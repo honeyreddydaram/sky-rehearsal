@@ -34,6 +34,7 @@ let landmarkEntities = [];
 let currentPosition,
   flightHeading = 0;
 let buildings = null;
+let buildingsVisible = true; // the "Buildings" on/off switch in Scene detail, default on
 let google3dTileset = null;
 let googleModeActive = false;
 let terrainGeneration = 0;
@@ -524,25 +525,26 @@ export function setLabelsVisible(checked) {
   else renderDiagram();
 }
 
-// resolutionScale always tracks the device's actual pixel ratio (capped at 2, to
-// bound cost on very-high-DPI screens) for crispness — it's no longer gated behind
-// the Quality selector, which now only trades off imagery/terrain tile resolution
-// (maximumScreenSpaceError: lower = sharper but more tiles to fetch/render).
-const RESOLUTION_SCALE = Math.min(devicePixelRatio || 1, 2);
-const MSSE_BY_QUALITY = {balanced: 1.5, sharp: 1};
+// The "Buildings" on/off switch in Scene detail. Independent of connecting/
+// disconnecting terrain entirely — lets the pilot quickly hide OSM 3D buildings
+// (e.g. because they're in the way) without losing World Terrain or re-entering a
+// token. Stored so a building set loaded later (or reloaded via connectTerrain)
+// starts in whatever state the switch is currently in.
+export function setBuildingsVisible(checked) {
+  buildingsVisible = checked;
+  if (buildings) {
+    buildings.show = checked;
+    viewer?.scene.requestRender();
+  }
+}
 
 export function setQuality(quality) {
   if (!viewer) return;
-  viewer.scene.globe.maximumScreenSpaceError = MSSE_BY_QUALITY[quality] ?? MSSE_BY_QUALITY.balanced;
+  viewer.useBrowserRecommendedResolution = true;
+  viewer.resolutionScale = quality === 'sharp' ? Math.min(devicePixelRatio || 1, 2) : 1;
+  viewer.scene.globe.maximumScreenSpaceError = quality === 'sharp' ? 1 : 2;
+  viewer.resize();
   viewer.scene.requestRender();
-}
-
-// A lighter, partly-translucent style for OSM 3D buildings so they give a sense of
-// the city without burying landmarks/runway markers underneath them — shown this way
-// in every view, including Pilot.
-function styleBuildingsLighter(tileset) {
-  tileset.style = new C.Cesium3DTileStyle({color: "color('white', 0.65)"});
-  return tileset;
 }
 
 export async function connectTerrain(token) {
@@ -576,12 +578,10 @@ export async function connectTerrain(token) {
         return;
       }
       if (buildings) viewer.scene.primitives.remove(buildings);
-      buildings = viewer.scene.primitives.add(styleBuildingsLighter(loaded));
+      buildings = viewer.scene.primitives.add(loaded);
+      buildings.show = buildingsVisible; // respects the Buildings on/off switch, default on
       text('terrain-status', 'World Terrain + OSM 3D buildings');
-      text(
-        'terrain-message',
-        'Connected. Building detail depends on local coverage. Shown translucent in every view (including Pilot) so landmarks stay readable underneath.',
-      );
+      text('terrain-message', 'Connected. Building detail depends on local coverage.');
     } catch (err) {
       console.warn('OSM buildings failed to load:', err);
       text('terrain-status', 'World Terrain · buildings unavailable');
@@ -766,14 +766,6 @@ export async function init() {
     viewer.scene.globe.baseColor = C.Color.fromCssColorString('#253b4c');
     viewer.scene.globe.depthTestAgainstTerrain = true;
     viewer.scene.screenSpaceCameraController.minimumZoomDistance = 50;
-    // Clarity: explicit 1x vertical exaggeration (no stretched-looking terrain),
-    // device-pixel-ratio-aware resolution, antialiasing, and a sharper default tile
-    // error tolerance than Cesium's own default (2) — see setQuality() for how the
-    // Quality selector adjusts this further.
-    viewer.scene.verticalExaggeration = 1;
-    viewer.resolutionScale = RESOLUTION_SCALE;
-    viewer.scene.postProcessStages.fxaa.enabled = true;
-    viewer.scene.globe.maximumScreenSpaceError = MSSE_BY_QUALITY.balanced;
 
     planned = viewer.entities.add({
       polyline: {

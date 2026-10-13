@@ -24,6 +24,8 @@ export function init() {
 
   $('quality').onchange = () => map.setQuality($('quality').value);
 
+  $('buildings-toggle').onchange = () => map.setBuildingsVisible($('buildings-toggle').checked);
+
   $('connect-terrain').onclick = () => {
     const token = $('ion-token').value.trim();
     if ($('google-3d-beta').checked) map.connectGoogle3D(token);
