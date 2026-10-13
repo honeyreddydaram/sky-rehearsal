@@ -275,6 +275,13 @@ export function validateAirportData(d) {
     if (typeof r.id !== 'string' || !Number.isFinite(r.lengthM) || !Number.isFinite(r.nominalAlignment)) {
       fail('Each runway needs id, lengthM, and nominalAlignment.');
     }
+    if (r.ends !== undefined) {
+      for (const [endId, end] of Object.entries(r.ends)) {
+        if (!Number.isFinite(end.lon) || !Number.isFinite(end.lat) || typeof end.source !== 'string') {
+          fail(`Runway end "${endId}" needs lon, lat, and a source.`);
+        }
+      }
+    }
   }
   return d;
 }
@@ -294,6 +301,18 @@ export function approximateRunwayEnds(referencePoint, runway) {
     [lowId]: destinationPoint(arpLonLat, lowBearing, half),
     [highId]: destinationPoint(arpLonLat, highBearing, half),
   };
+}
+
+// Prefers real surveyed/OSM-sourced runway-end coordinates (runway.ends) when the
+// airport data carries them, falling back to approximateRunwayEnds() when it
+// doesn't. Keeps map.js from needing to know which case it's in.
+export function resolveRunwayEnds(referencePoint, runway) {
+  if (runway.ends) {
+    const out = {};
+    for (const [id, end] of Object.entries(runway.ends)) out[id] = [end.lon, end.lat];
+    return out;
+  }
+  return approximateRunwayEnds(referencePoint, runway);
 }
 
 // Validates a circuit-pattern file (data/circuits/vohy-rwy27.json / vohy-rwy09.json).
@@ -380,6 +399,24 @@ export function reverseCircuit(source, {runway, side}) {
   };
 }
 
+// Validates data/landmarks.json (named lakes/hills for the map's Landmarks layer).
+export function validateLandmarksData(d) {
+  const fail = (m) => {
+    throw Error(m);
+  };
+  if (!d || d.schemaVersion !== 1) fail('landmarks.json must declare schemaVersion 1.');
+  if (!Array.isArray(d.landmarks) || !d.landmarks.length)
+    fail('landmarks.json needs a non-empty landmarks array.');
+  for (const l of d.landmarks) {
+    if (typeof l.name !== 'string' || !l.name.trim()) fail('Each landmark needs a name.');
+    if (!Number.isFinite(l.lon) || !Number.isFinite(l.lat)) fail(`Landmark "${l.name}" needs lon/lat.`);
+    if (typeof l.osmRef !== 'string' || typeof l.confidence !== 'string') {
+      fail(`Landmark "${l.name}" needs an osmRef and a confidence note.`);
+    }
+  }
+  return d;
+}
+
 // Pilots at this school refer to an aircraft by the NATO phonetic name of its
 // registration's last letter (confirmed rule; only VT-TSB "Bravo" and VT-STC "Charlie"
 // were individually confirmed). Deriving the others from the stated rule is applying a
@@ -429,6 +466,23 @@ export function validateAircraftType(d) {
     fail('Aircraft data needs a profile object (can be empty).');
   if (!Array.isArray(d.registrations)) fail('Aircraft data needs a registrations array (can be empty).');
   return d;
+}
+
+// Finds the closest of a list of named points to a clicked lon/lat — used by the
+// map's "click to identify" feature. candidates is [{name, lon, lat, ...}]; returns
+// null if candidates is empty, otherwise {name, distanceM, ...rest of the candidate}.
+export function nearestNamedPoint(point, candidates) {
+  if (!candidates.length) return null;
+  let best = null;
+  let bestDistance = Infinity;
+  for (const c of candidates) {
+    const d = distance(point, [c.lon, c.lat]);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = c;
+    }
+  }
+  return {...best, distanceM: bestDistance};
 }
 
 // Merges a Cessna type file (c152/c172r/c172s.json) with the shared performance

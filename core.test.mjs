@@ -15,11 +15,14 @@ import {
   destinationPoint,
   validateAirportData,
   approximateRunwayEnds,
+  resolveRunwayEnds,
   validateCircuitData,
   reverseCircuit,
   resolveAircraftProfile,
   lastLetterCallSign,
   validateAircraftType,
+  validateLandmarksData,
+  nearestNamedPoint,
 } from './core.mjs';
 assert.equal(bearing([0, 0], [0, 1]), 0);
 assert.equal(bearing([0, 0], [1, 0]), 90);
@@ -150,6 +153,28 @@ assert.ok(ends['09'] && ends['27']);
 assert.ok(ends['09'][0] < ends['27'][0]); // "09" (west end) should be west of "27" (east end) at this alignment
 assert.ok(Math.abs(distance(ends['09'], ends['27']) - 3230) < 1);
 
+// resolveRunwayEnds: falls back to the approximation when there's no real data,
+// prefers real ends when present
+assert.deepEqual(resolveRunwayEnds(goodAirport.referencePoint, goodAirport.runways[0]), ends);
+const withRealEnds = {
+  ...goodAirport.runways[0],
+  ends: {
+    '09': {lon: 78.1, lat: 17.1, source: 'OpenStreetMap test fixture'},
+    27: {lon: 78.2, lat: 17.2, source: 'OpenStreetMap test fixture'},
+  },
+};
+assert.deepEqual(resolveRunwayEnds(goodAirport.referencePoint, withRealEnds), {
+  '09': [78.1, 17.1],
+  27: [78.2, 17.2],
+});
+assert.equal(validateAirportData({...goodAirport, runways: [withRealEnds]}).runways[0], withRealEnds);
+assert.throws(() =>
+  validateAirportData({
+    ...goodAirport,
+    runways: [{...goodAirport.runways[0], ends: {'09': {lon: 1, lat: 1}}}],
+  }),
+);
+
 // circuit data validation
 const goodCircuit = {
   schemaVersion: 1,
@@ -257,6 +282,37 @@ for (const entry of fleet.aircraft) {
   }
 }
 
+const shippedAirport = readJson('data/airport-vohy.json');
+const shippedRunway = shippedAirport.runways[0];
+if (shippedRunway.ends) {
+  const realEnds = resolveRunwayEnds(shippedAirport.referencePoint, shippedRunway);
+  const realLengthM = distance(realEnds['09'], realEnds['27']);
+  // Loose sanity bound, not a re-assertion of the known ~4% OSM-vs-published
+  // discrepancy (that's flagged in the data file's geometryNote, not "fixed" here) --
+  // this just catches a gross typo in a future coordinate edit.
+  assert.ok(Math.abs(realLengthM - shippedRunway.lengthM) / shippedRunway.lengthM < 0.1);
+}
+
+// nearestNamedPoint
+assert.equal(nearestNamedPoint([0, 0], []), null);
+const near = nearestNamedPoint(
+  [78.47, 17.45],
+  [
+    {name: 'far', lon: 79, lat: 18},
+    {name: 'close', lon: 78.471, lat: 17.451},
+  ],
+);
+assert.equal(near.name, 'close');
+assert.ok(near.distanceM < 500);
+
+const landmarks = validateLandmarksData(readJson('data/landmarks.json'));
+for (const l of landmarks.landmarks) {
+  const d = distance([landmarks.center.lon, landmarks.center.lat], [l.lon, l.lat]) / 1852;
+  assert.ok(d <= landmarks.radiusNm + 0.5, `${l.name} is ${d.toFixed(1)} NM out, outside radiusNm`);
+  if (Number.isFinite(l.distanceNm))
+    assert.ok(Math.abs(d - l.distanceNm) < 0.2, `${l.name} distanceNm looks stale`);
+}
+
 console.log(
-  'Core tests passed: bearings, wind vectors/correction, impossible wind, drift distance, route interpolation, profile validation, route-data validation, progress-backup validation, destination point, airport data, runway geometry, circuit data, circuit reversal, aircraft profile merge, call signs, aircraft type validation, shipped data-file integration checks.',
+  'Core tests passed: bearings, wind vectors/correction, impossible wind, drift distance, route interpolation, profile validation, route-data validation, progress-backup validation, destination point, airport data, runway geometry, circuit data, circuit reversal, aircraft profile merge, call signs, aircraft type validation, landmarks validation, shipped data-file integration checks.',
 );

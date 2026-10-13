@@ -16,14 +16,31 @@
 
 import {bearing, routeModel, at, profileAt, windTriangle, driftPoint, validateRouteData} from './core.mjs';
 
+// Geoid undulation (N) at VOHY: the height of the geoid (mean sea level) above the
+// WGS84 ellipsoid. Pilots fly altitudes AMSL (orthometric height, H) on QNH; Cesium
+// needs ellipsoid height (h) to place anything with Cartesian3.fromDegrees(). The
+// relation (same one used throughout geodesy, e.g. GeographicLib's GeoidEval) is:
+//   h = N + H   (ellipsoid height = geoid undulation + orthometric/AMSL height)
+// N at VOHY (17.4531N, 78.4675E), computed from NGA's official EGM grids via
+// GeographicLib's online evaluator (https://geographiclib.sourceforge.io/cgi-bin/GeoidEval,
+// retrieved 2026-10-13): EGM2008 N = -76.5548 m, EGM96 N = -76.7629 m. Using EGM2008
+// (the more modern/higher-resolution model) as the app's constant. Negative here means
+// the geoid sits below the ellipsoid at this location, which is typical for this part
+// of India.
+export const EGM2008_UNDULATION_M_VOHY = -76.5548;
+
 // The demo altitude/true-airspeed schedule shown until the pilot imports a real
-// instructor-reviewed profile (Phase 2+) or a recorded GPX flight. These numbers are
-// illustrative only — see README "Scope and credits".
+// instructor-reviewed profile (Phase 2+) or a recorded GPX flight. The altitude values
+// are illustrative, but ARE meant to represent realistic AMSL figures for this circuit
+// (compare the real circuit altitude convention in data/airport-vohy.json:
+// circuitAltitude, ~2800 ft AMSL) — hence altitudeReference MSL with the real geoid
+// offset above, not ELLIPSOID with a zero offset as this used to be set. See README
+// "Scope and credits".
 export const demo = {
   name: 'Demo familiarization profile',
   source: 'Illustrative values for this route walkthrough',
-  altitudeReference: 'ELLIPSOID',
-  geoidOffsetM: 0,
+  altitudeReference: 'MSL',
+  geoidOffsetM: EGM2008_UNDULATION_M_VOHY,
   frames: [
     {progress: 0, altitudeFt: 2700, tasKt: 90},
     {progress: 0.18, altitudeFt: 2900, tasKt: 95},

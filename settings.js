@@ -24,6 +24,12 @@ export function init() {
 
   $('quality').onchange = () => map.setQuality($('quality').value);
 
-  $('connect-terrain').onclick = () => map.connectTerrain($('ion-token').value.trim());
+  $('buildings-toggle').onchange = () => map.setBuildingsVisible($('buildings-toggle').checked);
+
+  $('connect-terrain').onclick = () => {
+    const token = $('ion-token').value.trim();
+    if ($('google-3d-beta').checked) map.connectGoogle3D(token);
+    else map.connectTerrain(token);
+  };
   $('disconnect-terrain').onclick = () => map.disconnectTerrain();
 }
