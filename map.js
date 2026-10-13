@@ -634,7 +634,13 @@ export async function connectGoogle3D(token) {
       viewer.scene.primitives.remove(buildings);
       buildings = null;
     }
-    const tileset = await C.createGooglePhotorealistic3DTilesAsync();
+    // Note: despite the Async-suffix convention createWorldTerrainAsync/
+    // createOsmBuildingsAsync follow elsewhere in this file, Cesium's own name for
+    // this one is createGooglePhotorealistic3DTileset — no "Async" suffix, even
+    // though it's still promise-returning (see Cesium's own usage example). Confirmed
+    // against Cesium's docs after the first version of this code guessed the
+    // Async-suffixed name by pattern-matching the other two and was wrong.
+    const tileset = await C.createGooglePhotorealistic3DTileset();
     if (revision !== terrainGeneration) {
       tileset.destroy();
       return;
