@@ -5,16 +5,19 @@
   "type": "module",
   "description": "Browser-based VFR circuit rehearsal trainer for Begumpet Airport (VOHY), Hyderabad. Static site, no build step.",
   "scripts": {
-    "test": "node core.test.mjs",
+    "test": "node core.test.mjs && node tests/html-structure.test.mjs",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.64.0",
     "eslint": "^9.9.0",
     "eslint-config-prettier": "^9.1.0",
     "globals": "^15.9.0",
+    "jsdom": "^25.0.1",
     "prettier": "^3.3.3"
   }
 }

@@ -1,0 +1,5 @@
+# Keep line endings consistent regardless of platform/editor. Without this, Git for
+# Windows' autocrlf rewrites checked-out files to CRLF, which then makes
+# `npm run format:check` (Prettier defaults to LF) fail locally for files that are
+# actually fine -- confusing noise unrelated to any real formatting issue.
+* text=auto eol=lf
