@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "typeCode": "c172s",
+  "type": "Cessna 172S",
+  "engines": 1,
+  "registrations": ["VT-TSB", "VT-STC"],
+  "usesCommonProfile": true,
+  "needsPOHCheck": true,
+  "profile": {},
+  "maxDemoCrosswindKt": null,
+  "notes": "TODO: from POH.",
+  "source": "trainee pilot (fleet only); performance shared via cessna-common.json",
+  "verifiedBy": null
+}

@@ -1,9 +1,10 @@
 {
   "schemaVersion": 1,
-  "title": "Begumpet route walkthrough",
-  "status": "Recreated from route screenshots",
+  "title": "Begumpet route walkthrough (legacy screenshot reconstruction)",
+  "status": "Legacy screenshot reconstruction",
+  "legacyScreenshotReconstruction": true,
   "source": "Shared route reference screenshots",
-  "limitations": "A visual walkthrough using manually placed route points. Playback height and speed are illustrative; this is a ground-based learning prototype.",
+  "limitations": "A visual walkthrough using manually placed route points. Playback height and speed are illustrative; this is a ground-based learning prototype. Superseded as the reference circuit geometry by data/circuits/vohy-rwy27.json and vohy-rwy09.json (sourced from a trainee pilot's description of the actual traffic pattern) -- see README for how the two differ. This file is kept because the guided/quiz rehearsal flow still uses it as the flyable route; it is not itself the real VOHY circuit pattern.",
   "loops": {
     "inner": [
       [78.4676, 17.4531],

@@ -236,3 +236,206 @@ export function validateProgressBackup(d) {
   }
   return {name: p.name, sessions: p.sessions, flightProfiles: p.flightProfiles};
 }
+
+// Forward geodetic problem (the counterpart to bearing()/distance(), which solve the
+// inverse problem): given a start point, a true bearing, and a distance, returns the
+// destination [lon, lat]. Same spherical-Earth model (R = 6371000 m) as distance(), so
+// the two stay consistent with each other. Used to draw the approximate runway line
+// from the airport reference point — see validateAirportData()/data/airport-vohy.json.
+export function destinationPoint(point, bearingDeg, distanceM) {
+  const R = 6371000;
+  const brng = rad(bearingDeg);
+  const lat1 = rad(point[1]);
+  const lon1 = rad(point[0]);
+  const dByR = distanceM / R;
+  const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dByR) + Math.cos(lat1) * Math.sin(dByR) * Math.cos(brng));
+  const lon2 =
+    lon1 +
+    Math.atan2(
+      Math.sin(brng) * Math.sin(dByR) * Math.cos(lat1),
+      Math.cos(dByR) - Math.sin(lat1) * Math.sin(lat2),
+    );
+  return [deg(lon2), deg(lat2)];
+}
+
+// Validates data/airport-vohy.json (verified reference data: ARP, runway, elevation,
+// frequencies). Kept strict so a typo in the hand-authored JSON fails loudly rather
+// than silently drawing a wrong airport diagram.
+export function validateAirportData(d) {
+  const fail = (m) => {
+    throw Error(m);
+  };
+  if (!d || d.schemaVersion !== 1) fail('airport-vohy.json must declare schemaVersion 1.');
+  if (typeof d.icao !== 'string' || !d.icao.trim()) fail('Airport data needs an icao code.');
+  const arp = d.referencePoint;
+  if (!arp || !Number.isFinite(arp.lat) || !Number.isFinite(arp.lon))
+    fail('Airport data needs a referencePoint {lat, lon}.');
+  if (!Array.isArray(d.runways) || !d.runways.length) fail('Airport data needs at least one runway.');
+  for (const r of d.runways) {
+    if (typeof r.id !== 'string' || !Number.isFinite(r.lengthM) || !Number.isFinite(r.nominalAlignment)) {
+      fail('Each runway needs id, lengthM, and nominalAlignment.');
+    }
+  }
+  return d;
+}
+
+// Computes the two approximate runway-end points for a runway record from
+// data/airport-vohy.json. This is NOT a surveyed centerline: it assumes the airport
+// reference point sits at the runway midpoint and projects half the published length
+// each way along the nominal alignment. Good enough to draw a labeled "approximate"
+// line on the map; not for anything that needs a real threshold coordinate.
+export function approximateRunwayEnds(referencePoint, runway) {
+  const arpLonLat = [referencePoint.lon, referencePoint.lat];
+  const half = runway.lengthM / 2;
+  const [lowId, highId] = runway.id.split('/'); // e.g. "09/27" -> "09", "27"
+  const highBearing = wrap(runway.nominalAlignment); // the "high" end is in the alignment direction
+  const lowBearing = wrap(runway.nominalAlignment + 180); // the "low" end is the reciprocal
+  return {
+    [lowId]: destinationPoint(arpLonLat, lowBearing, half),
+    [highId]: destinationPoint(arpLonLat, highBearing, half),
+  };
+}
+
+// Validates a circuit-pattern file (data/circuits/vohy-rwy27.json / vohy-rwy09.json).
+// These describe a real traffic pattern as relayed by a trainee pilot, not an official
+// chart — every checkpoint must carry a confidence/source note rather than a bare
+// coordinate, so the data's provenance survives into the UI. coords is [lon, lat] or
+// null (not yet located).
+export function validateCircuitData(d) {
+  const fail = (m) => {
+    throw Error(m);
+  };
+  if (!d || d.schemaVersion !== 1) fail('Circuit data must declare schemaVersion 1.');
+  if (typeof d.runway !== 'string') fail('Circuit data needs a runway id.');
+  if (!['left-hand', 'right-hand'].includes(d.circuitDirection))
+    fail('circuitDirection must be left-hand or right-hand.');
+  if (!Array.isArray(d.legs) || !d.legs.length) fail('Circuit data needs at least one leg.');
+  const legNames = ['upwind', 'crosswind', 'downwind', 'base', 'final'];
+  for (const leg of d.legs) {
+    if (!legNames.includes(leg.name)) fail(`Unknown leg name "${leg.name}".`);
+    if (!Number.isFinite(leg.headingTrue)) fail(`Leg "${leg.name}" needs a headingTrue.`);
+    if (!Array.isArray(leg.checkpoints)) fail(`Leg "${leg.name}" needs a checkpoints array.`);
+    for (const c of leg.checkpoints) {
+      if (typeof c.name !== 'string' || !c.name.trim())
+        fail(`A checkpoint on "${leg.name}" is missing a name.`);
+      if (
+        c.coords !== null &&
+        !(Array.isArray(c.coords) && c.coords.length === 2 && c.coords.every(Number.isFinite))
+      ) {
+        fail(`Checkpoint "${c.name}" needs coords as [lon, lat] or null.`);
+      }
+      if (c.coords !== null && typeof c.confidence !== 'string') {
+        fail(`Checkpoint "${c.name}" has coords but no confidence note.`);
+      }
+    }
+  }
+  return d;
+}
+
+// Derives the reverse-runway circuit (e.g. RWY 09 from RWY 27): same ground track,
+// flown in the opposite direction. Opposite runway means the pattern direction flips
+// (left-hand becomes right-hand, because turning the same physical way relative to the
+// ground reverses handedness once you're flying the other way down the runway), the
+// leg sequence reverses, L/R side callouts swap, and each leg's heading is the
+// reciprocal (headingTrue + 180). Leg names are reassigned by their new position in
+// the standard upwind/crosswind/downwind/base/final sequence — that sequence is a
+// universal definition, not runway-specific data, so e.g. the leg right after takeoff
+// is always "upwind" regardless of what it was called in the source circuit. Any
+// runway-specific free text (headingNote) is dropped rather than carried over stale.
+// Pure and deterministic so it's unit-testable instead of hand-maintained — see
+// scripts/generate-rwy09-circuit.mjs for how it's invoked.
+const STANDARD_LEG_SEQUENCE = ['upwind', 'crosswind', 'downwind', 'base', 'final'];
+
+export function reverseCircuit(source, {runway, side}) {
+  const oppositeDirection = source.circuitDirection === 'left-hand' ? 'right-hand' : 'left-hand';
+  const swapSide = (s) => (s === 'LEFT' ? 'RIGHT' : s === 'RIGHT' ? 'LEFT' : s);
+  // A checkpoint flagged turnTo in the source marks a turn corner in THAT pattern's
+  // geometry. After reversal the turn corners move to different checkpoints (whichever
+  // one ends up last in each new leg) — carrying turnTo over would mislead a pilot
+  // flying the derived runway into turning at the wrong point, so it's dropped and
+  // replaced with a note instead of silently relocated.
+  const remapCheckpoint = (c) => {
+    const {turnTo, ...rest} = c;
+    const note = turnTo
+      ? `(This was a turn point in the RWY ${source.runway} pattern, not necessarily in this derived RWY ${runway} pattern.) ${c.note || ''}`.trim()
+      : c.note;
+    return {...rest, side: swapSide(c.side), note};
+  };
+  const legs = [...source.legs].reverse().map((leg, i) => ({
+    ...leg,
+    name: STANDARD_LEG_SEQUENCE[i] ?? leg.name,
+    headingNote: undefined, // JSON.stringify drops undefined keys; avoids carrying a stale runway-specific note
+    headingTrue: wrap(leg.headingTrue + 180),
+    checkpoints: [...leg.checkpoints].reverse().map(remapCheckpoint),
+  }));
+  return {
+    ...source,
+    runway,
+    circuitDirection: oppositeDirection,
+    side,
+    derived: true,
+    derivedFrom: source.runway,
+    needsConfirmation: true,
+    legs,
+  };
+}
+
+// Pilots at this school refer to an aircraft by the NATO phonetic name of its
+// registration's last letter (confirmed rule; only VT-TSB "Bravo" and VT-STC "Charlie"
+// were individually confirmed). Deriving the others from the stated rule is applying a
+// given definition, not guessing — see data/aircraft/fleet.json callSignSource.
+const NATO_ALPHABET = {
+  A: 'Alpha',
+  B: 'Bravo',
+  C: 'Charlie',
+  D: 'Delta',
+  E: 'Echo',
+  F: 'Foxtrot',
+  G: 'Golf',
+  H: 'Hotel',
+  I: 'India',
+  J: 'Juliett',
+  K: 'Kilo',
+  L: 'Lima',
+  M: 'Mike',
+  N: 'November',
+  O: 'Oscar',
+  P: 'Papa',
+  Q: 'Quebec',
+  R: 'Romeo',
+  S: 'Sierra',
+  T: 'Tango',
+  U: 'Uniform',
+  V: 'Victor',
+  W: 'Whiskey',
+  X: 'Xray',
+  Y: 'Yankee',
+  Z: 'Zulu',
+};
+export function lastLetterCallSign(registration) {
+  const letter = registration.trim().slice(-1).toUpperCase();
+  return NATO_ALPHABET[letter] || null;
+}
+
+// Validates an aircraft type file (data/aircraft/*.json).
+export function validateAircraftType(d) {
+  const fail = (m) => {
+    throw Error(m);
+  };
+  if (!d || d.schemaVersion !== 1) fail('Aircraft data must declare schemaVersion 1.');
+  if (typeof d.typeCode !== 'string' || !d.typeCode.trim()) fail('Aircraft data needs a typeCode.');
+  if (typeof d.usesCommonProfile !== 'boolean') fail('Aircraft data needs usesCommonProfile (boolean).');
+  if (!d.profile || typeof d.profile !== 'object')
+    fail('Aircraft data needs a profile object (can be empty).');
+  if (!Array.isArray(d.registrations)) fail('Aircraft data needs a registrations array (can be empty).');
+  return d;
+}
+
+// Merges a Cessna type file (c152/c172r/c172s.json) with the shared performance
+// profile in cessna-common.json when the type opts in (usesCommonProfile: true).
+// Fields present on the type file always win, so a type can override one value
+// (e.g. a confirmed POH number) without duplicating the rest of the common profile.
+export function resolveAircraftProfile(typeData, commonData) {
+  if (!typeData.usesCommonProfile) return typeData;
+  return {...typeData, profile: {...commonData.profile, ...(typeData.profile || {})}};
+}

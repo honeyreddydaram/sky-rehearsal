@@ -25,10 +25,10 @@ export default [
     },
   },
   {
-    // Test files and config run under Node via `npm test`/`npm run test:e2e`, not in
-    // the browser. tests/smoke.spec.mjs executes in Node too (it drives a browser via
-    // Playwright, but the test file itself is a Node script).
-    files: ['core.test.mjs', 'tests/**/*.mjs', 'playwright.config.mjs'],
+    // Test files, one-off data-generation scripts, and e2e config all run under Node
+    // via the CLI, not in the browser. tests/smoke.spec.mjs executes in Node too (it
+    // drives a browser via Playwright, but the test file itself is a Node script).
+    files: ['core.test.mjs', 'scripts/**/*.mjs', 'tests/**/*.mjs', 'playwright.config.mjs'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
