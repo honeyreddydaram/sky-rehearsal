@@ -98,6 +98,16 @@ export let models = null;
 // between flips), which also reverses every course/heading sampled from it. Called
 // once from loadRouteData() at startup, and again by app.js whenever the active
 // runway changes state.direction (see the `state.direction` field comment above).
+//
+// Known limitation: this reverses geometry/heading only. The altitude/airspeed
+// profile (profileAt, sampled by plain progress 0..1) and routeData.places (the
+// fixed map labels — Hussain Sagar, Balkampet side, etc.) do NOT mirror along with
+// direction, so e.g. a profile frame authored for "descending into the first turn"
+// stays tied to the same progress value regardless of which way the loop is being
+// flown. Not wrong exactly (the demo profile's climb/cruise/descent shape is
+// reasonably symmetric), but not direction-aware either — flagged here rather than
+// silently assumed correct. Revisit once the real GPX lets playback move onto the
+// actual circuit geometry instead of this legacy loop.
 export function rebuildModels() {
   const order = (loop) => (state.direction === 'reverse' ? [...loop].reverse() : loop);
   models = {
