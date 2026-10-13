@@ -52,10 +52,20 @@ test('Phase 2b: airfield panel loads real data, runway switch, and click-to-iden
   const rwy27Note = await page.locator('#circuit-source-note').textContent();
   expect(rwy27Note).toContain('trainee pilot');
 
+  // Switching active runway should flip the simulated flight's direction of travel
+  // to match (state.js rebuildModels()/direction) -- initial heading (t=0, playback
+  // never started so it hasn't drifted) should flip by ~180°, not just the circuit
+  // reference panel's text.
+  const headingBefore = parseInt(await page.locator('#heading').textContent(), 10);
+
   // Switching the active runway re-renders the circuit-leg list for RWY 09 (derived,
   // reversed leg order) without a page error.
   await page.click('[data-runway="09"]');
   await expect(page.locator('#runway-note')).toContainText('Derived from RWY 27');
+
+  const headingAfter = parseInt(await page.locator('#heading').textContent(), 10);
+  const diffFrom180 = ((((headingAfter - (headingBefore + 180)) % 360) + 540) % 360) - 180;
+  expect(Math.abs(diffFrom180)).toBeLessThan(15);
 
   // Click-to-identify: works through either rendering path (Cesium canvas or the
   // SVG fallback) -- click whichever one is actually visible and expect the same
