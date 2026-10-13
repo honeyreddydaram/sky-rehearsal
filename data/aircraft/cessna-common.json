@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "source": "trainee pilot",
+  "verified": false,
+  "appliesTo": ["c152", "c172r", "c172s"],
+  "powerUnit": "RPM",
+  "uiNote": "Cessna common profile -- confirm type-specific values in the POH.",
+  "displayFallback": "When rpm is null, show ≈{approxPowerPercent}% power (RPM to be confirmed).",
+  "profile": {
+    "rotateKt": 55,
+    "takeoff": {
+      "approxPowerPercent": 100,
+      "rpm": null,
+      "note": "TODO: RPM per phase from pilot/POH"
+    },
+    "climbWithFlaps": {
+      "speedKt": 65,
+      "approxPowerPercent": 100,
+      "rpm": null,
+      "note": "TODO: RPM per phase from pilot/POH"
+    },
+    "climbCleanAt2000ft": {
+      "trigger": "At 2000 ft: flaps up, power reduced.",
+      "speedKtRange": [70, 75],
+      "approxPowerPercent": 90,
+      "rpm": null,
+      "note": "TODO: RPM per phase from pilot/POH"
+    },
+    "cruise": {
+      "speedKtRange": [85, 90],
+      "approxPowerPercent": 50,
+      "rpm": null,
+      "note": "TODO: RPM per phase from pilot/POH"
+    },
+    "descentApproach": {
+      "approxPowerPercent": 30,
+      "rpm": null,
+      "note": "TODO: RPM per phase from pilot/POH"
+    }
+  }
+}

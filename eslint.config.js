@@ -25,8 +25,9 @@ export default [
     },
   },
   {
-    // The test file runs under Node via `npm test`, not in the browser.
-    files: ['core.test.mjs'],
+    // The test file and one-off data-generation scripts run under Node via the CLI,
+    // not in the browser.
+    files: ['core.test.mjs', 'scripts/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

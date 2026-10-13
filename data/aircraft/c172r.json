@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "typeCode": "c172r",
+  "type": "Cessna 172R",
+  "engines": 1,
+  "registrations": ["VT-CAM"],
+  "usesCommonProfile": true,
+  "needsPOHCheck": true,
+  "profile": {},
+  "maxDemoCrosswindKt": null,
+  "notes": "TODO: from POH",
+  "source": "trainee pilot (fleet only); performance shared via cessna-common.json",
+  "verifiedBy": null
+}

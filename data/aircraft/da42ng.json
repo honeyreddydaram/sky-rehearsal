@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "typeCode": "da42ng",
+  "type": "Diamond DA42 NG",
+  "engines": 2,
+  "registrations": [],
+  "usesCommonProfile": false,
+  "needsPOHCheck": true,
+  "profile": {
+    "rotateKt": null,
+    "vyKt": null,
+    "vxKt": null,
+    "circuitSpeedKt": null,
+    "approachSpeedKt": null
+  },
+  "maxDemoCrosswindKt": null,
+  "notes": "TODO: registration TBD; all performance values TODO from POH. Different airframe/powerplant from the Cessna fleet -- does not use cessna-common.json.",
+  "source": "trainee pilot (fleet only)",
+  "verifiedBy": null
+}

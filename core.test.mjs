@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {
   bearing,
   windTriangle,
@@ -11,6 +12,14 @@ import {
   validateRouteData,
   validateProgressBackup,
   headingText,
+  destinationPoint,
+  validateAirportData,
+  approximateRunwayEnds,
+  validateCircuitData,
+  reverseCircuit,
+  resolveAircraftProfile,
+  lastLetterCallSign,
+  validateAircraftType,
 } from './core.mjs';
 assert.equal(bearing([0, 0], [0, 1]), 0);
 assert.equal(bearing([0, 0], [1, 0]), 90);
@@ -119,6 +128,135 @@ assert.throws(() =>
   }),
 );
 
+// destinationPoint: forward geodesy should round-trip with bearing()/distance()
+// (the inverse problem) to within a small tolerance.
+const start = [78.4676, 17.4531];
+const dest = destinationPoint(start, 90, 10000); // 10 km due east
+assert.ok(Math.abs(distance(start, dest) - 10000) < 1);
+assert.ok(Math.abs(bearing(start, dest) - 90) < 0.5);
+
+// airport data validation + approximate runway geometry
+const goodAirport = {
+  schemaVersion: 1,
+  icao: 'VOHY',
+  referencePoint: {lat: 17.4531, lon: 78.4675},
+  runways: [{id: '09/27', lengthM: 3230, nominalAlignment: 90}],
+};
+assert.equal(validateAirportData(goodAirport), goodAirport);
+assert.throws(() => validateAirportData({...goodAirport, schemaVersion: 2}));
+assert.throws(() => validateAirportData({...goodAirport, runways: []}));
+const ends = approximateRunwayEnds(goodAirport.referencePoint, goodAirport.runways[0]);
+assert.ok(ends['09'] && ends['27']);
+assert.ok(ends['09'][0] < ends['27'][0]); // "09" (west end) should be west of "27" (east end) at this alignment
+assert.ok(Math.abs(distance(ends['09'], ends['27']) - 3230) < 1);
+
+// circuit data validation
+const goodCircuit = {
+  schemaVersion: 1,
+  runway: '27',
+  circuitDirection: 'left-hand',
+  side: 'south of runway',
+  legs: [
+    {
+      name: 'upwind',
+      headingTrue: 270,
+      checkpoints: [{name: 'Police Tower', side: 'LEFT', distanceNm: 2, coords: null}],
+    },
+    {
+      name: 'crosswind',
+      headingTrue: 180,
+      checkpoints: [
+        {
+          name: 'Wells Fargo building',
+          side: null,
+          distanceNm: 3,
+          coords: [78.3775143, 17.4249629],
+          confidence: 'medium',
+        },
+      ],
+    },
+  ],
+};
+assert.equal(validateCircuitData(goodCircuit), goodCircuit);
+assert.throws(() => validateCircuitData({...goodCircuit, circuitDirection: 'clockwise'}));
+assert.throws(() =>
+  validateCircuitData({...goodCircuit, legs: [{...goodCircuit.legs[0], name: 'base-leg'}]}),
+);
+assert.throws(() =>
+  validateCircuitData({
+    ...goodCircuit,
+    legs: [{name: 'upwind', headingTrue: 270, checkpoints: [{name: 'X', coords: [1, 2]}]}], // coords with no confidence
+  }),
+);
+
+// reverseCircuit: reversing twice should return to the original leg order/headings
+// (direction flips back, sides flip back).
+const rwy09 = reverseCircuit(goodCircuit, {runway: '09', side: 'south of runway'});
+assert.equal(rwy09.circuitDirection, 'right-hand');
+assert.equal(rwy09.derived, true);
+assert.equal(rwy09.legs[0].name, 'upwind'); // renamed by new position, not carried from the source leg
+assert.equal(rwy09.legs[0].headingTrue, 0); // 180 + 180, wrapped
+assert.equal(rwy09.legs[1].checkpoints[0].side, 'RIGHT'); // LEFT -> RIGHT
+const backTo27 = reverseCircuit(rwy09, {runway: '27', side: 'south of runway'});
+assert.equal(backTo27.circuitDirection, 'left-hand');
+assert.equal(backTo27.legs[0].name, 'upwind');
+assert.equal(backTo27.legs[0].headingTrue, 270);
+assert.equal(backTo27.legs[0].checkpoints[0].side, 'LEFT');
+
+// resolveAircraftProfile: common profile merges in, type-specific fields win
+const common = {profile: {rotateKt: 55, cruiseKt: 87}};
+const typeUsingCommon = {usesCommonProfile: true, profile: {cruiseKt: 90}};
+assert.deepEqual(resolveAircraftProfile(typeUsingCommon, common).profile, {rotateKt: 55, cruiseKt: 90});
+const typeNotUsingCommon = {usesCommonProfile: false, profile: {rotateKt: null}};
+assert.deepEqual(resolveAircraftProfile(typeNotUsingCommon, common), typeNotUsingCommon);
+
+// call-sign derivation + aircraft type validation
+assert.equal(lastLetterCallSign('VT-TSB'), 'Bravo');
+assert.equal(lastLetterCallSign('VT-STC'), 'Charlie');
+assert.equal(lastLetterCallSign('VT-AKN'), 'November');
+assert.equal(lastLetterCallSign('VT-CAM'), 'Mike');
+const goodAircraft = {
+  schemaVersion: 1,
+  typeCode: 'c152',
+  usesCommonProfile: true,
+  profile: {},
+  registrations: ['VT-AKN'],
+};
+assert.equal(validateAircraftType(goodAircraft), goodAircraft);
+assert.throws(() => validateAircraftType({...goodAircraft, usesCommonProfile: 'yes'}));
+assert.throws(() => validateAircraftType({...goodAircraft, registrations: 'VT-AKN'}));
+
+// Integration check: every shipped data file must actually validate against its
+// schema, and the Cessna profile merge must work on the real files, not just fixtures.
+// This catches a data-file typo or schema drift at test time, before it reaches the UI.
+const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
+
+validateRouteData(readJson('routes.json'));
+validateAirportData(readJson('data/airport-vohy.json'));
+
+const shippedRwy27 = validateCircuitData(readJson('data/circuits/vohy-rwy27.json'));
+const shippedRwy09 = validateCircuitData(readJson('data/circuits/vohy-rwy09.json'));
+assert.equal(shippedRwy09.derived, true);
+assert.equal(shippedRwy09.legs.length, shippedRwy27.legs.length);
+assert.deepEqual(
+  shippedRwy09.legs.map((l) => l.name),
+  shippedRwy27.legs.map((l) => l.name), // same 5 leg names, just reassigned by new position
+);
+
+const cessnaCommon = readJson('data/aircraft/cessna-common.json');
+for (const file of ['c152.json', 'c172r.json', 'c172s.json', 'da42ng.json']) {
+  const aircraft = validateAircraftType(readJson(`data/aircraft/${file}`));
+  const resolved = resolveAircraftProfile(aircraft, cessnaCommon);
+  if (aircraft.usesCommonProfile) assert.equal(resolved.profile.rotateKt, 55);
+}
+
+const fleet = readJson('data/aircraft/fleet.json');
+for (const entry of fleet.aircraft) {
+  if (entry.registration && entry.callSignSource === 'derived from the last-letter rule') {
+    assert.equal(lastLetterCallSign(entry.registration), entry.callSign);
+  }
+}
+
 console.log(
-  'Core tests passed: bearings, wind vectors/correction, impossible wind, drift distance, route interpolation, profile validation, route-data validation, progress-backup validation.',
+  'Core tests passed: bearings, wind vectors/correction, impossible wind, drift distance, route interpolation, profile validation, route-data validation, progress-backup validation, destination point, airport data, runway geometry, circuit data, circuit reversal, aircraft profile merge, call signs, aircraft type validation, shipped data-file integration checks.',
 );

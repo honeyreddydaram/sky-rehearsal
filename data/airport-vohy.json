@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "icao": "VOHY",
+  "iata": "BPM",
+  "name": "Begumpet Airport",
+  "city": "Hyderabad, Telangana, India",
+  "referencePoint": {
+    "lat": 17.4531,
+    "lon": 78.4675,
+    "source": "Wikipedia; aviationweather.gov airport database lists 17.453, 78.468 (consistent within rounding)"
+  },
+  "elevation": {
+    "ft": 1745,
+    "m": 532,
+    "source": "Wikipedia",
+    "discrepancy": "aviationweather.gov airport database lists 540 (unit as published there, not independently re-confirmed here). TODO: confirm against an official AIP/NOTAM source before using for anything beyond rough familiarization."
+  },
+  "frequenciesMHz": {
+    "tower": 122.25,
+    "atis": 126.8,
+    "note": "Display only, not sourced for operational use. Confirm current published frequencies before any real-world use."
+  },
+  "runways": [
+    {
+      "id": "09/27",
+      "lengthM": 3230,
+      "lengthFt": 10597,
+      "widthM": 45,
+      "widthFt": 148,
+      "nominalAlignment": 90,
+      "geometry": "approximate",
+      "geometryNote": "Threshold coordinates are not independently verified. This runway's line is computed from the reference point, the published length, and the nominal 090/270 alignment (see core.mjs approximateRunwayEnds) -- it is NOT a surveyed centerline. Treat it as a rough visual reference only, drawn and labeled as approximate in the UI."
+    }
+  ],
+  "sources": [
+    "Wikipedia: Begumpet Airport",
+    "aviationweather.gov airport database (https://aviationweather.gov/api/data/airport?ids=VOHY)"
+  ],
+  "circuitAltitude": {
+    "circuitHeightAglFt": 1000,
+    "aerodromeElevationFtPilotRounded": 1800,
+    "circuitAltitudeAmslFt": 2800,
+    "basis": "aerodromeElevationFtPilotRounded + circuitHeightAglFt",
+    "displayText": "Circuit: 2,800 ft QNH (1,000 ft AGL)",
+    "source": "trainee pilot",
+    "verified": false,
+    "note": "Pilots commonly round the published elevation (~1745 ft, see elevation field) up to 1800 ft for quick mental math. Circuit altitude is flown on the day's QNH, not a fixed pressure setting -- see the live METAR (Phase 3) for current QNH."
+  },
+  "liveWeather": {
+    "metarUrl": "https://aviationweather.gov/api/data/metar?ids=VOHY&format=json",
+    "note": "Fetched live in Phase 3 -- not bundled here since it changes constantly."
+  },
+  "limitations": "Reference data for ground-based familiarization only. Not for flight planning or navigation. See README for the full disclaimer."
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "typeCode": "c152",
+  "type": "Cessna 152",
+  "engines": 1,
+  "registrations": ["VT-AKN", "VT-YOU"],
+  "usesCommonProfile": true,
+  "needsPOHCheck": true,
+  "profile": {},
+  "maxDemoCrosswindKt": null,
+  "notes": "TODO: from POH",
+  "source": "trainee pilot (fleet only); performance shared via cessna-common.json",
+  "verifiedBy": null
+}

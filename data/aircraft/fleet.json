@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "source": "trainee pilot",
+  "verified": false,
+  "callSignRule": "Pilots refer to an aircraft by the NATO phonetic name of its registration's last letter (see core.mjs lastLetterCallSign).",
+  "aircraft": [
+    {
+      "registration": "VT-AKN",
+      "typeCode": "c152",
+      "callSign": "November",
+      "callSignSource": "derived from the last-letter rule"
+    },
+    {
+      "registration": "VT-YOU",
+      "typeCode": "c152",
+      "callSign": "Uniform",
+      "callSignSource": "derived from the last-letter rule"
+    },
+    {
+      "registration": "VT-CAM",
+      "typeCode": "c172r",
+      "callSign": "Mike",
+      "callSignSource": "derived from the last-letter rule"
+    },
+    {
+      "registration": "VT-TSB",
+      "typeCode": "c172s",
+      "callSign": "Bravo",
+      "callSignSource": "trainee pilot confirmed"
+    },
+    {
+      "registration": "VT-STC",
+      "typeCode": "c172s",
+      "callSign": "Charlie",
+      "callSignSource": "trainee pilot confirmed"
+    },
+    {"registration": null, "typeCode": "da42ng", "callSign": null, "callSignSource": "TODO: registration TBD"}
+  ]
+}

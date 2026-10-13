@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "runway": "27",
+  "source": "trainee pilot description",
+  "verified": false,
+  "circuitDirection": "left-hand",
+  "side": "south of runway",
+  "note": "Relayed from a trainee pilot's description of flying the circuit, not an official chart. Checkpoint coordinates were located individually (see each checkpoint's source/confidence) -- several visual landmarks could not be confidently pinned to a single point and are left null with a TODO. The GPX track from an actual flight (arriving separately) will be used to check this geometry; conflicts will be flagged, not silently edited into this file.",
+  "distanceFieldNote": "On upwind/crosswind/base/final, distanceNm is measured along that leg from its start. On downwind, the pilot's distances are ambiguous between 'along the leg' and 'straight-line distance from the airport' -- the described pattern (5, 4, ..., 1, abeam, 2, 3, 4, 5) only makes sense as airport-relative radial distance (closing in toward the abeam point, then opening back out), so downwind checkpoints use distanceFromAirportNm instead. This is an interpretation of the pilot's wording, not a literal field they specified -- flagged here rather than presented as fact.",
+  "legs": [
+    {
+      "name": "upwind",
+      "headingTrue": 270,
+      "headingNote": "Takeoff/departure heading for RWY 27 (reciprocal of the runway's own 270 alignment).",
+      "checkpoints": [
+        {
+          "name": "Police Tower",
+          "description": "Cuboid Telangana Police building, Banjara/Jubilee Hills area",
+          "side": "LEFT",
+          "distanceNm": 2,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: identify and locate the specific building. Several candidate Telangana Police buildings exist in this area; none matched confidently via OpenStreetMap search."
+        },
+        {
+          "name": "End of KBR Park",
+          "side": "LEFT",
+          "distanceNm": 3,
+          "coords": [78.4205231, 17.4201773],
+          "osmRef": "way/28268610",
+          "confidence": "medium",
+          "note": "Point is OSM's reference point for Kasu Brahmananda Reddy National Park as a whole, not specifically its 'end' edge as seen from the air. approximate: true."
+        },
+        {
+          "name": "Durgam Cheruvu",
+          "side": "LEFT",
+          "distanceNm": 3.5,
+          "distanceNmNote": "Pilot said 3-4 NM; 3.5 used as a midpoint placeholder.",
+          "coords": [78.3897305, 17.4310553],
+          "osmRef": "way/28131043",
+          "confidence": "medium",
+          "note": "Lake centroid, not an exact sighting point. approximate: true."
+        },
+        {
+          "name": "Overhead Cyber Towers",
+          "side": null,
+          "distanceNm": 5,
+          "coords": [78.3831376, 17.449005],
+          "osmRef": "node/6444553239",
+          "confidence": "medium",
+          "turnTo": "crosswind",
+          "note": "Turn point: left turn onto crosswind here."
+        }
+      ]
+    },
+    {
+      "name": "crosswind",
+      "headingTrue": 180,
+      "checkpoints": [
+        {
+          "name": "Wells Fargo building",
+          "side": null,
+          "distanceNm": 3,
+          "coords": [78.3775143, 17.4249629],
+          "osmRef": "way/1409668579",
+          "confidence": "medium",
+          "turnTo": "downwind",
+          "note": "Turn point: left turn onto downwind here."
+        }
+      ]
+    },
+    {
+      "name": "downwind",
+      "headingTrue": 90,
+      "checkpoints": [
+        {
+          "name": "IKEA",
+          "side": null,
+          "distanceFromAirportNm": 5,
+          "coords": [78.3751236, 17.4387591],
+          "osmRef": "way/847994242",
+          "confidence": "medium",
+          "note": "Marks the beginning of downwind, alongside KBR Park (next entry)."
+        },
+        {
+          "name": "KBR Park",
+          "side": "RIGHT",
+          "distanceFromAirportNm": 5,
+          "coords": [78.4205231, 17.4201773],
+          "osmRef": "way/28268610",
+          "confidence": "medium",
+          "note": "Same OSM reference point as the upwind KBR Park checkpoint, seen from the other side on downwind."
+        },
+        {
+          "name": "My Home Bhooja",
+          "side": null,
+          "distanceFromAirportNm": 4,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: not found via OpenStreetMap search; likely too new/not yet mapped, or an informal local name."
+        },
+        {
+          "name": "Durgam Cheruvu",
+          "side": "RIGHT",
+          "coords": [78.3897305, 17.4310553],
+          "osmRef": "way/28131043",
+          "confidence": "medium",
+          "note": "Same lake as on upwind, viewed from downwind. No distance given by the pilot for this mention."
+        },
+        {
+          "name": "Metro station / Police Tower",
+          "side": null,
+          "distanceFromAirportNm": 1,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: which metro station is ambiguous (several lines/stations in this area); not located."
+        },
+        {
+          "name": "Abeam tower (flag at Tank Bund / Hussain Sagar)",
+          "side": null,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "nearbyReference": {"name": "Hussain Sagar (lake, from routes.json)", "coords": [78.4747, 17.4239]},
+          "note": "TODO: the specific flagpole/monument was not confidently matched via OpenStreetMap search. Hussain Sagar's lake coordinate is included only as rough regional context, not as the checkpoint's position."
+        },
+        {
+          "name": "Secunderabad Railway Station",
+          "side": null,
+          "distanceFromAirportNm": 2,
+          "coords": [78.502051, 17.4338591],
+          "osmRef": "node/10252989488",
+          "confidence": "medium",
+          "note": "Start of the 'end of downwind' sequence -- distance now increasing again as the aircraft passes the abeam point."
+        },
+        {
+          "name": "Mahendra Hills",
+          "description": "Hill with houses",
+          "side": null,
+          "distanceFromAirportNm": 3,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: area name only, no single point matched via OpenStreetMap search."
+        },
+        {
+          "name": "White sheds",
+          "side": null,
+          "distanceFromAirportNm": 4,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: too generic a description to locate."
+        },
+        {
+          "name": "Y-junction road",
+          "side": null,
+          "distanceFromAirportNm": 5,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "turnTo": "base",
+          "nearbyReference": {
+            "name": "Rajiv Gandhi International Cricket Stadium, Uppal (far right, per pilot)",
+            "coords": [78.5505638, 17.4059481],
+            "osmRef": "way/839364278"
+          },
+          "note": "TODO: the Y-junction itself was not located. The stadium is included only as the pilot's own \"far right\" reference, not as the turn point's position. Turn point: left turn onto base here."
+        }
+      ]
+    },
+    {
+      "name": "base",
+      "headingTrue": 0,
+      "checkpoints": [
+        {
+          "name": "Small hills",
+          "side": null,
+          "distanceNm": 5,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: pilot describes flying toward these, heading north, ~5 NM; no single point identified."
+        }
+      ]
+    },
+    {
+      "name": "final",
+      "headingTrue": 270,
+      "headingNote": "Aligned with RWY 27.",
+      "checkpoints": [
+        {
+          "name": "Mahendra Hills",
+          "side": null,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "Same checkpoint as end-of-downwind, seen again on final. TODO: not located."
+        },
+        {
+          "name": "White sheds",
+          "side": null,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "Same checkpoint as end-of-downwind, seen again on final. TODO: not located."
+        },
+        {
+          "name": "L-shaped buildings",
+          "side": "RIGHT",
+          "distanceNm": 4,
+          "coords": null,
+          "osmRef": null,
+          "confidence": "unconfirmed",
+          "note": "TODO: too generic a description to locate."
+        }
+      ]
+    }
+  ]
+}
