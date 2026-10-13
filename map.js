@@ -541,7 +541,7 @@ export function setQuality(quality) {
 // the city without burying landmarks/runway markers underneath them — shown this way
 // in every view, including Pilot.
 function styleBuildingsLighter(tileset) {
-  tileset.style = new C.Cesium3DTileStyle({color: "color('white', 0.45)"});
+  tileset.style = new C.Cesium3DTileStyle({color: "color('white', 0.65)"});
   return tileset;
 }
 
