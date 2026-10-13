@@ -26,7 +26,11 @@ test('switching route and mode updates the briefing panel', async ({page}) => {
   await expect(page.locator('#route-distance')).not.toHaveText('—', {timeout: 10_000});
 
   const before = await page.locator('#route-distance').textContent();
-  await page.click('[data-route="outer"]');
+  // [data-route]/[data-runway] buttons now exist in both the Briefing screen's
+  // reference cards and the Rehearsal sidebar (ui.js's selectStates() keeps both
+  // copies in sync) -- scope to Rehearsal, the screen actually visible here, so
+  // Playwright's strict mode doesn't see two matches.
+  await page.click('#screen-rehearsal [data-route="outer"]');
   await expect(page.locator('#route-distance')).not.toHaveText(before ?? '', {timeout: 5_000});
 
   await page.click('[data-mode="quiz"]');
@@ -45,6 +49,12 @@ test('Phase 2b: airfield panel loads real data, runway switch, and click-to-iden
   // code paths (map.init()'s try and catch) must leave the rest of app.js working.
   await expect(page.locator('#engine-status')).not.toHaveText('Opening map', {timeout: 10_000});
 
+  // Circuit/aircraft reference data lives on the Briefing screen (Phase 3a nav
+  // restructure moved it out of the always-visible panel it used to be in) --
+  // navigate there before asserting on its content.
+  await page.click('[data-nav="briefing"]');
+  await expect(page.locator('#screen-briefing')).toBeVisible();
+
   // airport.js's fetch-and-validate of 10 JSON files + airfield.js's rendering ran
   // without throwing, and actually populated the DOM from real data.
   await expect(page.locator('#circuit-legs .circuit-leg').first()).toBeVisible({timeout: 10_000});
@@ -53,9 +63,14 @@ test('Phase 2b: airfield panel loads real data, runway switch, and click-to-iden
   expect(rwy27Note).toContain('trainee pilot');
 
   // Switching the active runway re-renders the circuit-leg list for RWY 09 (derived,
-  // reversed leg order) without a page error.
-  await page.click('[data-runway="09"]');
+  // reversed leg order) without a page error. Scoped to Briefing: the Rehearsal
+  // sidebar has its own copy of this same button, kept in sync by selectStates().
+  await page.click('#screen-briefing [data-runway="09"]');
   await expect(page.locator('#runway-note')).toContainText('Derived from RWY 27');
+
+  // Click-to-identify happens on the map, which lives on the Rehearsal screen.
+  await page.click('[data-nav="rehearsal"]');
+  await expect(page.locator('#screen-rehearsal')).toBeVisible();
 
   // Click-to-identify: works through either rendering path (Cesium canvas or the
   // SVG fallback) -- click whichever one is actually visible and expect the same
@@ -107,6 +122,41 @@ test('Phase 2b: Google 3D (beta) checkbox exists, unchecked, no network by defau
   await expect(page.locator('#settings-dialog')).toBeVisible({timeout: 5_000});
   await expect(page.locator('#google-3d-beta')).toBeVisible();
   await expect(page.locator('#google-3d-beta')).not.toBeChecked();
+
+  expect(pageErrors.map((e) => e.message)).toEqual([]);
+});
+
+test('Phase 3a: header nav switches screens; Quiz nav sets quiz mode and lands on Rehearsal', async ({
+  page,
+}) => {
+  const pageErrors = [];
+  page.on('pageerror', (err) => pageErrors.push(err));
+
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).not.toHaveText('—', {timeout: 10_000});
+
+  // No hash on load -> router.js's default screen.
+  await expect(page.locator('#screen-rehearsal')).toBeVisible();
+  await expect(page.locator('#screen-overview')).toBeHidden();
+
+  await page.click('[data-nav="overview"]');
+  await expect(page.locator('#screen-overview')).toBeVisible();
+  await expect(page.locator('#screen-rehearsal')).toBeHidden();
+  await expect(page).toHaveURL(/#overview$/);
+
+  await page.click('[data-nav="briefing"]');
+  await expect(page.locator('#screen-briefing')).toBeVisible();
+  await expect(page.locator('#screen-overview')).toBeHidden();
+
+  await page.click('[data-nav="progress"]');
+  await expect(page.locator('#screen-progress')).toBeVisible();
+
+  // Quiz is a redirect, not a screen of its own: it sets the Rehearsal mode to
+  // quiz and routes there -- quiz mechanics are unchanged (see router.js).
+  await page.click('[data-nav="quiz"]');
+  await expect(page.locator('#screen-rehearsal')).toBeVisible();
+  await expect(page.locator('[data-mode="quiz"]')).toHaveClass(/selected/);
+  await expect(page.locator('[data-nav="quiz"]')).toHaveClass(/active/);
 
   expect(pageErrors.map((e) => e.message)).toEqual([]);
 });
