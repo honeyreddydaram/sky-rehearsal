@@ -1,0 +1,8 @@
+# Binary/3D asset — never run a text formatter over this despite the name.
+aircraft.gltf
+
+# Pre-existing hand-tuned files, out of scope for the Phase 1 maintainability pass.
+# Reformatting them would produce a large, unrelated diff with no behavior change.
+style.css
+index.html
+README.md

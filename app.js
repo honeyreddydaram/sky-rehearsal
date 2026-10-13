@@ -1,73 +1,111 @@
-import {clamp,rad,deg,wrap,headingText,distance,bearing,routeModel,at,profileAt,windTriangle,elapsedAt,driftPoint,validateProfile} from './core.mjs';
-const $=id=>document.getElementById(id),all=s=>[...document.querySelectorAll(s)],KEY='sky-rehearsal-learners-v1';
-const text=(id,value)=>$(id).textContent=value;
-function toast(message){text('notification',message);$('notification').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('notification').hidden=true,6000);}
-function loadStore(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&Array.isArray(d.learners)&&d.learners.length&&d.learners.every(p=>typeof p.id==='string'&&typeof p.name==='string'&&Array.isArray(p.sessions)&&Array.isArray(p.flightProfiles))){if(!d.learners.some(p=>p.id===d.active))d.active=d.learners[0].id;return d;}}catch{}return {active:'default',learners:[{id:'default',name:'Learner',sessions:[],flightProfiles:[]}]};}
-let store=loadStore();const learner=()=>store.learners.find(p=>p.id===store.active);
-function save(){try{localStorage.setItem(KEY,JSON.stringify(store));text('save-status','Saved for '+learner().name+' · this browser');}catch{ text('save-status','Storage unavailable · export progress to keep it');toast('Browser storage is unavailable. Export your progress before leaving.');}}
-function download(name,data){const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function showDialog(id){if(!$(id).open)$(id).showModal();}
-all('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
-let data;try{const r=await fetch('./routes.json');if(!r.ok)throw Error();data=await r.json();}catch{toast('Route data could not load. Please refresh.');throw Error('Route load failed');}
-const models={inner:routeModel(data.loops.inner),outer:routeModel(data.loops.outer)};
-const demo={name:'Demo familiarization profile',source:'Illustrative values for this route walkthrough',altitudeReference:'ELLIPSOID',geoidOffsetM:0,frames:[{progress:0,altitudeFt:2700,tasKt:90},{progress:.18,altitudeFt:2900,tasKt:95},{progress:.44,altitudeFt:2900,tasKt:95},{progress:.7,altitudeFt:2800,tasKt:90},{progress:1,altitudeFt:2700,tasKt:85}],callouts:[]};
-let route='inner',mode='guided',view='overview',t=0,playing=false,started=false,eligible=true,completed=false,seen=new Set(),customSeen=new Set(),answers=[],pending=null,profile=demo,windFrom=270,windSpeed=0,correctWind=false,rate=15,sessionId='',yaw=0,pitch=-20,viewRange=230,last=performance.now(),uiStamp=0;
-let viewer=null,C=window.Cesium,plane,planned,windLine,groundLine,labels=[],currentPosition,flightHeading=0,buildings=null,terrainReady=false,terrainGeneration=0,imageryGeneration=0;
-let trackPoints=[],travelTimes=[],traceRevision=0;
-const waypoints=()=>[{p:.055,name:'Begumpet Airport',cue:'Orient yourself to the runway and surrounding city.'},{p:.205,name:'Western turn',cue:'Look toward Balkampet and the KBR Park side of the loop.'},{p:.46,name:'Hussain Sagar side',cue:'Identify the lake and trace the route across the city.'},{p:.73,name:route==='inner'?'Malkajgiri side':'Moula Ali side',cue:'Study the eastern turn and the surrounding landmarks.'},{p:.94,name:'Return to Begumpet',cue:'Locate the airport again and recall the sequence of landmarks.'}];
-function selectStates(){all('[data-route]').forEach(b=>{b.classList.toggle('selected',b.dataset.route===route);b.setAttribute('aria-pressed',b.dataset.route===route)});all('[data-mode]').forEach(b=>{b.classList.toggle('selected',b.dataset.mode===mode);b.setAttribute('aria-pressed',b.dataset.mode===mode)});all('[data-view]').forEach(b=>{b.classList.toggle('selected',b.dataset.view===view);b.setAttribute('aria-pressed',b.dataset.view===view)});}
-function callout(title,message,speak=true){text('callout-title',title);text('callout-text',message);if(speak&&$('audio').checked)say(message);}
-function say(message){if(!('speechSynthesis'in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(message);u.rate=.92;u.lang='en-US';window.speechSynthesis.speak(u);}
-$('audio').onchange=()=>{if(!('speechSynthesis'in window)){$('audio').checked=false;text('audio-state','Audio is not supported in this browser. Text callouts remain available.');}else if($('audio').checked)say('Spoken callouts enabled.');else window.speechSynthesis.cancel();};
-$('repeat').onclick=()=>{if($('audio').checked)say($('callout-text').textContent);else toast('Enable spoken callouts to hear the current cue.');};
-function planBearing(progress){return bearing(at(models[route],Math.max(0,progress-.001)),at(models[route],Math.min(1,progress+.001)));}
-function rebuildTrace(){const n=240;trackPoints=[];travelTimes=[0];for(let i=0;i<=n;i++){const p=i/n,point=at(models[route],p),f=profileAt(profile.frames,p),w=windTriangle(planBearing(p),f.tasKt,windFrom,windSpeed,correctWind);if(i)travelTimes[i]=travelTimes[i-1]+models[route].total/n/(Math.max(1,w.possible?w.alongSpeed:f.tasKt)*.514444);trackPoints.push(correctWind?point:driftPoint(point,travelTimes[i],windFrom,windSpeed));}traceRevision++;updateRoutes();renderDiagram();}
-function secondsAt(progress){const x=clamp(progress,0,1)*240,i=Math.min(239,Math.floor(x));return travelTimes[i]+(travelTimes[i+1]-travelTimes[i])*(x-i);}
-function positionAt(progress){const p=at(models[route],progress);return correctWind?p:driftPoint(p,secondsAt(progress),windFrom,windSpeed);}
-function heightAt(progress){const f=profileAt(profile.frames,progress);return f.altitudeFt*.3048+(profile.geoidOffsetM||0);}
-function stateAt(progress){const f=profileAt(profile.frames,progress),course=planBearing(progress),w=windTriangle(course,f.tasKt,windFrom,windSpeed,correctWind);return {...f,...w,course,position:positionAt(progress),height:heightAt(progress)};}
-function chart(){const frames=profile.frames,min=Math.min(...frames.map(f=>f.altitudeFt)),max=Math.max(...frames.map(f=>f.altitudeFt)),lo=min-100,hi=max+100;const points=Array.from({length:81},(_,i)=>`${i*3},${60-(profileAt(frames,i/80).altitudeFt-lo)/(hi-lo)*45}`).join(' ');$('altitude-chart').innerHTML=`<path d="M0 60H240" stroke="#344159"/><polyline points="${points}" stroke="#bda7fa" stroke-width="2" fill="none"/><text x="0" y="10" fill="#97a7bf" font-size="9">${Math.round(min)}–${Math.round(max)} ft · ${profile===demo?'demo':profile.altitudeReference}</text>`;}
-function waypointList(){const list=$('waypoints');list.replaceChildren();waypoints().forEach((w,i)=>{const li=document.createElement('li'),b=document.createElement('button'),num=document.createElement('span'),title=document.createElement('span');num.className='num';num.textContent=String(i+1).padStart(2,'0');title.textContent=w.name;b.append(num,title);b.onclick=()=>{if(mode==='quiz'){toast('Complete each question in order during a quiz.');return;}playing=false;t=w.p;eligible=false;seen=new Set(waypoints().map((x,j)=>x.p<=t?j:-1).filter(j=>j>=0));callout(w.name,w.cue);refresh();};li.append(b);list.append(li);});}
-function reset(){playing=false;started=false;eligible=true;completed=false;seen.clear();customSeen.clear();answers=[];pending=null;t=0;sessionId=crypto.randomUUID();if($('quiz-dialog').open)$('quiz-dialog').close();window.speechSynthesis?.cancel();waypointList();selectStates();refresh();callout('READY WHEN YOU ARE',mode==='quiz'?'The flight will pause before each checkpoint. Answer five questions to complete your attempt.':'Start your rehearsal. Listen for cues, pause, and look around.',false);}
-function refresh(){const s=stateAt(t);text('heading',s.possible?headingText(s.heading):'—');text('altitude',Math.round(s.altitudeFt).toLocaleString()+' ft');text('altitude-label','ALTITUDE · '+(profile===demo?'DEMO':profile.altitudeReference));text('airspeed',Math.round(s.tasKt)+' kt');text('groundspeed',s.possible?Math.round(s.groundspeed)+' kt':'—');text('track',s.possible?headingText(s.track):'—');text('crosswind',Math.abs(s.crosswind||0).toFixed(1)+' kt');text('correction',s.possible?(correctWind?s.correction.toFixed(1)+'°':'Off'):'Not feasible');text('drift',(distance(at(models[route],t),s.position)/1852).toFixed(2)+' NM');text('percentage',Math.round(t*100)+'%');const sec=Math.round(secondsAt(t));text('elapsed',`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')} elapsed`);$('timeline').value=Math.round(t*1000);$('timeline').disabled=mode==='quiz';text('play',playing?'Pause':completed?'Practice again':started?'Resume':'Start rehearsal');text('route-distance',(models[route].total/1852).toFixed(1)+' NM');text('route-duration',Math.round(elapsedAt(models[route],profile.frames,1)/60)+' min');all('#waypoints li').forEach((li,i)=>{li.classList.toggle('passed',seen.has(i));li.classList.toggle('active',!seen.has(i)&&(i===0||seen.has(i-1)));});renderPosition(s);}
-function profileOptions(){const select=$('flight-profile');select.replaceChildren();const opt=document.createElement('option');opt.value='demo';opt.textContent='Demo familiarization profile';select.append(opt);learner().flightProfiles.filter(p=>p.route===route).forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;select.append(o);});select.value='demo';profile=demo;profileCopy();}
-function profileCopy(){text('profile-source',profile===demo?'Demo altitude and TAS schedule · ellipsoid heights.':profile.source+' · '+profile.altitudeReference+' · user supplied');text('scope-note',profile===demo?'Demo geometry and flight values support familiarization. Import a sourced flight profile for your own altitude and airspeed schedule.':'Using “'+profile.name+'” on the screenshot-based route. Confirm the geometry and profile with your instructor before using it for training.');chart();}
-function beginQuestion(index){pending=index;playing=false;const w=waypoints()[index],isHeading=index%2===1;const course=planBearing(Math.min(1,w.p+.045));const correct=isHeading?headingText(course):w.name;let choices=isHeading?[correct,headingText(course+90),headingText(course+180),headingText(course+270)]:[w.name,...waypoints().filter((_,j)=>j!==index).map(x=>x.name).slice(0,3)];choices=choices.map(value=>({value,key:Math.random()})).sort((a,b)=>a.key-b.key).map(x=>x.value);text('question-number',`CHECKPOINT ${index+1} OF 5`);text('question',isHeading?'What true track does the next leg of this route follow?':'Which landmark or area comes next along this route?');$('answers').replaceChildren();text('feedback','');$('continue-quiz').disabled=true;choices.forEach(choice=>{const b=document.createElement('button');b.textContent=choice;b.onclick=()=>{if(answers.some(a=>a.index===index))return;const right=choice===correct;answers.push({index,question:$('question').textContent,selected:choice,correct,passed:right,waypoint:w.name});all('#answers button').forEach(btn=>{btn.disabled=true;btn.classList.toggle('correct',btn.textContent===correct);btn.classList.toggle('incorrect',btn===b&&!right)});text('feedback',right?'Correct. '+w.cue:'The answer is '+correct+'. '+w.cue);$('continue-quiz').disabled=false;};$('answers').append(b);});showDialog('quiz-dialog');refresh();}
-$('quiz-dialog').addEventListener('cancel',e=>{e.preventDefault();toast('Answer and continue, or choose End attempt.');});
-$('continue-quiz').onclick=()=>{if(pending===null||!answers.some(a=>a.index===pending))return;seen.add(pending);const w=waypoints()[pending];callout(w.name,w.cue);pending=null;$('quiz-dialog').close();playing=true;last=performance.now();refresh();};
-$('end-quiz').onclick=()=>{$('quiz-dialog').close();pending=null;playing=false;eligible=false;started=false;toast('Attempt ended. Incomplete attempts are not added to scores.');reset();};
-function finish(){playing=false;completed=true;if(eligible&&mode!=='explore'&&(mode!=='quiz'||answers.length===5)){const record={id:sessionId,route,mode,completedAt:new Date().toISOString(),score:mode==='quiz'?answers.filter(a=>a.passed).length:null,total:mode==='quiz'?5:null,profile:profile.name,windFrom,windSpeed,correctWind,answers:[...answers]};if(!learner().sessions.some(s=>s.id===record.id)){learner().sessions.push(record);learner().sessions=learner().sessions.slice(-300);save();}text('result-title',mode==='quiz'?`${record.score} / 5 — quiz complete`:'Route rehearsed');text('result-body',`${route==='inner'?'Inner':'Outer'} loop saved to ${learner().name}’s flight log.`);$('result-review').replaceChildren();answers.forEach(a=>{const p=document.createElement('p');p.className='review-row';p.textContent=(a.passed?'✓ ':'↺ ')+a.waypoint+' · '+a.correct;$('result-review').append(p);});showDialog('results-dialog');}else callout('EXPLORATION COMPLETE','Start a full guided rehearsal or quiz to add a session to your flight log.',false);refresh();}
-function step(dt){if(!playing||document.hidden)return;const s=stateAt(t);if(!s.possible){playing=false;toast('This wind is too strong for the selected airspeed and track. Reduce wind speed.');refresh();return;}const next=Math.min(1,t+dt*rate*s.alongSpeed*.514444/models[route].total);for(const [i,w]of waypoints().entries()){const gate=mode==='quiz'?Math.max(0,w.p-.028):w.p;if(!seen.has(i)&&t<=gate&&next>=gate){t=gate;if(mode==='quiz'){beginQuestion(i);return;}seen.add(i);if(mode==='guided')callout(w.name,w.cue);}}
-for(const [i,c]of(profile.callouts||[]).entries()){if(!customSeen.has(i)&&c.progress>=t&&c.progress<=next){customSeen.add(i);if(mode==='guided')callout('PROFILE CALLOUT',c.text);}}
-t=next;if(t>=1)finish();}
-$('play').onclick=()=>{if(pending!==null){showDialog('quiz-dialog');return;}if(completed)reset();if(!started){started=true;if(t!==0)eligible=false;callout(mode==='quiz'?'QUIZ FLIGHT':'REHEARSAL IN PROGRESS','Follow the route and study the surroundings.');}playing=!playing;last=performance.now();refresh();};$('restart').onclick=reset;$('rate').onchange=e=>rate=+e.target.value;
-$('timeline').oninput=e=>{if(mode==='quiz')return;t=+e.target.value/1000;playing=false;eligible=false;completed=false;seen=new Set(waypoints().map((w,i)=>w.p<=t?i:-1).filter(i=>i>=0));customSeen=new Set((profile.callouts||[]).map((w,i)=>w.progress<=t?i:-1).filter(i=>i>=0));refresh();};
-all('[data-route]').forEach(b=>b.onclick=()=>{route=b.dataset.route;profileOptions();reset();rebuildTrace();fit();});all('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;reset();});
-$('flight-profile').onchange=e=>{profile=e.target.value==='demo'?demo:learner().flightProfiles.find(p=>p.id===e.target.value)||demo;profileCopy();reset();rebuildTrace();};
-function windChanged(){windFrom=+$('wind-from').value;windSpeed=+$('wind-speed').value;correctWind=$('compensate').checked;text('wind-from-value',headingText(windFrom));text('wind-speed-value',windSpeed+' kt');const wasStarted=started;reset();rebuildTrace();refresh();if(wasStarted)callout('NEW WIND SCENARIO','The session restarted so your score and ground track reflect one consistent wind scenario.',false);}
-$('wind-from').oninput=windChanged;$('wind-speed').oninput=windChanged;$('compensate').onchange=windChanged;
-function renderProgress(){text('progress-person',learner().name+' · local browser profile');const sessions=learner().sessions,quizzes=sessions.filter(s=>s.mode==='quiz'),best=quizzes.length?Math.max(...quizzes.map(s=>Math.round(s.score/s.total*100)))+'%':'—';$('progress-stats').replaceChildren();for(const [v,l]of[[sessions.length,'Sessions'],[new Set(sessions.map(s=>s.route)).size,'Routes rehearsed'],[best,'Best quiz']]){const d=document.createElement('div'),b=document.createElement('strong'),sm=document.createElement('small');b.textContent=v;sm.textContent=l;d.append(b,sm);$('progress-stats').append(d);}$('history').replaceChildren();if(!sessions.length){const p=document.createElement('p');p.textContent='Your first completed rehearsal will appear here.';$('history').append(p);}sessions.slice(-20).reverse().forEach(s=>{const d=document.createElement('div'),sm=document.createElement('small');d.className='history-row';d.textContent=`${s.route==='inner'?'Inner':'Outer'} loop · ${s.mode==='quiz'?`Quiz ${s.score}/${s.total}`:'Guided rehearsal'}`;sm.textContent=new Date(s.completedAt).toLocaleString()+' · '+s.profile;d.append(sm);$('history').append(d);});}
-$('progress-open').onclick=()=>{renderProgress();showDialog('progress-dialog');};
-function profilesUI(){text('profile-open',learner().name);$('profile-list').replaceChildren();store.learners.forEach(p=>{const b=document.createElement('button');b.textContent=(p.id===store.active?'✓ ':'')+p.name;b.onclick=()=>{store.active=p.id;save();profileOptions();reset();rebuildTrace();profilesUI();$('profile-dialog').close();};$('profile-list').append(b);});}
-$('profile-open').onclick=()=>{profilesUI();showDialog('profile-dialog');};$('new-profile').onsubmit=e=>{e.preventDefault();const name=$('learner-name').value.trim();if(!name)return;const p={id:crypto.randomUUID(),name,sessions:[],flightProfiles:[]};store.learners.push(p);store.active=p.id;$('learner-name').value='';save();profileOptions();reset();rebuildTrace();profilesUI();$('profile-dialog').close();};
-$('export-progress').onclick=()=>download('sky-rehearsal-progress.json',{schemaVersion:1,exportedAt:new Date().toISOString(),learner:learner()});
-$('restore-progress').onchange=async e=>{const file=e.target.files[0];try{if(!file||file.size>2000000)throw Error('Choose a progress backup under 2 MB.');const d=JSON.parse(await file.text()),p=d.learner;if(d.schemaVersion!==1||!p||typeof p.name!=='string'||!p.name.trim()||p.name.length>40||!Array.isArray(p.sessions)||p.sessions.length>300||!Array.isArray(p.flightProfiles)||p.flightProfiles.length>30)throw Error('This is not a supported progress backup.');for(const s of p.sessions){if(!['inner','outer'].includes(s.route)||!['quiz','guided'].includes(s.mode)||!Number.isFinite(Date.parse(s.completedAt))||typeof s.profile!=='string'||(s.mode==='quiz'&&(!Number.isInteger(s.score)||s.score<0||s.score>5||s.total!==5)))throw Error('Backup contains invalid session data.');}const restored={id:crypto.randomUUID(),name:p.name.slice(0,29)+' (imported)',sessions:p.sessions.map(s=>({id:crypto.randomUUID(),route:s.route,mode:s.mode,completedAt:s.completedAt,score:s.score,total:s.total,profile:s.profile,answers:[]})),flightProfiles:p.flightProfiles.map(f=>({...validateProfile(f),id:crypto.randomUUID()}))};store.learners.push(restored);store.active=restored.id;save();profilesUI();profileOptions();reset();rebuildTrace();renderProgress();toast('Backup imported as a separate learner profile.');}catch(err){toast(err.message);}e.target.value='';};
-$('settings-open').onclick=()=>showDialog('settings-dialog');$('terrain-open').onclick=()=>showDialog('settings-dialog');$('import-open').onclick=()=>showDialog('import-dialog');
-$('template-download').onclick=()=>download('flight-profile-example.json',{schemaVersion:1,route,name:'Example only — replace with your flight data',source:'Replace with instructor or flight recording reference',altitudeReference:'ELLIPSOID',frames:demo.frames,callouts:[{progress:.2,text:'Replace this with your instructor’s waypoint instruction.'}]});
-$('import-profile').onchange=async e=>{const file=e.target.files[0];try{if(!file||file.size>200000)throw Error('Choose a JSON profile under 200 KB.');const p=validateProfile(JSON.parse(await file.text()));if(learner().flightProfiles.length>=30)throw Error('This learner already has 30 imported profiles.');p.id=crypto.randomUUID();learner().flightProfiles.push(p);save();route=p.route;profileOptions();$('flight-profile').value=p.id;profile=p;profileCopy();reset();rebuildTrace();text('import-message','Loaded '+p.name+'. Altitude, airspeed, and callouts now follow this profile.');toast('Flight profile loaded.');}catch(err){text('import-message',err.message);}e.target.value='';};
-// The SVG study map keeps practice usable on devices without a WebGL context.
-function renderDiagram(){if(viewer)return;const svg=$('fallback-map');svg.replaceChildren();const ns='http://www.w3.org/2000/svg',node=(tag,attrs)=>{const n=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);svg.append(n);return n;};const coords=[...models[route].points,...trackPoints,...data.places.map(p=>[p.lon,p.lat])];const minX=Math.min(...coords.map(p=>p[0]))-.01,maxX=Math.max(...coords.map(p=>p[0]))+.01,minY=Math.min(...coords.map(p=>p[1]))-.009,maxY=Math.max(...coords.map(p=>p[1]))+.009;const lonScale=Math.cos(rad(17.44)),spanX=(maxX-minX)*lonScale,spanY=maxY-minY,scale=Math.min(790/spanX,450/spanY),x0=(900-spanX*scale)/2,y0=(600-spanY*scale)/2;renderDiagram.project=p=>[x0+(p[0]-minX)*lonScale*scale,600-y0-(p[1]-minY)*scale];for(let x=0;x<=900;x+=50)node('path',{d:`M${x} 0V600`,stroke:'#a9c3df0b'});for(let y=0;y<=600;y+=50)node('path',{d:`M0 ${y}H900`,stroke:'#a9c3df0b'});const path=pts=>pts.map(p=>renderDiagram.project(p).join(',')).join(' ');node('polyline',{points:path(models[route].points),fill:'none',stroke:'#bda7fa','stroke-width':4,'stroke-linejoin':'round'});if(windSpeed>0)node('polyline',{points:path(trackPoints),fill:'none',stroke:'#efb769','stroke-width':3,'stroke-dasharray':correctWind?'8 6':'none'});if($('labels').checked)data.places.forEach(p=>{const[x,y]=renderDiagram.project([p.lon,p.lat]);node('circle',{cx:x,cy:y,r:4,fill:'#c1d8ee'});const label=node('text',{x:x+8,y:y-10,fill:'#b5c6da','font-size':12,'paint-order':'stroke',stroke:'#152034','stroke-width':4});label.textContent=p.name;});node('path',{id:'diagram-plane',d:'M0 -14L4 -2 16 6 16 10 3 6 3 13 7 17 -7 17 -3 13 -3 6 -16 10 -16 6 -4 -2Z',fill:'#edf5ff',stroke:'#8971b6','stroke-width':2});const title=node('text',{x:30,y:580,fill:'#829bb8','font-size':11});title.textContent='ROUTE STUDY DIAGRAM · N ↑';}
-function renderPosition(s){if(viewer){currentPosition=C.Cartesian3.fromDegrees(...s.position,s.height);flightHeading=rad(s.possible?s.heading:s.course);plane.position=currentPosition;plane.orientation=C.Transforms.headingPitchRollQuaternion(currentPosition,new C.HeadingPitchRoll(flightHeading-Math.PI/2,0,0));plane.model.show=view!=='pilot';plane.billboard.show=view==='overview';updateCamera();viewer.scene.requestRender();}else{const p=$('diagram-plane');if(p&&renderDiagram.project){const[x,y]=renderDiagram.project(s.position);p.setAttribute('transform',`translate(${x} ${y}) rotate(${s.possible?s.heading:s.course})`);}}}
-function updateRoutes(){if(!viewer)return;planned.polyline.positions=models[route].points.map((p,i)=>C.Cartesian3.fromDegrees(...p,heightAt(models[route].lengths[i]/models[route].total)));windLine.polyline.positions=trackPoints.map((p,i)=>C.Cartesian3.fromDegrees(...p,heightAt(i/240)));windLine.show=windSpeed>0;groundLine.polyline.positions=models[route].points.map(p=>C.Cartesian3.fromDegrees(...p));viewer.scene.requestRender();}
-function fit(){if(!viewer){renderDiagram();refresh();return;}viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);const pts=[...models[route].points,...trackPoints],west=Math.min(...pts.map(p=>p[0]))-.014,east=Math.max(...pts.map(p=>p[0]))+.014,south=Math.min(...pts.map(p=>p[1]))-.012,north=Math.max(...pts.map(p=>p[1]))+.012;viewer.camera.setView({destination:C.Rectangle.fromDegrees(west,south,east,north),orientation:{heading:0,pitch:-Math.PI/2,roll:0}});}
-function updateCamera(){if(!viewer)return;viewer.scene.screenSpaceCameraController.enableInputs=view==='overview';if(view==='pilot'){viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);viewer.camera.setView({destination:currentPosition,orientation:{heading:flightHeading+yaw,pitch:rad(pitch),roll:0}});}else if(view==='follow'){viewer.camera.lookAt(currentPosition,new C.HeadingPitchRange(flightHeading+yaw,rad(clamp(pitch,-85,-8)),viewRange));}}
-function setView(v){if(!viewer&&v!=='overview'){toast('Pilot and chase views need WebGL. You can still rehearse and take quizzes in the route diagram.');return;}view=v;yaw=0;pitch=-20;selectStates();if(v==='overview')fit();refresh();}
-all('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));$('fit').onclick=()=>setView('overview');all('[data-look]').forEach(b=>b.onclick=()=>{if(!viewer){toast('Look-around controls need the 3D map.');return;}if(view==='overview')view='pilot';yaw=b.dataset.look==='left'?-Math.PI/2:b.dataset.look==='right'?Math.PI/2:0;pitch=b.dataset.look==='down'?-85:-20;selectStates();refresh();});
-async function loadImagery(){if(!viewer)return;const rev=++imageryGeneration,type=$('basemap').value;try{const provider=type==='satellite'?await C.ArcGisMapServerImageryProvider.fromUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',{enablePickFeatures:false}):new C.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'});if(rev!==imageryGeneration)return;viewer.imageryLayers.removeAll();viewer.imageryLayers.addImageryProvider(provider);viewer.scene.requestRender();}catch{toast('Imagery could not load. Try the other map option in Settings.');}}
-$('basemap').onchange=loadImagery;$('labels').onchange=()=>{labels.forEach(l=>l.show=$('labels').checked);if(viewer)viewer.scene.requestRender();else{renderDiagram();refresh();}};$('quality').onchange=()=>{if(!viewer)return;viewer.useBrowserRecommendedResolution=true;viewer.resolutionScale=$('quality').value==='sharp'?Math.min(devicePixelRatio||1,2):1;viewer.scene.globe.maximumScreenSpaceError=$('quality').value==='sharp'?1:2;viewer.resize();viewer.scene.requestRender();};
-function fallback(reason){viewer?.destroy();viewer=null;$('map').replaceChildren();$('map').hidden=true;$('fallback-map').removeAttribute('hidden');$('map-note').hidden=false;text('map-note',reason+' Practice and quizzes remain available below.');text('engine-status','Study diagram');text('terrain-status','3D scene unavailable on this browser');renderDiagram();refresh();}
-async function initMap(){try{if(!C)throw Error('3D engine unavailable.');C.Ion.defaultAccessToken='';viewer=new C.Viewer('map',{baseLayer:false,terrainProvider:new C.EllipsoidTerrainProvider(),animation:false,timeline:false,geocoder:false,homeButton:false,sceneModePicker:false,baseLayerPicker:false,navigationHelpButton:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,creditContainer:$('credits'),requestRenderMode:true,maximumRenderTimeChange:Infinity,shouldAnimate:false});viewer.scene.globe.baseColor=C.Color.fromCssColorString('#253b4c');viewer.scene.globe.depthTestAgainstTerrain=true;viewer.scene.screenSpaceCameraController.minimumZoomDistance=50;planned=viewer.entities.add({polyline:{positions:[],width:4,material:C.Color.fromCssColorString('#bda7fa'),arcType:C.ArcType.NONE}});windLine=viewer.entities.add({polyline:{positions:[],width:3,material:C.Color.fromCssColorString('#efb769'),arcType:C.ArcType.NONE}});groundLine=viewer.entities.add({polyline:{positions:[],width:2,clampToGround:true,material:new C.PolylineDashMaterialProperty({color:C.Color.WHITE.withAlpha(.35)})}});plane=viewer.entities.add({position:C.Cartesian3.fromDegrees(78.4676,17.4531,900),model:{uri:'./aircraft.gltf',minimumPixelSize:40,maximumScale:140,scale:2},billboard:{image:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><path d="M22 3h4l2 15 16 12v5l-17-6v10l6 4v3l-9-3-9 3v-3l6-4V29L4 35v-5l16-12Z" fill="white" stroke="#8b70bb"/></svg>'),width:32,height:32,disableDepthTestDistance:Infinity}});labels=data.places.map(p=>viewer.entities.add({position:C.Cartesian3.fromDegrees(p.lon,p.lat),point:{pixelSize:5,color:C.Color.WHITE,heightReference:C.HeightReference.CLAMP_TO_GROUND},label:{text:p.name,font:'13px sans-serif',fillColor:C.Color.WHITE,showBackground:true,backgroundColor:C.Color.fromCssColorString('#172234dd'),pixelOffset:new C.Cartesian2(0,-16),heightReference:C.HeightReference.CLAMP_TO_GROUND,disableDepthTestDistance:Infinity}}));const canvas=viewer.canvas;const pointers=new Map();let pinch=0;canvas.style.touchAction='none';canvas.addEventListener('pointerdown',e=>{if(view==='overview')return;canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);});canvas.addEventListener('pointermove',e=>{const old=pointers.get(e.pointerId);if(!old)return;pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===2){const[a,b]=[...pointers.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch){viewRange=clamp(viewRange*pinch/d,60,1300);if(view==='pilot')viewer.camera.frustum.fov=clamp(viewer.camera.frustum.fov*pinch/d,.4,1.6);}pinch=d;}else{yaw-=(e.clientX-old[0])*.005;pitch=clamp(pitch+(e.clientY-old[1])*.17,-88,50);}refresh();});['pointerup','pointercancel','lostpointercapture'].forEach(event=>canvas.addEventListener(event,e=>{pointers.delete(e.pointerId);pinch=0;}));canvas.addEventListener('wheel',e=>{if(view==='overview')return;e.preventDefault();viewRange=clamp(viewRange*Math.exp(e.deltaY*.001),60,1500);if(view==='pilot')viewer.camera.frustum.fov=clamp(viewer.camera.frustum.fov+e.deltaY*.001,.4,1.6);refresh();},{passive:false});viewer.scene.renderError.addEventListener(()=>{playing=false;fallback('The 3D renderer stopped.');});text('engine-status','Satellite / Cesium');updateRoutes();fit();refresh();loadImagery();}catch{fallback('3D is unavailable on this device.');}}
-$('connect-terrain').onclick=async()=>{if(!viewer){text('terrain-message','This browser cannot initialize WebGL. Open the site on a WebGL-capable device to load 3D detail.');return;}const token=$('ion-token').value.trim();if(!token){text('terrain-message','Enter your Cesium ion read-only token.');return;}playing=false;refresh();const revision=++terrainGeneration;text('terrain-message','Loading World Terrain…');$('connect-terrain').disabled=true;C.Ion.defaultAccessToken=token;try{const terrain=await C.createWorldTerrainAsync({requestVertexNormals:true});if(revision!==terrainGeneration)return;viewer.terrainProvider=terrain;terrainReady=true;text('terrain-status','Cesium World Terrain · loading buildings');text('terrain-message','Terrain connected. Loading available OSM buildings…');let loaded;try{loaded=await C.createOsmBuildingsAsync();if(revision!==terrainGeneration){loaded.destroy();return;}if(buildings)viewer.scene.primitives.remove(buildings);buildings=viewer.scene.primitives.add(loaded);text('terrain-status','World Terrain + OSM 3D buildings');text('terrain-message','Connected. Building detail depends on local coverage.');}catch{text('terrain-status','World Terrain · buildings unavailable');text('terrain-message','Terrain loaded, but buildings could not load. Check asset access on your token.');}viewer.scene.requestRender();}catch{text('terrain-message','Could not load terrain. Check the token, allowed URLs, and asset access.');}finally{if(revision===terrainGeneration)$('connect-terrain').disabled=false;}};
-$('disconnect-terrain').onclick=()=>{terrainGeneration++;$('connect-terrain').disabled=false;$('ion-token').value='';if(C)C.Ion.defaultAccessToken='';if(viewer){viewer.terrainProvider=new C.EllipsoidTerrainProvider();if(buildings)viewer.scene.primitives.remove(buildings);buildings=null;terrainReady=false;viewer.scene.requestRender();text('terrain-status','Satellite imagery · smooth globe');}text('terrain-message','Using the basic globe. Token cleared from this session.');};
-profilesUI();profileOptions();rebuildTrace();reset();await initMap();
-function tick(now){const dt=Math.min((now-last)/1000,.15);last=now;step(dt);if(playing&&now-uiStamp>80){refresh();uiStamp=now;}requestAnimationFrame(tick);}requestAnimationFrame(tick);
+// app.js
+// Entry point loaded by index.html. Wires together the feature modules (state, ui,
+// map, playback, quiz, progress, settings) and starts the simulation loop.
+//
+// This is intentionally the only file that imports every other module, and the only
+// place that wires the "cross-cutting" controls — route/mode selection, wind scenario
+// sliders, and flight-profile selection — because changing any of those touches
+// state.js + playback.js + map.js + progress.js all at once. Giving any ONE of those
+// modules ownership of that wiring would force it to import the others, which is
+// exactly the import-cycle problem each module's own header comment describes. The
+// three cycles that would otherwise appear are broken with an injected-callback
+// pattern (map.setInteractionHandler, playback.setQuizHandler,
+// progress.setContextChangeHandler) wired up below.
+
+import {headingText} from './core.mjs';
+import {state, loadRouteData, rebuildTrace} from './state.js';
+import * as ui from './ui.js';
+import * as map from './map.js';
+import * as playback from './playback.js';
+import * as quiz from './quiz.js';
+import * as progress from './progress.js';
+import * as settings from './settings.js';
+
+try {
+  await loadRouteData();
+} catch (err) {
+  console.warn('routes.json failed to load or validate:', err);
+  ui.toast('Route data could not load. Please refresh.');
+  throw err;
+}
+
+ui.initDialogs();
+ui.wireAudioControls();
+
+// Break the import cycles described above: each module calls one of these instead of
+// importing the module that would otherwise need to import it back.
+map.setInteractionHandler(playback.refresh);
+playback.setQuizHandler(quiz.beginQuestion);
+progress.setContextChangeHandler(() => {
+  playback.reset();
+  rebuildTrace();
+  map.refreshRouteVisuals();
+});
+
+quiz.wireQuizDialog();
+playback.wireControls();
+progress.wireLearnerDialog();
+progress.wireProgressDialog();
+progress.wireProfileImport();
+settings.init();
+map.wireViewControls();
+
+// Route / mode selection. Changing route resets the flight-profile picker back to the
+// demo profile (imported profiles are recorded per-route) and refits the camera;
+// changing mode only needs a fresh session.
+ui.all('[data-route]').forEach((b) => {
+  b.onclick = () => {
+    state.route = b.dataset.route;
+    progress.profileOptions();
+    playback.reset();
+    rebuildTrace();
+    map.refreshRouteVisuals();
+    map.fit();
+  };
+});
+ui.all('[data-mode]').forEach((b) => {
+  b.onclick = () => {
+    state.mode = b.dataset.mode;
+    playback.reset();
+  };
+});
+
+ui.$('flight-profile').onchange = (e) => progress.setProfile(e.target.value);
+
+// Wind scenario sliders — changing any of them restarts the session so the logged
+// score and ground track reflect one consistent wind, rather than mixing scenarios
+// mid-attempt.
+function windChanged() {
+  state.windFrom = +ui.$('wind-from').value;
+  state.windSpeed = +ui.$('wind-speed').value;
+  state.correctWind = ui.$('compensate').checked;
+  ui.text('wind-from-value', headingText(state.windFrom));
+  ui.text('wind-speed-value', state.windSpeed + ' kt');
+  const wasStarted = state.started;
+  playback.reset();
+  rebuildTrace();
+  map.refreshRouteVisuals();
+  playback.refresh();
+  if (wasStarted) {
+    ui.callout(
+      'NEW WIND SCENARIO',
+      'The session restarted so your score and ground track reflect one consistent wind scenario.',
+      false,
+    );
+  }
+}
+ui.$('wind-from').oninput = windChanged;
+ui.$('wind-speed').oninput = windChanged;
+ui.$('compensate').onchange = windChanged;
+
+// --- Bootstrap ------------------------------------------------------------------
+// Order matters here: rebuildTrace() draws the SVG fallback diagram immediately
+// (map.init() hasn't run yet, so there's no Cesium viewer to draw into instead); if
+// map.init() goes on to create a working Cesium viewer, the SVG stays hidden.
+progress.profilesUI();
+progress.profileOptions();
+rebuildTrace();
+map.refreshRouteVisuals();
+playback.reset();
+await map.init();
+playback.startLoop();
