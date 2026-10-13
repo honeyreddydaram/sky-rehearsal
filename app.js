@@ -20,6 +20,8 @@ import * as playback from './playback.js';
 import * as quiz from './quiz.js';
 import * as progress from './progress.js';
 import * as settings from './settings.js';
+import * as airport from './airport.js';
+import * as airfield from './airfield.js';
 
 try {
   await loadRouteData();
@@ -27,6 +29,17 @@ try {
   console.warn('routes.json failed to load or validate:', err);
   ui.toast('Route data could not load. Please refresh.');
   throw err;
+}
+
+// The airfield/circuit reference layer (Phase 2) is supplementary — if it fails to
+// load, the flight simulator above should still work, so this failure doesn't stop
+// the rest of app.js the way a routes.json failure does.
+let airfieldAvailable = true;
+try {
+  await airport.loadAirportData();
+} catch (err) {
+  console.warn('Airfield/circuit reference data failed to load:', err);
+  airfieldAvailable = false;
 }
 
 ui.initDialogs();
@@ -108,4 +121,9 @@ rebuildTrace();
 map.refreshRouteVisuals();
 playback.reset();
 await map.init();
+if (airfieldAvailable) {
+  airfield.init();
+} else {
+  ui.$('airfield-panel')?.setAttribute('hidden', '');
+}
 playback.startLoop();

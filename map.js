@@ -11,9 +11,10 @@
 // Instead the app bootstrap (app.js) hands this module a callback via
 // setInteractionHandler(), and we call that instead of importing playback.js.
 
-import {rad} from './core.mjs';
+import {rad, approximateRunwayEnds} from './core.mjs';
 import {state, models, routeData, getTrackPoints, heightAt} from './state.js';
 import {$, all, text, toast, selectStates} from './ui.js';
+import {airport, activeCircuit} from './airport.js';
 
 const C = window.Cesium;
 
@@ -25,6 +26,8 @@ let currentPosition,
 let buildings = null;
 let terrainGeneration = 0;
 let imageryGeneration = 0;
+let runwayEntity = null;
+let checkpointEntities = [];
 
 // Called by app.js after a route/profile/wind change and by anything that drags the
 // camera around, so the HUD (telemetry text, waypoint list, etc) stays current. See
@@ -36,6 +39,16 @@ export function setInteractionHandler(fn) {
 
 export function hasViewer() {
   return viewer !== null;
+}
+
+// Runway ends (approximate) + the active circuit's located checkpoints, shared by
+// both the Cesium entities (refreshAirportLayer, below) and the SVG fallback
+// (renderDiagram, next). Returns null until airport.loadAirportData() has finished.
+function airportGeometry() {
+  if (!airport) return null;
+  const ends = Object.values(approximateRunwayEnds(airport.referencePoint, airport.runways[0]));
+  const checkpoints = activeCircuit().legs.flatMap((leg) => leg.checkpoints.filter((c) => c.coords));
+  return {ends, checkpoints};
 }
 
 // --- SVG fallback diagram -----------------------------------------------------
@@ -54,10 +67,12 @@ function renderDiagram() {
     svg.append(n);
     return n;
   };
+  const airportLayer = airportGeometry();
   const coords = [
     ...models[state.route].points,
     ...getTrackPoints(),
     ...routeData.places.map((p) => [p.lon, p.lat]),
+    ...(airportLayer ? [...airportLayer.ends, ...airportLayer.checkpoints.map((c) => c.coords)] : []),
   ];
   const minX = Math.min(...coords.map((p) => p[0])) - 0.01;
   const maxX = Math.max(...coords.map((p) => p[0])) + 0.01;
@@ -106,6 +121,31 @@ function renderDiagram() {
       });
       label.textContent = p.name;
     });
+  }
+  if (airportLayer) {
+    node('polyline', {
+      points: path(airportLayer.ends),
+      fill: 'none',
+      stroke: '#ffd166',
+      'stroke-width': 3,
+      'stroke-dasharray': '2 5', // dashed: signals "approximate", not a surveyed centerline
+    });
+    if ($('labels').checked) {
+      airportLayer.checkpoints.forEach((c) => {
+        const [x, y] = renderDiagram.project(c.coords);
+        node('circle', {cx: x, cy: y, r: 3.5, fill: '#7fd1ff'});
+        const label = node('text', {
+          x: x + 7,
+          y: y - 8,
+          fill: '#bfe6ff',
+          'font-size': 10,
+          'paint-order': 'stroke',
+          stroke: '#152034',
+          'stroke-width': 3,
+        });
+        label.textContent = c.name + (c.confidence !== 'medium' ? ' (unconfirmed)' : '');
+      });
+    }
   }
   node('path', {
     id: 'diagram-plane',
@@ -160,6 +200,65 @@ export function updateRoutes() {
 // polylines and the SVG fallback diagram (only one of the two is ever visible).
 export function refreshRouteVisuals() {
   updateRoutes();
+  renderDiagram();
+}
+
+// Draws the approximate runway line and the active circuit's located checkpoints.
+// Called once airport.loadAirportData() resolves, and again whenever the active
+// runway changes (the checkpoint set differs between the two circuits). A no-op
+// until airport data has loaded. Also redraws the SVG fallback, since renderDiagram()
+// includes this layer too (see airportGeometry() above).
+export function refreshAirportLayer() {
+  const layer = airportGeometry();
+  if (!layer) return;
+  if (viewer) {
+    const runwayPositions = layer.ends.map((p) => C.Cartesian3.fromDegrees(...p, 0));
+    if (!runwayEntity) {
+      runwayEntity = viewer.entities.add({
+        position: C.Cartesian3.fromDegrees(...layer.ends[0], 0),
+        polyline: {
+          positions: runwayPositions,
+          width: 5,
+          material: new C.PolylineDashMaterialProperty({color: C.Color.fromCssColorString('#ffd166')}),
+          clampToGround: true,
+        },
+        label: {
+          text: 'RWY 09/27 (approximate)',
+          font: '11px sans-serif',
+          fillColor: C.Color.fromCssColorString('#ffd166'),
+          showBackground: true,
+          backgroundColor: C.Color.fromCssColorString('#172234dd'),
+          pixelOffset: new C.Cartesian2(0, -14),
+          heightReference: C.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Infinity,
+        },
+      });
+    } else {
+      runwayEntity.polyline.positions = runwayPositions;
+    }
+    checkpointEntities.forEach((e) => viewer.entities.remove(e));
+    checkpointEntities = layer.checkpoints.map((c) =>
+      viewer.entities.add({
+        position: C.Cartesian3.fromDegrees(...c.coords, 0),
+        point: {
+          pixelSize: 6,
+          color: C.Color.fromCssColorString('#7fd1ff'),
+          heightReference: C.HeightReference.CLAMP_TO_GROUND,
+        },
+        label: {
+          text: c.name + (c.confidence !== 'medium' ? ' (unconfirmed)' : ''),
+          font: '11px sans-serif',
+          fillColor: C.Color.WHITE,
+          showBackground: true,
+          backgroundColor: C.Color.fromCssColorString('#172234dd'),
+          pixelOffset: new C.Cartesian2(0, -16),
+          heightReference: C.HeightReference.CLAMP_TO_GROUND,
+          disableDepthTestDistance: Infinity,
+        },
+      }),
+    );
+    viewer.scene.requestRender();
+  }
   renderDiagram();
 }
 
