@@ -652,7 +652,7 @@ export async function connectGoogle3D(token) {
     console.warn('Google Photorealistic 3D Tiles failed to load:', err);
     text(
       'terrain-message',
-      'Could not load Google 3D Tiles. Check the token and that your ion account has access to this asset.',
+      "Could not load Google 3D Tiles. This usually means the token is missing the \"geocode\" scope that this asset requires (your account's default ion token has it; a token scoped down to specific assets, as suggested above for World Terrain, often doesn't). Try your account's default token, or add the geocode scope to a custom one. Check the browser console for the exact error.",
     );
   } finally {
     if (revision === terrainGeneration) $('connect-terrain').disabled = false;
