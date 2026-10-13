@@ -19,23 +19,23 @@
           "coords": null,
           "osmRef": null,
           "confidence": "unconfirmed",
-          "note": "TODO: too generic a description to locate."
+          "note": "TODO: omitted at the user's request when providing the other pins for this round -- not located, left unconfirmed."
         },
         {
           "name": "White sheds",
           "side": null,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "Same checkpoint as end-of-downwind, seen again on final. TODO: not located."
+          "coords": [78.5320913, 17.4349488],
+          "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
+          "confidence": "high",
+          "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
         },
         {
           "name": "Mahendra Hills",
           "side": null,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "Same checkpoint as end-of-downwind, seen again on final. TODO: not located."
+          "coords": [78.5192298, 17.4546797],
+          "source": "Google Maps (user-provided): https://maps.app.goo.gl/3F12LuHBcyPm4baf6",
+          "confidence": "high",
+          "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
         }
       ]
     },
@@ -62,34 +62,34 @@
           "name": "Y-junction road",
           "side": null,
           "distanceFromAirportNm": 5,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
+          "coords": [78.544948, 17.451477],
+          "source": "Google Maps (user-provided): https://maps.app.goo.gl/NwTzRB3MFWFvBV886",
+          "confidence": "high",
           "nearbyReference": {
             "name": "Rajiv Gandhi International Cricket Stadium, Uppal (far right, per pilot)",
             "coords": [78.5505638, 17.4059481],
             "osmRef": "way/839364278"
           },
-          "note": "(This was a turn point in the RWY 27 pattern, not necessarily in this derived RWY 09 pattern.) TODO: the Y-junction itself was not located. The stadium is included only as the pilot's own \"far right\" reference, not as the turn point's position. Turn point: left turn onto base here."
+          "note": "(This was a turn point in the RWY 27 pattern, not necessarily in this derived RWY 09 pattern.) User-provided pin. 4.44 NM from VOHY, bearing 91° (east) -- matches the stated end-of-downwind/turn-to-base point well. The stadium stays noted as the pilot's own \"far right\" reference. Turn point: left turn onto base here."
         },
         {
           "name": "White sheds",
           "side": null,
           "distanceFromAirportNm": 4,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: too generic a description to locate."
+          "coords": [78.5320913, 17.4349488],
+          "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
+          "confidence": "high",
+          "note": "User-provided pin. 3.86 NM from VOHY, bearing 106° -- consistent with continuing east/ESE along end-of-downwind."
         },
         {
           "name": "Mahendra Hills",
           "description": "Hill with houses",
           "side": null,
           "distanceFromAirportNm": 3,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: area name only, no single point matched via OpenStreetMap search."
+          "coords": [78.5192298, 17.4546797],
+          "source": "Google Maps (user-provided): https://maps.app.goo.gl/3F12LuHBcyPm4baf6",
+          "confidence": "high",
+          "note": "User-provided pin. 2.96 NM from VOHY, bearing 88° (east) -- consistent with the end-of-downwind sequence running east with increasing distance."
         },
         {
           "name": "Secunderabad Railway Station",
@@ -110,16 +110,16 @@
             "name": "Hussain Sagar (lake, from routes.json)",
             "coords": [78.4747, 17.4239]
           },
-          "note": "TODO: the specific flagpole/monument was not confidently matched via OpenStreetMap search. Hussain Sagar's lake coordinate is included only as rough regional context, not as the checkpoint's position."
+          "note": "TODO: still not located -- coords stay null. The user confirmed the Tank Bund tower/flag link they had actually identifies the Buddha Statue (78.474973, 17.4155657; https://maps.app.goo.gl/4T857gRXLWVz7KUG9), a distinct nearby landmark, not this checkpoint's own flagpole/monument -- that one is still needed. Buddha Statue is 2.29 NM south of VOHY, consistent with the Tank Bund/Hussain Sagar area, so it's a useful nearby reference even though it isn't this checkpoint itself."
         },
         {
           "name": "Metro station / Police Tower",
           "side": null,
           "distanceFromAirportNm": 1,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: which metro station is ambiguous (several lines/stations in this area); not located."
+          "coords": [78.451161, 17.428605],
+          "source": "Google Maps (user-provided, \"Panjagutta Metro Station\"): https://maps.app.goo.gl/xvVAsgPvkXyCJagZ7",
+          "confidence": "high",
+          "note": "User-provided pin. 1.74 NM from VOHY -- close match to the pilot's stated ~1 NM for this checkpoint."
         },
         {
           "name": "Durgam Cheruvu",
@@ -133,10 +133,10 @@
           "name": "My Home Bhooja",
           "side": null,
           "distanceFromAirportNm": 4,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: not found via OpenStreetMap search; likely too new/not yet mapped, or an informal local name."
+          "coords": [78.3777758, 17.430975],
+          "source": "Google Maps (user-provided): https://maps.app.goo.gl/mdWHhMHCNZHmSwuz9",
+          "confidence": "high",
+          "note": "User-provided pin. 5.31 NM from VOHY, bearing 256° -- consistent with the west side of downwind, near the beginning-of-downwind checkpoints."
         },
         {
           "name": "KBR Park",
@@ -210,10 +210,10 @@
           "description": "Cuboid Telangana Police building, Banjara/Jubilee Hills area",
           "side": "RIGHT",
           "distanceNm": 2,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: identify and locate the specific building. Several candidate Telangana Police buildings exist in this area; none matched confidently via OpenStreetMap search."
+          "coords": [78.4274895, 17.4144553],
+          "source": "Google Maps (user-provided, \"Police Twin Towers\"): https://maps.app.goo.gl/JzKneGGt3g7U6jgu8",
+          "confidence": "high",
+          "note": "User-provided pin. 3.26 NM from VOHY at bearing 225° -- plausible as a landmark left/south of the upwind track rather than directly on it (the pilot calls out landmarks they can see to the side, not points on the centerline)."
         }
       ]
     }

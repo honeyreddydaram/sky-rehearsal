@@ -35,12 +35,13 @@
     {
       "name": "Moula Ali hill",
       "kind": "hill",
-      "lon": 78.5566923,
-      "lat": 17.468754,
-      "distanceNm": 5.19,
+      "lon": 78.556148,
+      "lat": 17.4684742,
+      "distanceNm": 5.16,
       "osmRef": "way/357991201",
-      "confidence": "medium",
-      "note": "No separate natural=peak/natural=hill node for Moula Ali was found in OpenStreetMap. This coordinate is the Moula Ali Dargah (place_of_worship) building, which sits atop the hill, used as the best available proxy for the hill's location."
+      "source": "Google Maps (user-provided): https://maps.app.goo.gl/Uqq53JcGnWmZoqMZ8",
+      "confidence": "high",
+      "note": "Originally pinned via OpenStreetMap's Moula Ali Dargah (place_of_worship) node, the best available proxy since OSM has no separate natural=peak/hill node for Moula Ali. The user independently supplied a Google Maps pin for the hill that landed 66 m from that OSM point -- close enough to treat as the same location and upgrade confidence from medium to high. Coordinates above are the user-provided pin."
     },
     {
       "name": "Kapra lake",

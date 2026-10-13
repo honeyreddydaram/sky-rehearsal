@@ -4,7 +4,7 @@
   "status": "Legacy screenshot reconstruction",
   "legacyScreenshotReconstruction": true,
   "source": "Shared route reference screenshots",
-  "limitations": "A visual walkthrough using manually placed route points. Playback height and speed are illustrative; this is a ground-based learning prototype. Superseded as the reference circuit geometry by data/circuits/vohy-rwy27.json and vohy-rwy09.json (sourced from a trainee pilot's description of the actual traffic pattern) -- see README for how the two differ. This file is kept because the guided/quiz rehearsal flow still uses it as the flyable route; it is not itself the real VOHY circuit pattern.",
+  "limitations": "A visual walkthrough using manually placed route points. Playback height and speed are illustrative; this is a ground-based learning prototype. Superseded as the reference circuit geometry by data/circuits/vohy-rwy27.json and vohy-rwy09.json (sourced from a trainee pilot's description of the actual traffic pattern) -- see README for how the two differ. This file is kept because the guided/quiz rehearsal flow still uses it as the flyable route; it is not itself the real VOHY circuit pattern. The \"places\" list below is independent of that and includes real, user-sourced landmark pins used for general map labeling.",
   "loops": {
     "inner": [
       [78.4676, 17.4531],
@@ -75,9 +75,56 @@
       "lat": 17.45
     },
     {
-      "name": "Moula Ali side",
-      "lon": 78.557,
-      "lat": 17.454
+      "name": "My Home Bhooja",
+      "lon": 78.3777758,
+      "lat": 17.430975,
+      "source": "https://maps.app.goo.gl/mdWHhMHCNZHmSwuz9"
+    },
+    {
+      "name": "Police Twin Towers",
+      "lon": 78.4274895,
+      "lat": 17.4144553,
+      "source": "https://maps.app.goo.gl/JzKneGGt3g7U6jgu8"
+    },
+    {
+      "name": "Panjagutta Metro Station",
+      "lon": 78.451161,
+      "lat": 17.428605,
+      "source": "https://maps.app.goo.gl/xvVAsgPvkXyCJagZ7"
+    },
+    {
+      "name": "Buddha Statue",
+      "lon": 78.474973,
+      "lat": 17.4155657,
+      "source": "https://maps.app.goo.gl/4T857gRXLWVz7KUG9"
+    },
+    {
+      "name": "Mahendra Hills",
+      "lon": 78.5192298,
+      "lat": 17.4546797,
+      "source": "https://maps.app.goo.gl/3F12LuHBcyPm4baf6"
+    },
+    {
+      "name": "White sheds — SCR Workshop",
+      "lon": 78.5320913,
+      "lat": 17.4349488,
+      "source": "https://maps.app.goo.gl/bCJyJttTZqo8HcXe9"
+    },
+    {
+      "name": "Y-junction",
+      "lon": 78.544948,
+      "lat": 17.451477,
+      "source": "https://maps.app.goo.gl/NwTzRB3MFWFvBV886"
+    },
+    {
+      "name": "Moula Ali Hills",
+      "lon": 78.556148,
+      "lat": 17.4684742,
+      "source": "https://maps.app.goo.gl/Uqq53JcGnWmZoqMZ8"
     }
+  ],
+  "landmarkNotes": [
+    "The supplied Tank Bund tower link identifies the Buddha Statue; the separate flag/tower pin is still needed.",
+    "L-shaped buildings omitted as requested."
   ]
 }
