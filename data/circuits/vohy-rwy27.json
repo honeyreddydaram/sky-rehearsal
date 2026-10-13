@@ -5,7 +5,7 @@
   "verified": false,
   "circuitDirection": "left-hand",
   "side": "south of runway",
-  "note": "Relayed from a trainee pilot's description of flying the circuit, not an official chart. Checkpoint coordinates were located individually (see each checkpoint's source/confidence) -- several checkpoints were first located via OpenStreetMap search (confidence: medium), several more via Google Maps links the user supplied directly (confidence: high, source field cites the link), and a handful remain null with a TODO where neither turned up a confident match. The GPX track from an actual flight (arriving separately) will be used to check this geometry; conflicts will be flagged, not silently edited into this file.",
+  "note": "Relayed from a trainee pilot's description of flying the circuit, not an official chart. Checkpoint coordinates were located individually (see each checkpoint's source/confidence) -- several checkpoints were first located via OpenStreetMap search (confidence: medium), several more via Google Maps links the user supplied directly (confidence: high, source field cites the link). Three checkpoints that stayed unlocated (Abeam tower, Small hills, L-shaped buildings) were removed from this file at the user's request rather than kept as unconfirmed placeholders -- if they're identified later, re-add them with a coords/source entry rather than guessing. The GPX track from an actual flight (arriving separately) will be used to check this geometry; conflicts will be flagged, not silently edited into this file.",
   "distanceFieldNote": "On upwind/crosswind/base/final, distanceNm is measured along that leg from its start. On downwind, the pilot's distances are ambiguous between 'along the leg' and 'straight-line distance from the airport' -- the described pattern (5, 4, ..., 1, abeam, 2, 3, 4, 5) only makes sense as airport-relative radial distance (closing in toward the abeam point, then opening back out), so downwind checkpoints use distanceFromAirportNm instead. This is an interpretation of the pilot's wording, not a literal field they specified -- flagged here rather than presented as fact.",
   "legs": [
     {
@@ -119,15 +119,6 @@
           "note": "User-provided pin. 1.74 NM from VOHY -- close match to the pilot's stated ~1 NM for this checkpoint."
         },
         {
-          "name": "Abeam tower (flag at Tank Bund / Hussain Sagar)",
-          "side": null,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "nearbyReference": {"name": "Hussain Sagar (lake, from routes.json)", "coords": [78.4747, 17.4239]},
-          "note": "TODO: still not located -- coords stay null. The user confirmed the Tank Bund tower/flag link they had actually identifies the Buddha Statue (78.474973, 17.4155657; https://maps.app.goo.gl/4T857gRXLWVz7KUG9), a distinct nearby landmark, not this checkpoint's own flagpole/monument -- that one is still needed. Buddha Statue is 2.29 NM south of VOHY, consistent with the Tank Bund/Hussain Sagar area, so it's a useful nearby reference even though it isn't this checkpoint itself."
-        },
-        {
           "name": "Secunderabad Railway Station",
           "side": null,
           "distanceFromAirportNm": 2,
@@ -175,17 +166,7 @@
     {
       "name": "base",
       "headingTrue": 0,
-      "checkpoints": [
-        {
-          "name": "Small hills",
-          "side": null,
-          "distanceNm": 5,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: pilot describes flying toward these, heading north, ~5 NM; no single point identified."
-        }
-      ]
+      "checkpoints": []
     },
     {
       "name": "final",
@@ -207,15 +188,6 @@
           "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
           "confidence": "high",
           "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
-        },
-        {
-          "name": "L-shaped buildings",
-          "side": "RIGHT",
-          "distanceNm": 4,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: omitted at the user's request when providing the other pins for this round -- not located, left unconfirmed."
         }
       ]
     }
