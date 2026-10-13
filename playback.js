@@ -91,8 +91,12 @@ export function reset() {
 export function refresh() {
   const s = stateAt(state.t);
   text('heading', s.possible ? headingText(s.heading) : '—');
-  text('altitude', Math.round(s.altitudeFt).toLocaleString() + ' ft');
-  text('altitude-label', 'ALTITUDE · ' + (state.profile === demo ? 'DEMO' : state.profile.altitudeReference));
+  const isAmsl = state.profile.altitudeReference === 'MSL';
+  text('altitude', Math.round(s.altitudeFt).toLocaleString() + (isAmsl ? ' ft AMSL' : ' ft'));
+  text(
+    'altitude-label',
+    'ALTITUDE · ' + (state.profile === demo ? 'DEMO' : isAmsl ? 'AMSL' : 'ELLIPSOID (GPS)'),
+  );
   text('airspeed', Math.round(s.tasKt) + ' kt');
   text('groundspeed', s.possible ? Math.round(s.groundspeed) + ' kt' : '—');
   text('track', s.possible ? headingText(s.track) : '—');

@@ -19,6 +19,7 @@ import {
   validateAirportData,
   validateCircuitData,
   validateAircraftType,
+  validateLandmarksData,
   resolveAircraftProfile,
 } from './core.mjs';
 
@@ -27,6 +28,7 @@ export const circuits = {}; // '27' | '09' -> validated circuit data
 export let fleet = null;
 export const aircraftTypes = {}; // typeCode -> validated aircraft type data
 export let cessnaCommon = null;
+export let landmarks = null;
 
 export const airportState = {
   activeRunway: '27',
@@ -40,18 +42,29 @@ async function fetchJson(path) {
 }
 
 export async function loadAirportData() {
-  const [airportRaw, rwy27Raw, rwy09Raw, fleetRaw, commonRaw, c152Raw, c172rRaw, c172sRaw, da42Raw] =
-    await Promise.all([
-      fetchJson('./data/airport-vohy.json'),
-      fetchJson('./data/circuits/vohy-rwy27.json'),
-      fetchJson('./data/circuits/vohy-rwy09.json'),
-      fetchJson('./data/aircraft/fleet.json'),
-      fetchJson('./data/aircraft/cessna-common.json'),
-      fetchJson('./data/aircraft/c152.json'),
-      fetchJson('./data/aircraft/c172r.json'),
-      fetchJson('./data/aircraft/c172s.json'),
-      fetchJson('./data/aircraft/da42ng.json'),
-    ]);
+  const [
+    airportRaw,
+    rwy27Raw,
+    rwy09Raw,
+    fleetRaw,
+    commonRaw,
+    c152Raw,
+    c172rRaw,
+    c172sRaw,
+    da42Raw,
+    landmarksRaw,
+  ] = await Promise.all([
+    fetchJson('./data/airport-vohy.json'),
+    fetchJson('./data/circuits/vohy-rwy27.json'),
+    fetchJson('./data/circuits/vohy-rwy09.json'),
+    fetchJson('./data/aircraft/fleet.json'),
+    fetchJson('./data/aircraft/cessna-common.json'),
+    fetchJson('./data/aircraft/c152.json'),
+    fetchJson('./data/aircraft/c172r.json'),
+    fetchJson('./data/aircraft/c172s.json'),
+    fetchJson('./data/aircraft/da42ng.json'),
+    fetchJson('./data/landmarks.json'),
+  ]);
 
   airport = validateAirportData(airportRaw);
   circuits['27'] = validateCircuitData(rwy27Raw);
@@ -62,6 +75,7 @@ export async function loadAirportData() {
   aircraftTypes.c172r = validateAircraftType(c172rRaw);
   aircraftTypes.c172s = validateAircraftType(c172sRaw);
   aircraftTypes.da42ng = validateAircraftType(da42Raw);
+  landmarks = validateLandmarksData(landmarksRaw);
 
   airportState.selectedRegistration = fleet.aircraft.find((a) => a.registration)?.registration ?? null;
 }

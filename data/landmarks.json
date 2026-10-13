@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "source": "OpenStreetMap, individually looked up via the Nominatim search API during development (2026-10-13)",
+  "note": "A broader automated sweep (every named lake/peak within the radius via the Overpass API) was attempted first but the public Overpass instance was rate-limiting during development, so this list is a curated set of specific named landmarks individually confirmed to exist in OSM and fall within radiusNm -- not an exhaustive spatial query. Extend it the same way (search, cite the OSM reference, record confidence) rather than guessing coordinates for a name that doesn't turn up a match.",
+  "center": {"lat": 17.4531, "lon": 78.4675, "note": "VOHY airport reference point"},
+  "radiusNm": 8,
+  "landmarks": [
+    {
+      "name": "Hussain Sagar",
+      "kind": "lake",
+      "lon": 78.475421,
+      "lat": 17.4229113,
+      "distanceNm": 1.87,
+      "osmRef": "relation/2833155",
+      "confidence": "high"
+    },
+    {
+      "name": "Safilguda Lake Park",
+      "kind": "lake",
+      "lon": 78.5362774,
+      "lat": 17.4633878,
+      "distanceNm": 3.99,
+      "osmRef": "relation/10669535",
+      "confidence": "high"
+    },
+    {
+      "name": "Durgam Cheruvu",
+      "kind": "lake",
+      "lon": 78.3897305,
+      "lat": 17.4310553,
+      "distanceNm": 4.65,
+      "osmRef": "way/28131043",
+      "confidence": "high"
+    },
+    {
+      "name": "Moula Ali hill",
+      "kind": "hill",
+      "lon": 78.5566923,
+      "lat": 17.468754,
+      "distanceNm": 5.19,
+      "osmRef": "way/357991201",
+      "confidence": "medium",
+      "note": "No separate natural=peak/natural=hill node for Moula Ali was found in OpenStreetMap. This coordinate is the Moula Ali Dargah (place_of_worship) building, which sits atop the hill, used as the best available proxy for the hill's location."
+    },
+    {
+      "name": "Kapra lake",
+      "kind": "lake",
+      "lon": 78.5534411,
+      "lat": 17.4935493,
+      "distanceNm": 5.49,
+      "osmRef": "way/265159686",
+      "confidence": "high"
+    }
+  ]
+}

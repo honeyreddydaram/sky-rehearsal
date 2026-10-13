@@ -28,13 +28,28 @@
       "widthM": 45,
       "widthFt": 148,
       "nominalAlignment": 90,
-      "geometry": "approximate",
-      "geometryNote": "Threshold coordinates are not independently verified. This runway's line is computed from the reference point, the published length, and the nominal 090/270 alignment (see core.mjs approximateRunwayEnds) -- it is NOT a surveyed centerline. Treat it as a rough visual reference only, drawn and labeled as approximate in the UI."
+      "geometry": "OpenStreetMap",
+      "geometryNote": "Endpoint coordinates below are the first/last nodes of OpenStreetMap way 28113198 (aeroway=runway, ref=09/27), retrieved via the Overpass API on 2026-10-13 -- a real digitized runway outline, not computed from the reference point. core.mjs's approximateRunwayEnds()/resolveRunwayEnds() still exist as a fallback for an airport that has no such OSM way. Discrepancy, flagged not resolved: the OSM-derived length is ~3103 m, about 4% shorter than the 3230 m published length above -- the community-mapped way may not trace the full paved length exactly.",
+      "ends": {
+        "09": {
+          "lon": 78.4544977,
+          "lat": 17.452873,
+          "source": "OpenStreetMap way/28113198, node 308808702",
+          "confidence": "high"
+        },
+        "27": {
+          "lon": 78.4837418,
+          "lat": 17.4534266,
+          "source": "OpenStreetMap way/28113198, node 308808703",
+          "confidence": "high"
+        }
+      }
     }
   ],
   "sources": [
     "Wikipedia: Begumpet Airport",
-    "aviationweather.gov airport database (https://aviationweather.gov/api/data/airport?ids=VOHY)"
+    "aviationweather.gov airport database (https://aviationweather.gov/api/data/airport?ids=VOHY)",
+    "OpenStreetMap, way/28113198 (runway endpoints), via the Overpass API"
   ],
   "circuitAltitude": {
     "circuitHeightAglFt": 1000,

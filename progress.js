@@ -14,7 +14,7 @@
 // playback.js (setQuizHandler) — see README "Architecture".
 
 import {profileAt, validateProfile, validateProgressBackup} from './core.mjs';
-import {state, demo} from './state.js';
+import {state, demo, EGM2008_UNDULATION_M_VOHY} from './state.js';
 import {$, text, toast, download, showDialog} from './ui.js';
 
 const KEY = 'sky-rehearsal-learners-v1';
@@ -106,8 +106,11 @@ function profileCopy() {
   text(
     'profile-source',
     state.profile === demo
-      ? 'Demo altitude and TAS schedule · ellipsoid heights.'
-      : state.profile.source + ' · ' + state.profile.altitudeReference + ' · user supplied',
+      ? 'Demo altitude and TAS schedule · ft AMSL.'
+      : state.profile.source +
+          ' · ' +
+          (state.profile.altitudeReference === 'MSL' ? 'ft AMSL' : 'ellipsoid height') +
+          ' · user supplied',
   );
   text(
     'scope-note',
@@ -269,7 +272,8 @@ export function wireProfileImport() {
       route: state.route,
       name: 'Example only — replace with your flight data',
       source: 'Replace with instructor or flight recording reference',
-      altitudeReference: 'ELLIPSOID',
+      altitudeReference: 'MSL',
+      geoidOffsetM: EGM2008_UNDULATION_M_VOHY, // pre-filled for VOHY; adjust for a profile recorded elsewhere
       frames: demo.frames,
       callouts: [{progress: 0.2, text: 'Replace this with your instructor’s waypoint instruction.'}],
     });

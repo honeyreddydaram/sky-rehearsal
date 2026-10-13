@@ -15,7 +15,7 @@ import {
   setActiveRunway,
   setSelectedRegistration,
 } from './airport.js';
-import {refreshAirportLayer} from './map.js';
+import {refreshAirportLayer, refreshLandmarksLayer, wireIdentify} from './map.js';
 
 function renderRunwaySelector() {
   all('[data-runway]').forEach((b) => {
@@ -128,6 +128,8 @@ export function init() {
   renderConcepts();
   renderAircraftOptions();
   refreshAll();
+  refreshLandmarksLayer(); // runway-independent, so only needs drawing once
+  wireIdentify();
 
   all('[data-runway]').forEach((b) => {
     b.onclick = () => {
