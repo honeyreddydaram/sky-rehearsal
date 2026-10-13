@@ -463,7 +463,6 @@ export function setView(v) {
   state.yaw = 0;
   state.pitch = v === 'pilot' ? PILOT_AHEAD_PITCH_DEG : -20;
   if (v === 'pilot' && viewer) viewer.camera.frustum.fov = rad(PILOT_FOV_DEG);
-  if (buildings) buildings.show = v !== 'pilot'; // keep landmarks readable looking forward on final
   selectStates(state);
   if (v === 'overview') fit(); // note: fit() also calls onInteraction() when there's no viewer
   onInteraction();
@@ -539,8 +538,8 @@ export function setQuality(quality) {
 }
 
 // A lighter, partly-translucent style for OSM 3D buildings so they give a sense of
-// the city without burying landmarks/runway markers underneath them. Combined with
-// setView() hiding them outright in Pilot view (see above).
+// the city without burying landmarks/runway markers underneath them — shown this way
+// in every view, including Pilot.
 function styleBuildingsLighter(tileset) {
   tileset.style = new C.Cesium3DTileStyle({color: "color('white', 0.45)"});
   return tileset;
@@ -578,11 +577,10 @@ export async function connectTerrain(token) {
       }
       if (buildings) viewer.scene.primitives.remove(buildings);
       buildings = viewer.scene.primitives.add(styleBuildingsLighter(loaded));
-      buildings.show = state.view !== 'pilot';
       text('terrain-status', 'World Terrain + OSM 3D buildings');
       text(
         'terrain-message',
-        'Connected. Building detail depends on local coverage. Hidden by default in Pilot view so landmarks stay readable — toggle views to see them.',
+        'Connected. Building detail depends on local coverage. Shown translucent in every view (including Pilot) so landmarks stay readable underneath.',
       );
     } catch (err) {
       console.warn('OSM buildings failed to load:', err);
