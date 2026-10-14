@@ -26,7 +26,12 @@ const C = window.Cesium;
 const PILOT_AHEAD_PITCH_DEG = -5;
 const PILOT_LOOK_YAW_DEG = 60;
 const PILOT_DOWN_PITCH_DEG = -85; // unchanged — "Below" stays steep
-const PILOT_FOV_DEG = 60;
+// Narrower than a natural ~60° field of view, on purpose: Pilot view starts "zoomed
+// in" (closer-looking, like a telephoto lens) so landmarks and checkpoints below read
+// clearly from the start, rather than looking distant until the pilot manually
+// scrolls/pinches in. Still comfortably inside the zoom clamp range used by
+// scroll/pinch below (~23°-92°), so there's room to zoom further either way.
+const PILOT_FOV_DEG = 35;
 
 let viewer = null;
 let plane, planned, windLine, groundLine;
@@ -455,18 +460,28 @@ function updateCamera() {
 // Switches camera mode and always ends by calling the injected onInteraction() (HUD
 // refresh) — matching the original's unconditional refresh() at the end of setView().
 // Pilot view defaults to a natural forward-looking pitch (horizon visible, like a
-// real cockpit) and a natural field of view; chase view keeps its old default.
+// real cockpit) and a zoomed-in field of view (see PILOT_FOV_DEG); chase view keeps
+// its old default.
 export function setView(v) {
   if (!viewer && v !== 'overview') {
     toast('Pilot and chase views need WebGL. You can still rehearse and take quizzes in the route diagram.');
     return false;
   }
+  // Toast only on the actual overview/follow -> pilot transition, not on every call
+  // with v === 'pilot' already active (e.g. re-clicking the tab) -- it's a one-shot
+  // orientation hint, not a persistent instruction.
+  const enteringPilot = v === 'pilot' && state.view !== 'pilot';
   state.view = v;
   state.yaw = 0;
   state.pitch = v === 'pilot' ? PILOT_AHEAD_PITCH_DEG : -20;
   if (v === 'pilot' && viewer) viewer.camera.frustum.fov = rad(PILOT_FOV_DEG);
   selectStates(state);
   if (v === 'overview') fit(); // note: fit() also calls onInteraction() when there's no viewer
+  if (enteringPilot) {
+    toast(
+      'Drag (or arrow keys) to look around, scroll/pinch to zoom — study the view to spot each checkpoint.',
+    );
+  }
   onInteraction();
   return true;
 }
