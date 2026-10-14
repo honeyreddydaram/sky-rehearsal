@@ -15,6 +15,7 @@ import {rad, deg, resolveRunwayEnds, nearestNamedPoint} from './core.mjs';
 import {state, models, routeData, getTrackPoints, heightAt} from './state.js';
 import {$, all, text, toast, selectStates} from './ui.js';
 import {airport, activeCircuit, circuits, landmarks} from './airport.js';
+import {PUBLIC_ION_TOKEN} from './ion-token.js';
 
 const C = window.Cesium;
 
@@ -895,6 +896,15 @@ export async function init() {
     updateRoutes();
     fit();
     loadImagery();
+    // Auto-connect World Terrain + OSM buildings for every visitor when a public
+    // token was embedded at deploy time (see ion-token.js) — otherwise this stays a
+    // no-op and 3D detail still requires pasting a token into Settings, same as
+    // before PUBLIC_ION_TOKEN existed. Populating #ion-token too keeps Settings'
+    // display consistent with what's actually connected if the pilot opens it.
+    if (PUBLIC_ION_TOKEN) {
+      $('ion-token').value = PUBLIC_ION_TOKEN;
+      connectTerrain(PUBLIC_ION_TOKEN);
+    }
   } catch (err) {
     console.warn('Cesium failed to initialize, falling back to the SVG diagram:', err);
     fallback('3D is unavailable on this device.');

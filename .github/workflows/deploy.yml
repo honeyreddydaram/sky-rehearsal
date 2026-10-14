@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+# Runs the same checks as test.yml, then deploys to Pages via a GitHub Actions
+# artifact instead of Pages' old "serve the main branch root" mode. That
+# indirection is the whole point: it lets this job substitute the real Cesium
+# ion token (from the CESIUM_ION_TOKEN repository secret) into ion-token.js only
+# in the artifact that gets deployed -- the committed copy in this repo, and
+# everything in its git history, stays the empty placeholder. See ion-token.js
+# for what this token does and doesn't protect once it's live.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; don't cancel one that's already live-deploying.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm test
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Embed the public Cesium ion token (deploy artifact only)
+        env:
+          CESIUM_ION_TOKEN: ${{ secrets.CESIUM_ION_TOKEN }}
+        run: |
+          if [ -z "$CESIUM_ION_TOKEN" ]; then
+            echo "::warning::CESIUM_ION_TOKEN repository secret is not set -- deploying with ion-token.js left empty, same as before it existed (visitors still see the basic globe until they paste their own token)."
+          else
+            printf "export const PUBLIC_ION_TOKEN = '%s';\n" "$CESIUM_ION_TOKEN" > ion-token.js
+          fi
+
+      - name: Drop VCS internals before publishing the artifact
+        run: rm -rf .git
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@v4
