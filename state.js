@@ -54,7 +54,7 @@ export const demo = {
 // The single shared state object. Fields match 1:1 with the loose `let` variables the
 // original app.js kept at module scope.
 export const state = {
-  route: 'inner', // 'inner' | 'outer'
+  route: 'outer', // 'inner' | 'outer'
   mode: 'guided', // 'guided' | 'quiz' | 'explore'
   view: 'overview', // 'overview' | 'follow' | 'pilot'
   t: 0, // progress along the route, 0..1
@@ -70,7 +70,7 @@ export const state = {
   windFrom: 270, // degrees true, the direction the wind is blowing FROM
   windSpeed: 0, // knots
   correctWind: false, // apply a heading correction to hold the planned track
-  rate: 15, // playback speed multiplier
+  rate: 5, // playback speed multiplier
   sessionId: '',
   yaw: 0, // look-around offset, radians, added to the flight heading
   pitch: -20, // look-around pitch, degrees

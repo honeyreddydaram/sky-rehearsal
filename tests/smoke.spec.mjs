@@ -26,7 +26,8 @@ test('switching route and mode updates the briefing panel', async ({page}) => {
   await expect(page.locator('#route-distance')).not.toHaveText('—', {timeout: 10_000});
 
   const before = await page.locator('#route-distance').textContent();
-  await page.click('[data-route="outer"]');
+  // Outer loop is the default route, so switch to inner to actually exercise a change.
+  await page.click('[data-route="inner"]');
   await expect(page.locator('#route-distance')).not.toHaveText(before ?? '', {timeout: 5_000});
 
   await page.click('[data-mode="quiz"]');
