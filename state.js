@@ -56,7 +56,11 @@ export const demo = {
 export const state = {
   route: 'outer', // 'inner' | 'outer'
   mode: 'guided', // 'guided' | 'quiz' | 'explore'
-  view: 'overview', // 'overview' | 'follow' | 'pilot'
+  // 'overview' | 'follow' | 'pilot'. This raw default only matters before a Cesium
+  // viewer exists (map.js can't position a pilot/follow camera without one) -- once
+  // map.init() resolves, app.js's bootstrap calls map.setView('pilot') to make Pilot
+  // the actual default view (falling back to this 'overview' value if WebGL failed).
+  view: 'overview',
   t: 0, // progress along the route, 0..1
   playing: false,
   started: false,

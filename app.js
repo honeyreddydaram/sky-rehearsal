@@ -121,6 +121,14 @@ rebuildTrace();
 map.refreshRouteVisuals();
 playback.reset();
 await map.init();
+// Pilot is the default camera mode, but only once a Cesium viewer actually exists to
+// put it in that mode (state.js's raw `view: 'overview'` stays as the pre-viewer
+// value — see its comment). Going through setView() rather than hand-setting
+// state.view/state.pitch here keeps this in one place: it also sets the zoomed-in
+// field of view and fires the look-around hint toast, exactly as if the pilot had
+// clicked the Pilot tab themselves. Falls back to Overview (map.init()'s own default)
+// if WebGL isn't available, same as switching to Pilot manually would.
+map.setView('pilot');
 if (airfieldAvailable) {
   airfield.init();
 } else {
