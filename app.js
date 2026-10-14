@@ -13,7 +13,7 @@
 // progress.setContextChangeHandler) wired up below.
 
 import {headingText} from './core.mjs';
-import {state, loadRouteData, rebuildTrace} from './state.js';
+import {state, loadRouteData, rebuildTrace, rebuildModels} from './state.js';
 import * as ui from './ui.js';
 import * as map from './map.js';
 import * as playback from './playback.js';
@@ -54,6 +54,21 @@ progress.setContextChangeHandler(() => {
   playback.reset();
   rebuildTrace();
   map.refreshRouteVisuals();
+});
+// Switching active runway flies the existing legacy loop in the matching rotational
+// direction (RWY 27 departs west, RWY 09 departs east) — see state.js's `direction`
+// field and rebuildModels() for what this does and doesn't change.
+airport.setRunwayChangeHandler((id) => {
+  state.direction = id === '09' ? 'reverse' : 'forward';
+  rebuildModels();
+  playback.reset();
+  rebuildTrace();
+  map.refreshRouteVisuals();
+  ui.toast(
+    id === '09'
+      ? 'RWY 09 active — rehearsal now flies the loop in the reverse direction to match.'
+      : 'RWY 27 active — rehearsal flies the loop in its original direction.',
+  );
 });
 
 quiz.wireQuizDialog();

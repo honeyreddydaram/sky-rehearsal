@@ -62,11 +62,22 @@ test('Phase 2b: airfield panel loads real data, runway switch, and click-to-iden
   const rwy27Note = await page.locator('#circuit-source-note').textContent();
   expect(rwy27Note).toContain('trainee pilot');
 
+  // Switching active runway should flip the simulated flight's direction of travel
+  // to match (state.js rebuildModels()/direction) -- initial heading (t=0, playback
+  // never started so it hasn't drifted) should flip by ~180°, not just the circuit
+  // reference panel's text. #heading lives on the Rehearsal screen, but reading its
+  // text doesn't require that screen to be visible.
+  const headingBefore = parseInt(await page.locator('#heading').textContent(), 10);
+
   // Switching the active runway re-renders the circuit-leg list for RWY 09 (derived,
   // reversed leg order) without a page error. Scoped to Briefing: the Rehearsal
   // sidebar has its own copy of this same button, kept in sync by selectStates().
   await page.click('#screen-briefing [data-runway="09"]');
   await expect(page.locator('#runway-note')).toContainText('Derived from RWY 27');
+
+  const headingAfter = parseInt(await page.locator('#heading').textContent(), 10);
+  const diffFrom180 = ((((headingAfter - (headingBefore + 180)) % 360) + 540) % 360) - 180;
+  expect(Math.abs(diffFrom180)).toBeLessThan(15);
 
   // Click-to-identify happens on the map, which lives on the Rehearsal screen.
   await page.click('[data-nav="rehearsal"]');
