@@ -5,15 +5,17 @@
 // aircraft fleet. Also owns the two small pieces of state this data introduces:
 // which runway is active, and which aircraft the pilot picked.
 //
-// This is deliberately a reference/briefing layer, not the flight simulator: the
-// circuit pattern here is NOT used as the flyable route (see routes.json and
-// state.js for that — the "legacy screenshot reconstruction" loop is still what the
-// guided/quiz rehearsal actually flies). Several circuit checkpoints have no
-// confirmed coordinates yet, so there isn't enough geometry to fly the real pattern
-// until more of them are confirmed or a recorded GPX flight fills the gaps. Blending
-// the two now would risk implying the plane is "on" a real-world checkpoint it isn't
-// actually near — so for now this module only drives a reference panel and the map's
-// static runway/checkpoint markers.
+// This is mostly a reference/briefing layer, not the flight simulator: the circuit
+// pattern's actual ground track (checkpoint-to-checkpoint geometry) is NOT used as
+// the flyable route (see routes.json and state.js for that — the "legacy screenshot
+// reconstruction" loop is still what the guided/quiz rehearsal actually flies). Even
+// with every checkpoint located, their spacing is too sparse and leg-by-leg to form a
+// smooth continuous path the way routeModel()'s spline needs; that still waits on
+// real GPX data. One connection DOES exist, though: switching active runway flips
+// state.direction (see app.js's runway-change wiring below and state.js), which
+// flies the existing legacy loop in the matching rotational direction — same path
+// shape, opposite course/heading — so the simulated flight's direction of travel
+// matches the real circuit's even though its exact ground track doesn't yet.
 
 import {
   validateAirportData,
@@ -84,8 +86,20 @@ export function activeCircuit() {
   return circuits[airportState.activeRunway];
 }
 
+// Called whenever the active runway changes, after airportState.activeRunway is
+// already updated. app.js wires this (same injected-callback pattern used elsewhere
+// in this codebase, e.g. map.setInteractionHandler) to flip state.direction and
+// rebuild the flight model/trace — kept as a callback rather than an import so this
+// module doesn't need to depend on state.js/playback.js/map.js just for this one hook.
+let onRunwayChange = () => {};
+export function setRunwayChangeHandler(fn) {
+  onRunwayChange = fn;
+}
+
 export function setActiveRunway(id) {
-  if (circuits[id]) airportState.activeRunway = id;
+  if (!circuits[id]) return;
+  airportState.activeRunway = id;
+  onRunwayChange(id);
 }
 
 // Resolves the pilot's selected aircraft to {registration, callSign, typeCode, profile}

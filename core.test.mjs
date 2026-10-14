@@ -313,6 +313,24 @@ for (const l of landmarks.landmarks) {
     assert.ok(Math.abs(d - l.distanceNm) < 0.2, `${l.name} distanceNm looks stale`);
 }
 
+// Flight direction reversal (state.js rebuildModels()/waypoints() build on this):
+// reversing the legacy loop's point order before routeModel() should flip the
+// initial course by ~180°, matching the opposite runway's upwind heading. Tested
+// here against core.mjs's pure functions directly (routeModel/at/bearing) since
+// state.js's own rebuildModels() needs a real fetch() for routes.json that a plain
+// Node test can't provide -- this exercises the same math it relies on.
+const shippedRoutes = readJson('routes.json');
+for (const loopName of ['inner', 'outer']) {
+  const forwardModel = routeModel(shippedRoutes.loops[loopName]);
+  const reverseModel = routeModel([...shippedRoutes.loops[loopName]].reverse());
+  const sample = (model) => bearing(at(model, 0.054), at(model, 0.056));
+  const diffFrom180 = ((sample(reverseModel) - (sample(forwardModel) + 180) + 540) % 360) - 180;
+  assert.ok(
+    Math.abs(diffFrom180) < 10,
+    `${loopName} loop: reversed bearing isn't ~180° from forward (off by ${diffFrom180.toFixed(1)}°)`,
+  );
+}
+
 console.log(
-  'Core tests passed: bearings, wind vectors/correction, impossible wind, drift distance, route interpolation, profile validation, route-data validation, progress-backup validation, destination point, airport data, runway geometry, circuit data, circuit reversal, aircraft profile merge, call signs, aircraft type validation, landmarks validation, shipped data-file integration checks.',
+  'Core tests passed: bearings, wind vectors/correction, impossible wind, drift distance, route interpolation, profile validation, route-data validation, progress-backup validation, destination point, airport data, runway geometry, circuit data, circuit reversal, aircraft profile merge, call signs, aircraft type validation, landmarks validation, flight-direction reversal, shipped data-file integration checks.',
 );

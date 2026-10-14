@@ -13,7 +13,7 @@
 // progress.setContextChangeHandler) wired up below.
 
 import {headingText} from './core.mjs';
-import {state, loadRouteData, rebuildTrace} from './state.js';
+import {state, loadRouteData, rebuildTrace, rebuildModels} from './state.js';
 import * as ui from './ui.js';
 import * as map from './map.js';
 import * as playback from './playback.js';
@@ -22,6 +22,7 @@ import * as progress from './progress.js';
 import * as settings from './settings.js';
 import * as airport from './airport.js';
 import * as airfield from './airfield.js';
+import * as router from './router.js';
 
 try {
   await loadRouteData();
@@ -54,11 +55,26 @@ progress.setContextChangeHandler(() => {
   rebuildTrace();
   map.refreshRouteVisuals();
 });
+// Switching active runway flies the existing legacy loop in the matching rotational
+// direction (RWY 27 departs west, RWY 09 departs east) — see state.js's `direction`
+// field and rebuildModels() for what this does and doesn't change.
+airport.setRunwayChangeHandler((id) => {
+  state.direction = id === '09' ? 'reverse' : 'forward';
+  rebuildModels();
+  playback.reset();
+  rebuildTrace();
+  map.refreshRouteVisuals();
+  ui.toast(
+    id === '09'
+      ? 'RWY 09 active — rehearsal now flies the loop in the reverse direction to match.'
+      : 'RWY 27 active — rehearsal flies the loop in its original direction.',
+  );
+});
 
 quiz.wireQuizDialog();
 playback.wireControls();
 progress.wireLearnerDialog();
-progress.wireProgressDialog();
+progress.wireProgressScreen();
 progress.wireProfileImport();
 settings.init();
 map.wireViewControls();
@@ -124,6 +140,20 @@ await map.init();
 if (airfieldAvailable) {
   airfield.init();
 } else {
-  ui.$('airfield-panel')?.setAttribute('hidden', '');
+  ui.$('nav-briefing')?.setAttribute('hidden', ''); // nothing to show there without airfield data
 }
+
+// Sidebar collapse toggles on the Rehearsal screen (pure UI state, no business
+// logic — doesn't need its own module).
+ui.all('[data-collapse]').forEach((b) => {
+  b.onclick = () => ui.$(b.dataset.collapse).classList.toggle('collapsed');
+});
+
+// Screens that need to react when they become visible (router.js calls these
+// instead of importing map.js/progress.js directly — same injected-callback
+// pattern used throughout this codebase to avoid import cycles).
+router.setScreenShownHandler('rehearsal', map.onScreenShown);
+router.setScreenShownHandler('progress', progress.renderProgress);
+router.init();
+
 playback.startLoop();

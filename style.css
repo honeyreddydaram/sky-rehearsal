@@ -1,1 +1,342 @@
-:root{font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;color:#dae1ec;background:#0c111b;color-scheme:dark;--panel:#131c2a;--line:#283348;--muted:#97a7bf;--violet:#bda7fa;--amber:#efb769}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}button,select,.file-button{border:1px solid var(--line);background:#1b2638;color:#e7edf8;border-radius:8px;padding:9px 12px}button:hover,.file-button:hover{background:#2b3550}button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--violet);outline-offset:3px}a{color:inherit}header{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:0 32px;background:#101724}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-size:19px;font-weight:650}.brand-icon{display:grid;place-items:center;width:38px;height:38px;color:var(--violet);border:1px solid #645581;border-radius:10px;font-size:28px}.brand small{display:block;color:var(--muted);font-size:9px;letter-spacing:1.8px;font-weight:500}nav{display:flex;gap:9px}nav button{background:transparent}.profile-pill{color:var(--violet);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}main{padding:24px 28px;max-width:1840px;margin:auto}.page-heading{display:flex;justify-content:space-between;align-items:center;margin:0 0 24px}.eyebrow{font-size:10px;letter-spacing:1.7px;font-weight:650;color:var(--violet);margin:0 0 7px}h1{font-size:clamp(24px,2.1vw,32px);font-weight:550;letter-spacing:-.8px;margin:0 0 5px}.page-heading p:not(.eyebrow){color:var(--muted);margin:0}.subtle-pill{font-size:11px;color:#b0bdd0;border:1px solid var(--line);padding:6px 12px;border-radius:20px}.layout{display:grid;grid-template-columns:246px minmax(0,1fr) 252px;gap:18px;align-items:start}.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.briefing,.conditions{padding:20px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:17px}.section-head h2{margin:0;font-size:15px;font-weight:600}.step{font-size:11px;color:#586b86}h3{font-size:13px;font-weight:600;margin:0 0 10px}.micro{font-size:11px;line-height:1.7;color:var(--muted)}.segmented{display:flex;background:#0d1522;border-radius:8px;padding:3px;gap:3px}.segmented button{flex:1;padding:7px 3px;border:0;background:transparent;font-size:12px}.selected{background:#bba2f51d!important;color:#e3d6ff!important;border-color:#8c72c5!important}.route-facts{display:grid;grid-template-columns:1fr 1fr;border-block:1px solid var(--line);padding:16px 0;margin:18px 0}.route-facts strong{display:block;font-size:18px;font-weight:550}.route-facts small{font-size:10px;color:var(--muted)}.modes{display:grid;gap:7px;margin-bottom:24px}.modes button{text-align:left;padding:10px 12px;background:transparent}.modes b{display:block;font-size:12px;font-weight:550}.modes small{display:block;font-size:10px;color:var(--muted);margin-top:2px}.waypoints{list-style:none;margin:0 0 18px;padding:0}.waypoints li{position:relative}.waypoints li:not(:last-child):before{content:'';position:absolute;left:12px;top:32px;bottom:0;width:1px;background:var(--line)}.waypoints button{display:flex;gap:9px;align-items:center;text-align:left;border:0;background:transparent;padding:10px 0;width:100%;font-size:11px}.waypoints .num{width:25px;height:25px;border:1px solid #495674;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:10px}.waypoints .passed .num{background:#33564c;color:#b6efd4;border-color:#33564c}.waypoints .active .num{background:var(--violet);color:#171027;border-color:var(--violet)}.check{display:flex!important;align-items:center;gap:8px;font-size:12px!important}.check input{width:15px;accent-color:var(--violet);margin:0}.flight-column{min-width:0}.map-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px}.status-pill{font-size:10px;color:#a8cbbf}.view-tabs{display:flex;gap:4px}.view-tabs button{font-size:11px;padding:6px 9px;background:transparent}.map-shell{position:relative;height:clamp(340px,47vh,630px);background:#101c2d;overflow:hidden}#map,#fallback-map{position:absolute;inset:0;width:100%;height:100%}#fallback-map{background:radial-gradient(ellipse at center,#203247,#101c2d)}.map-note{position:absolute;top:12px;left:12px;right:12px;color:#c3cedf;background:#121d2dde;padding:7px 11px;border-radius:6px;font-size:11px;pointer-events:none}.map-legend{position:absolute;bottom:12px;left:12px;background:#0d1427df;padding:6px 10px;border-radius:6px;display:flex;align-items:center;gap:7px;font-size:10px;pointer-events:none}.dot{height:3px;width:13px;display:inline-block}.purple{background:var(--violet)}.amber{background:var(--amber)}.look-controls{position:absolute;bottom:12px;right:12px;display:flex;gap:4px}.look-controls button{padding:5px 9px;background:#172236e8;font-size:11px}#credits{min-height:22px;font-size:9px;text-align:right;padding:3px 10px;color:#a2b0c2}#credits img{height:13px;width:auto;vertical-align:middle}#credits a{color:#c8d2df}.cesium-viewer-bottom{display:none}.telemetry{border-block:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:16px 8px}.telemetry>div{padding:0 12px;border-right:1px solid var(--line)}.telemetry>div:last-child{border:0}.telemetry small{font-size:8px;letter-spacing:.8px;color:#879ab7;display:block;margin-bottom:4px}.telemetry strong{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}.telemetry strong small{display:inline;font-size:11px}.playback{padding:17px}.playback-top{display:flex;align-items:center;gap:9px;margin-bottom:11px}.primary{background:var(--violet);border-color:var(--violet);color:#20162e;font-weight:650}.primary:hover{background:#d0bcff}.playback-top label{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11px;margin:0 0 0 auto}.playback-top select{padding:6px;font-size:11px}.playback-top #percentage{font-size:11px;min-width:29px;text-align:right;color:var(--muted)}input[type=range]{width:100%;accent-color:var(--violet);height:14px;margin:10px 0;cursor:pointer}.timeline-labels{display:flex;justify-content:space-between;font-size:9px}.callout{display:flex;gap:13px;align-items:center;margin-top:14px;padding:17px}.callout p:last-child{font-size:13px;line-height:1.6;margin:0}.callout-icon{font-size:24px;color:var(--violet)}.callout button{margin-left:auto;background:transparent}.scope-note{font-size:10px;line-height:1.6;color:#8796ae;margin:12px 6px}.conditions label{display:block;color:#adbdd2;font-size:11px;margin:16px 0}.conditions label>span{float:right;color:#e2e9f5;font-variant-numeric:tabular-nums}.wind-facts{background:#0e1725;border-radius:8px;padding:9px 12px;margin-top:16px}.wind-facts p{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:7px 0}.wind-facts b{font-weight:500;color:#dbe3ee}.wide{width:100%;font-size:11px}#flight-profile{width:100%;font-size:11px;padding:8px 6px}hr{border:0;border-top:1px solid var(--line);margin:21px 0}#altitude-chart{display:block;width:100%;margin:8px 0 15px}.conditions>h3{margin-top:3px}footer{display:flex;justify-content:space-between;gap:20px;color:#798da9;font-size:9px;letter-spacing:.8px;padding:25px 2px 3px}dialog{background:#151e2e;color:#e3eaf4;border:1px solid #3b4660;border-radius:16px;padding:26px;width:min(530px,calc(100% - 26px));max-height:85dvh;overflow:auto;box-shadow:0 20px 100px #0008}dialog::backdrop{background:#050a17b8;backdrop-filter:blur(4px)}dialog h2{font-weight:550;margin:0 0 12px}dialog p{line-height:1.65}.answers{display:grid;gap:8px;margin:22px 0}.answers button{text-align:left;padding:13px}.answers button.correct{background:#235746;border-color:#59b394}.answers button.incorrect{background:#62343b;border-color:#df8791}.dialog-actions{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:20px}dialog label{display:block;font-size:12px;margin:12px 0}input:not([type=range]):not([type=checkbox]):not([type=file]){display:block;width:100%;padding:10px;margin-top:6px;border:1px solid #485772;border-radius:8px;background:#0e1725;color:#e6edfa}.file-button{display:inline-block;cursor:pointer;font-size:12px;margin:0!important}input[type=file]{display:block;width:100%;font-size:11px;margin-top:8px}#profile-list button{display:block;width:100%;text-align:left;margin-bottom:8px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}.stats>div{background:#0c1727;padding:13px;border-radius:7px}.stats strong{display:block;font-size:25px}.stats small{color:var(--muted);font-size:10px}.history-row{padding:12px 0;border-bottom:1px solid var(--line);font-size:12px}.history-row small{display:block;color:var(--muted);margin-top:3px}.review-row{font-size:12px;padding:10px 0;border-bottom:1px solid var(--line)}#notification{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 20px;background:#25364d;box-shadow:0 8px 24px #0006;border:1px solid #6581a6;border-radius:9px;z-index:10;max-width:90%;font-size:12px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}[hidden]{display:none!important}@media(min-width:1600px){.layout{grid-template-columns:280px minmax(0,1fr) 285px}.briefing,.conditions{padding:24px}.map-shell{height:58vh}}@media(max-width:1150px){.layout{grid-template-columns:220px minmax(0,1fr)}.conditions{grid-column:1/-1;display:block}.conditions{columns:3;column-gap:30px}.conditions>*{break-inside:avoid}.conditions .section-head{column-span:all}.conditions hr{display:none}.conditions label{margin:10px 0}.conditions h3{margin-top:14px}.telemetry strong{font-size:18px}}@media(max-width:720px){header{height:68px;padding:0 14px}.brand{font-size:15px;gap:8px}.brand small{font-size:7px;letter-spacing:1px}.brand-icon{height:32px;width:32px;font-size:23px}nav{gap:5px}nav button{font-size:10px;padding:7px}.profile-pill{max-width:72px}#settings-open{font-size:0}#settings-open:after{content:'⚙';font-size:15px}main{padding:18px 12px}.page-heading{margin-bottom:18px}.page-heading h1{font-size:23px}.page-heading p:not(.eyebrow){font-size:12px;max-width:280px}.subtle-pill{display:none}.layout{display:flex;flex-direction:column;gap:12px}.briefing,.conditions,.flight-column{width:100%}.briefing{padding:14px}.briefing .section-head{margin-bottom:10px}.route-facts,.briefing>.micro,.waypoints{display:none}.modes{display:flex;gap:5px;margin:12px 0}.modes button{flex:1;padding:9px 6px;text-align:center}.modes small{display:none}.modes b{font-size:10px}.briefing .section-head:has(h3){display:none}.briefing #audio-state{display:none}.briefing .check{font-size:11px!important}.map-shell{height:400px}.map-toolbar{padding:9px}.status-pill{font-size:9px}.view-tabs button{font-size:10px;padding:6px}.telemetry{padding:12px 3px}.telemetry>div{padding:0 8px}.telemetry small{font-size:7px;letter-spacing:.2px}.telemetry strong{font-size:17px}.playback{padding:12px}.playback-top{gap:6px}.primary{font-size:12px;padding:9px}.playback-top label{font-size:10px}.icon-button{padding:8px}.map-legend{font-size:9px;left:8px;bottom:10px}.look-controls{right:8px;bottom:10px}.look-controls button{padding:5px 7px;font-size:10px}.conditions{columns:auto;padding:18px}.conditions hr{display:block}.callout{padding:14px}.callout p:last-child{font-size:12px}footer{font-size:8px;letter-spacing:.2px;flex-direction:column;gap:5px}dialog{padding:20px}.scope-note{font-size:10px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}.runway{background:#ffd166}.airfield{padding:20px}.airfield-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:14px 0 20px}.airfield-grid select{width:100%}.concepts{background:#0e1725;border-radius:8px;padding:12px 14px;margin-bottom:20px}.concepts dl{margin:0}.concepts dt{font-size:11px;font-weight:650;color:var(--violet);margin-top:10px}.concepts dt:first-child{margin-top:0}.concepts dd{font-size:11px;color:var(--muted);margin:3px 0 0;line-height:1.6}.circuit-legs{display:grid;gap:12px}.circuit-leg{background:#0e1725;border-radius:8px;padding:12px 14px}.circuit-leg h4{margin:0 0 8px;font-size:12px;font-weight:650;text-transform:capitalize;color:#dbe3ee}.circuit-leg ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}.circuit-leg li{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);gap:8px}.confidence{font-size:9px;padding:2px 7px;border-radius:10px;flex-shrink:0;white-space:nowrap}.confidence-high,.confidence-medium{background:#1f3b2f;color:#8fe3bb}.confidence-low{background:#3b331f;color:#e3c98f}.confidence-unconfirmed{background:#3a2430;color:#e3a2b8}@media(max-width:720px){.airfield-grid{grid-template-columns:1fr}}.landmark{background:#8fe3bb}.identify-panel{position:absolute;top:12px;right:12px;max-width:min(260px,40%);background:#0d1427df;padding:9px 11px;border-radius:8px;display:flex;gap:8px;align-items:flex-start;font-size:11px}.identify-panel strong{display:block;font-size:13px;font-variant-numeric:tabular-nums;color:#e7edf8;margin:2px 0 3px}.identify-panel small{letter-spacing:.6px;color:#879ab7;font-size:9px}.identify-panel .micro{display:block}.identify-panel button{background:transparent;border:0;padding:2px 4px;color:#879ab7;font-size:14px;line-height:1}
+/* Design tokens. Colors are untouched from the original design — the redesign's
+   job is hierarchy/spacing/typography, not a palette change. The type and space
+   scales below are new: every structural rule added for the 5-screen redesign
+   pulls its sizes from here instead of a one-off number, so the whole app reads
+   off one consistent scale. Existing component-level rules (dialogs, waypoints,
+   answers, etc.) keep their original fine-tuned values — they already read fine
+   and weren't part of what the user asked to change. */
+:root {
+  font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: #dae1ec;
+  background: #0c111b;
+  color-scheme: dark;
+  --panel: #131c2a;
+  --line: #283348;
+  --muted: #97a7bf;
+  --violet: #bda7fa;
+  --amber: #efb769;
+  /* Type scale (per the redesign spec): page titles / section headers / sub-headers /
+     body / meta-text / big stat readouts. */
+  --text-page-title: clamp(24px, 2.1vw, 32px);
+  --text-section: 18px;
+  --text-sub: 15px;
+  --text-body: 14px;
+  --text-meta: 12px;
+  --text-stat: clamp(22px, 2vw, 28px);
+  /* 8px spacing scale. */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+}
+* { box-sizing: border-box }
+body { margin: 0 }
+button, input, select { font: inherit }
+button { cursor: pointer }
+button, select, .file-button {
+  border: 1px solid var(--line);
+  background: #1b2638;
+  color: #e7edf8;
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+button:hover, .file-button:hover { background: #2b3550 }
+button:disabled { opacity: .45; cursor: not-allowed }
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 3px;
+}
+a { color: inherit; text-decoration: none }
+hr { border: 0; border-top: 1px solid var(--line); margin: 21px 0 }
+h1 { font-size: var(--text-page-title); font-weight: 550; letter-spacing: -.8px; margin: 0 0 5px }
+h2 { font-size: var(--text-section); font-weight: 600; margin: 0 }
+h3 { font-size: var(--text-sub); font-weight: 600; margin: 0 0 10px }
+.eyebrow { font-size: 10px; letter-spacing: 1.7px; font-weight: 650; color: var(--violet); margin: 0 0 7px }
+.micro { font-size: var(--text-meta); line-height: 1.7; color: var(--muted) }
+.subtle-pill { font-size: 11px; color: #b0bdd0; border: 1px solid var(--line); padding: 6px 12px; border-radius: 20px }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0) }
+[hidden] { display: none !important }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto } }
+
+/* --- Header / primary nav --------------------------------------------------- */
+header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  padding: 0 var(--space-3);
+  background: #101724;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 650 }
+.brand-icon {
+  display: grid; place-items: center;
+  width: 32px; height: 32px;
+  color: var(--violet);
+  border: 1px solid #645581;
+  border-radius: 9px;
+  font-size: 18px;
+}
+.main-nav { display: flex; gap: 2px; height: 100% }
+.main-nav a {
+  display: flex; align-items: center;
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+}
+.main-nav a:hover { color: #e7edf8 }
+.main-nav a.active { color: #e7edf8; border-bottom-color: var(--violet) }
+.header-actions { display: flex; align-items: center; gap: 10px }
+.icon-button { padding: 8px 10px; font-size: 15px; line-height: 1 }
+.profile-pill { color: var(--violet); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+/* --- Shared page scaffolding ------------------------------------------------- */
+main { padding: var(--space-3) 28px; max-width: 1840px; margin: auto }
+.page-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3) }
+.card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: var(--space-3);
+}
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px }
+.segmented { display: flex; background: #0d1522; border-radius: 8px; padding: 3px; gap: 3px }
+.segmented button { flex: 1; padding: 7px 3px; border: 0; background: transparent; font-size: 12px }
+.selected { background: #bba2f51d !important; color: #e3d6ff !important; border-color: #8c72c5 !important }
+.check { display: flex !important; align-items: center; gap: 8px; font-size: 12px !important }
+.check input { width: 15px; accent-color: var(--violet); margin: 0 }
+
+/* --- Overview screen --------------------------------------------------------- */
+.overview-hero { max-width: 640px; margin-bottom: var(--space-4) }
+.overview-hero p { color: var(--muted); font-size: 15px }
+.overview-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2) }
+.overview-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: var(--space-3);
+  display: block;
+}
+.overview-card:hover { border-color: #645581; background: #16202f }
+.overview-card h2 { font-size: var(--text-sub); margin-bottom: 7px }
+.overview-card p { color: var(--muted); font-size: 13px; margin: 0 }
+
+/* --- Briefing screen --------------------------------------------------------- */
+.briefing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-3) }
+.briefing-grid select { width: 100% }
+#screen-briefing > .card { margin-bottom: var(--space-3) }
+.concepts dt { font-size: 11px; font-weight: 650; color: var(--violet); margin-top: 10px }
+.concepts dt:first-child { margin-top: 0 }
+.concepts dd { font-size: 11px; color: var(--muted); margin: 3px 0 0; line-height: 1.6 }
+.circuit-legs { display: grid; gap: 12px }
+.circuit-leg { background: #0e1725; border-radius: 8px; padding: 12px 14px }
+.circuit-leg h4 { margin: 0 0 8px; font-size: 12px; font-weight: 650; text-transform: capitalize; color: #dbe3ee }
+.circuit-leg ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.circuit-leg li { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); gap: 8px }
+.confidence { font-size: 9px; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; white-space: nowrap }
+.confidence-high, .confidence-medium { background: #1f3b2f; color: #8fe3bb }
+.confidence-low { background: #3b331f; color: #e3c98f }
+.confidence-unconfirmed { background: #3a2430; color: #e3a2b8 }
+
+/* --- Rehearsal screen --------------------------------------------------------
+   Three-column layout: collapsible left sidebar (route briefing), the scene
+   column (map + telemetry, the immersive center), collapsible right sidebar
+   (live cue + scope note). A fixed-height bottom bar holds playback controls,
+   always in the same place regardless of sidebar state. Collapsing a sidebar
+   hides its content and shrinks its track to a thin rail (the toggle button
+   stays reachable to expand it again). */
+.rehearsal-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 270px;
+  gap: var(--space-2);
+  align-items: start;
+  transition: grid-template-columns .15s ease;
+}
+.rehearsal-layout:has(#sidebar-left.collapsed) { grid-template-columns: 34px minmax(0, 1fr) 270px }
+.rehearsal-layout:has(#sidebar-right.collapsed) { grid-template-columns: 260px minmax(0, 1fr) 34px }
+.rehearsal-layout:has(#sidebar-left.collapsed):has(#sidebar-right.collapsed) { grid-template-columns: 34px minmax(0, 1fr) 34px }
+.sidebar-left, .sidebar-right {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: var(--space-3);
+  min-width: 0;
+}
+.sidebar-left.collapsed, .sidebar-right.collapsed { padding: var(--space-3) 6px }
+.sidebar-left.collapsed .sidebar-content, .sidebar-right.collapsed .sidebar-content { display: none }
+.sidebar-toggle {
+  position: absolute; top: 10px; right: 10px;
+  padding: 4px 7px; font-size: 12px; background: transparent; border-color: transparent;
+}
+.sidebar-left.collapsed .sidebar-toggle, .sidebar-right.collapsed .sidebar-toggle { position: static; transform: rotate(180deg) }
+.sidebar-right .sidebar-toggle { right: auto; left: 10px; transform: rotate(180deg) }
+.sidebar-right.collapsed .sidebar-toggle { transform: none }
+.route-facts { display: grid; grid-template-columns: 1fr 1fr; border-block: 1px solid var(--line); padding: var(--space-2) 0; margin: var(--space-2) 0 }
+.route-facts strong { display: block; font-size: var(--text-sub); font-weight: 550 }
+.route-facts small { font-size: 10px; color: var(--muted) }
+.modes { display: grid; gap: 7px; margin-bottom: var(--space-3) }
+.modes button { text-align: left; padding: 10px 12px; background: transparent }
+.modes b { display: block; font-size: 12px; font-weight: 550 }
+.modes small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px }
+.waypoints { list-style: none; margin: 0 0 var(--space-2); padding: 0 }
+.waypoints li { position: relative }
+.waypoints li:not(:last-child):before { content: ''; position: absolute; left: 12px; top: 32px; bottom: 0; width: 1px; background: var(--line) }
+.waypoints button { display: flex; gap: 9px; align-items: center; text-align: left; border: 0; background: transparent; padding: 10px 0; width: 100%; font-size: 11px }
+.waypoints .num { width: 25px; height: 25px; border: 1px solid #495674; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; font-size: 10px }
+.waypoints .passed .num { background: #33564c; color: #b6efd4; border-color: #33564c }
+.waypoints .active .num { background: var(--violet); color: #171027; border-color: var(--violet) }
+
+.scene-column { min-width: 0; display: flex; flex-direction: column; gap: var(--space-2) }
+.map-toolbar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-1); padding: 10px 13px }
+.status-pill { font-size: 10px; color: #a8cbbf }
+.compass { display: flex; align-items: center; gap: 6px; color: var(--muted) }
+.compass small { font-size: 11px; font-variant-numeric: tabular-nums }
+.view-tabs { display: flex; gap: 4px }
+.view-tabs button { font-size: 11px; padding: 6px 9px; background: transparent }
+.map-shell { position: relative; height: clamp(380px, 56vh, 680px); background: #101c2d; overflow: hidden; border-radius: 14px }
+#map, #fallback-map { position: absolute; inset: 0; width: 100%; height: 100% }
+#fallback-map { background: radial-gradient(ellipse at center, #203247, #101c2d) }
+.map-note { position: absolute; top: 12px; left: 12px; right: 12px; color: #c3cedf; background: #121d2dde; padding: 7px 11px; border-radius: 6px; font-size: 11px; pointer-events: none }
+.map-legend-expand { position: absolute; bottom: 12px; left: 12px; background: #0d1427df; border-radius: 6px; font-size: 10px }
+.map-legend-expand summary { cursor: pointer; padding: 6px 10px; list-style: none; color: var(--muted) }
+.map-legend-expand[open] summary { border-bottom: 1px solid var(--line) }
+.map-legend { display: flex; align-items: center; gap: 7px; padding: 6px 10px }
+.dot { height: 3px; width: 13px; display: inline-block }
+.purple { background: var(--violet) }
+.amber { background: var(--amber) }
+.runway { background: #ffd166 }
+.landmark { background: #8fe3bb }
+.identify-panel { position: absolute; top: 12px; right: 12px; max-width: min(260px, 40%); background: #0d1427df; padding: 9px 11px; border-radius: 8px; display: flex; gap: 8px; align-items: flex-start; font-size: 11px }
+.identify-panel strong { display: block; font-size: 13px; font-variant-numeric: tabular-nums; color: #e7edf8; margin: 2px 0 3px }
+.identify-panel small { letter-spacing: .6px; color: #879ab7; font-size: 9px }
+.identify-panel .micro { display: block }
+.identify-panel button { background: transparent; border: 0; padding: 2px 4px; color: #879ab7; font-size: 14px; line-height: 1 }
+.look-controls { position: absolute; bottom: 12px; right: 12px; display: flex; gap: 4px }
+.look-controls button { padding: 5px 9px; background: #172236e8; font-size: 11px }
+#credits { min-height: 22px; font-size: 9px; text-align: right; padding: 3px 10px; color: #a2b0c2 }
+#credits img { height: 13px; width: auto; vertical-align: middle }
+#credits a { color: #c8d2df }
+.cesium-viewer-bottom { display: none }
+.info-strip { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); display: grid; grid-template-columns: repeat(4, 1fr); padding: var(--space-2) 8px }
+.info-strip > div { padding: 0 12px; border-right: 1px solid var(--line) }
+.info-strip > div:last-child { border: 0 }
+.info-strip small { font-size: 8px; letter-spacing: .8px; color: #879ab7; display: block; margin-bottom: 4px }
+.info-strip strong { font-size: var(--text-stat); font-weight: 500; font-variant-numeric: tabular-nums }
+
+.panel.callout { display: flex; gap: 13px; align-items: center; padding: var(--space-2) }
+.callout p:last-child { font-size: 13px; line-height: 1.6; margin: 0 }
+.callout-icon { font-size: 24px; color: var(--violet) }
+.callout button { margin-left: auto; background: transparent }
+.scope-note { font-size: 10px; line-height: 1.6; color: #8796ae; margin: var(--space-2) 6px 0 }
+
+.bottom-bar {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: var(--space-2);
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 9px;
+}
+.bottom-bar label { display: flex; gap: 7px; align-items: center; color: var(--muted); font-size: 11px }
+.bottom-bar select { padding: 6px; font-size: 11px }
+.bottom-bar #percentage { font-size: 11px; min-width: 29px; text-align: right; color: var(--muted) }
+.bottom-bar input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--violet); height: 14px; margin: 2px 0 0; cursor: pointer }
+.timeline-labels { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: 9px }
+
+/* --- Progress screen ---------------------------------------------------------- */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-1); margin: var(--space-2) 0 }
+.stats > div { background: #0c1727; padding: 13px; border-radius: 7px }
+.stats strong { display: block; font-size: 25px }
+.stats small { color: var(--muted); font-size: 10px }
+.history-row { padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 12px }
+.history-row small { display: block; color: var(--muted); margin-top: 3px }
+.review-row { font-size: 12px; padding: 10px 0; border-bottom: 1px solid var(--line) }
+
+/* --- Dialogs ------------------------------------------------------------------- */
+dialog {
+  background: #151e2e; color: #e3eaf4;
+  border: 1px solid #3b4660; border-radius: 16px;
+  padding: 26px; width: min(530px, calc(100% - 26px));
+  max-height: 85dvh; overflow: auto; box-shadow: 0 20px 100px #0008;
+}
+dialog::backdrop { background: #050a17b8; backdrop-filter: blur(4px) }
+dialog h2 { font-weight: 550; margin: 0 0 12px }
+dialog p { line-height: 1.65 }
+dialog label { display: block; font-size: 12px; margin: 12px 0 }
+dialog label > span { float: right; color: #e2e9f5; font-variant-numeric: tabular-nums }
+input[type=range] { width: 100%; accent-color: var(--violet); height: 14px; margin: 10px 0; cursor: pointer }
+input:not([type=range]):not([type=checkbox]):not([type=file]) {
+  display: block; width: 100%; padding: 10px; margin-top: 6px;
+  border: 1px solid #485772; border-radius: 8px; background: #0e1725; color: #e6edfa;
+}
+.file-button { display: inline-block; cursor: pointer; font-size: 12px; margin: 0 !important }
+input[type=file] { display: block; width: 100%; font-size: 11px; margin-top: 8px }
+.wide { width: 100%; font-size: 11px }
+#flight-profile { width: 100%; font-size: 11px; padding: 8px 6px }
+#altitude-chart { display: block; width: 100%; margin: 8px 0 15px }
+.wind-facts { background: #0e1725; border-radius: 8px; padding: 9px 12px; margin-top: var(--space-2) }
+.wind-facts p { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin: 7px 0 }
+.wind-facts b { font-weight: 500; color: #dbe3ee }
+.answers { display: grid; gap: 8px; margin: 22px 0 }
+.answers button { text-align: left; padding: 13px }
+.answers button.correct { background: #235746; border-color: #59b394 }
+.answers button.incorrect { background: #62343b; border-color: #df8791 }
+.dialog-actions { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 20px }
+#profile-list button { display: block; width: 100%; text-align: left; margin-bottom: 8px }
+.primary { background: var(--violet); border-color: var(--violet); color: #20162e; font-weight: 650 }
+.primary:hover { background: #d0bcff }
+
+/* --- Footer / toast ------------------------------------------------------------ */
+footer { display: flex; justify-content: space-between; gap: 20px; color: #798da9; font-size: 9px; letter-spacing: .8px; padding: 25px 2px 3px }
+#notification {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  padding: 12px 20px; background: #25364d; box-shadow: 0 8px 24px #0006;
+  border: 1px solid #6581a6; border-radius: 9px; z-index: 10; max-width: 90%; font-size: 12px;
+}
+
+/* --- Responsive ---------------------------------------------------------------- */
+@media (min-width: 1600px) {
+  .card { padding: var(--space-4) }
+  .map-shell { height: 62vh }
+}
+@media (max-width: 1150px) {
+  .rehearsal-layout { grid-template-columns: 220px minmax(0, 1fr) }
+  .sidebar-right { display: none } /* cue panel folds away first on medium screens; map + left nav stay */
+  .briefing-grid, .overview-cards { grid-template-columns: 1fr 1fr }
+}
+@media (max-width: 720px) {
+  header { height: 56px; padding: 0 12px }
+  .brand { font-size: 14px; gap: 7px }
+  .brand-icon { height: 28px; width: 28px; font-size: 16px }
+  .main-nav { gap: 0 }
+  .main-nav a { font-size: 11px; padding: 0 8px }
+  .profile-pill { max-width: 60px }
+  main { padding: var(--space-2) 12px }
+  .page-heading { margin-bottom: var(--space-2) }
+  .page-heading h1 { font-size: 21px }
+  .subtle-pill { display: none }
+  .overview-cards, .briefing-grid { grid-template-columns: 1fr }
+  .rehearsal-layout { display: flex; flex-direction: column; gap: var(--space-1) }
+  .sidebar-left, .sidebar-right { width: 100% }
+  .sidebar-right { display: block }
+  .sidebar-left .route-facts, .sidebar-left .waypoints { display: none } /* keep the mobile left panel to mode-switching only */
+  .modes { display: flex; gap: 5px; margin: 10px 0 0 }
+  .modes button { flex: 1; padding: 9px 6px; text-align: center }
+  .modes small { display: none }
+  .modes b { font-size: 10px }
+  .map-shell { height: 360px }
+  .info-strip { padding: 10px 3px }
+  .info-strip > div { padding: 0 6px }
+  .info-strip small { font-size: 7px; letter-spacing: .2px }
+  .info-strip strong { font-size: 16px }
+  .bottom-bar { padding: 10px }
+  .look-controls { right: 8px; bottom: 10px }
+  .look-controls button { padding: 5px 7px; font-size: 10px }
+  dialog { padding: 20px }
+}

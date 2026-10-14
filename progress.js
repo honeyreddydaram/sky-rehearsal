@@ -214,11 +214,10 @@ export function renderProgress() {
     });
 }
 
-export function wireProgressDialog() {
-  $('progress-open').onclick = () => {
-    renderProgress();
-    showDialog('progress-dialog');
-  };
+// "My progress" is now the Progress screen (router.js calls renderProgress() via
+// setScreenShownHandler whenever it becomes visible), not a dialog opened on
+// demand — this just wires the screen's export/import controls.
+export function wireProgressScreen() {
   $('export-progress').onclick = () =>
     download('sky-rehearsal-progress.json', {
       schemaVersion: 1,

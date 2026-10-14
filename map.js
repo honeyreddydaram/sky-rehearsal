@@ -11,7 +11,7 @@
 // Instead the app bootstrap (app.js) hands this module a callback via
 // setInteractionHandler(), and we call that instead of importing playback.js.
 
-import {rad, deg, resolveRunwayEnds, nearestNamedPoint} from './core.mjs';
+import {rad, deg, wrap, resolveRunwayEnds, nearestNamedPoint} from './core.mjs';
 import {state, models, routeData, getTrackPoints, heightAt} from './state.js';
 import {$, all, text, toast, selectStates} from './ui.js';
 import {airport, activeCircuit, circuits, landmarks} from './airport.js';
@@ -61,6 +61,17 @@ export function setInteractionHandler(fn) {
 
 export function hasViewer() {
   return viewer !== null;
+}
+
+// Called by router.js every time the Rehearsal screen becomes visible again. A
+// Cesium viewer whose container was [hidden] can end up with a stale/zero canvas
+// size once the browser laid out everything else without it — resize() recomputes
+// it from the now-visible container, and requestRender() repaints immediately
+// rather than waiting for the next state change to trigger one.
+export function onScreenShown() {
+  if (!viewer) return;
+  viewer.resize();
+  viewer.scene.requestRender();
 }
 
 // Runway ends (real OSM coordinates when the data has them, else the computed
@@ -278,7 +289,22 @@ export function wireIdentify() {
 
 // --- Position / camera ---------------------------------------------------------
 
+// Rotates the compass rose (#compass-rose, in the map toolbar) so its N/S labels
+// point the right way relative to the fixed forward-pointing index triangle drawn
+// around it in index.html — standard "rotating card" compass convention. True
+// heading only: no magnetic variation data exists anywhere in this project (see
+// README's existing "directions are true, not magnetic" note), so this isn't
+// guessing one just to make the compass fancier.
+function updateCompass(s) {
+  const rose = $('compass-rose');
+  if (!rose) return;
+  const heading = s.possible ? s.heading : s.course;
+  rose.setAttribute('transform', `rotate(${-heading} 20 20)`);
+  text('compass-heading', Math.round(wrap(heading)) + '°');
+}
+
 export function renderPosition(s) {
+  updateCompass(s);
   if (viewer) {
     currentPosition = C.Cartesian3.fromDegrees(...s.position, s.height);
     flightHeading = rad(s.possible ? s.heading : s.course);

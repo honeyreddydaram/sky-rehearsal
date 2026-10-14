@@ -11,8 +11,10 @@ import {refresh} from './playback.js';
 import * as map from './map.js';
 
 export function init() {
+  // The "Scene detail" quick-open button (#terrain-open) that used to sit in the
+  // always-visible Flight Lab sidebar is gone in the redesigned layout — the header's
+  // settings icon (#settings-open) is the one entry point into this dialog now.
   $('settings-open').onclick = () => showDialog('settings-dialog');
-  $('terrain-open').onclick = () => showDialog('settings-dialog');
 
   $('basemap').onchange = () => map.loadImagery();
 

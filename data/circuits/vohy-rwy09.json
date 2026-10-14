@@ -13,15 +13,6 @@
       "headingTrue": 90,
       "checkpoints": [
         {
-          "name": "L-shaped buildings",
-          "side": "LEFT",
-          "distanceNm": 4,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: omitted at the user's request when providing the other pins for this round -- not located, left unconfirmed."
-        },
-        {
           "name": "White sheds",
           "side": null,
           "coords": [78.5320913, 17.4349488],
@@ -42,17 +33,7 @@
     {
       "name": "crosswind",
       "headingTrue": 180,
-      "checkpoints": [
-        {
-          "name": "Small hills",
-          "side": null,
-          "distanceNm": 5,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "note": "TODO: pilot describes flying toward these, heading north, ~5 NM; no single point identified."
-        }
-      ]
+      "checkpoints": []
     },
     {
       "name": "downwind",
@@ -99,18 +80,6 @@
           "osmRef": "node/10252989488",
           "confidence": "medium",
           "note": "Start of the 'end of downwind' sequence -- distance now increasing again as the aircraft passes the abeam point."
-        },
-        {
-          "name": "Abeam tower (flag at Tank Bund / Hussain Sagar)",
-          "side": null,
-          "coords": null,
-          "osmRef": null,
-          "confidence": "unconfirmed",
-          "nearbyReference": {
-            "name": "Hussain Sagar (lake, from routes.json)",
-            "coords": [78.4747, 17.4239]
-          },
-          "note": "TODO: still not located -- coords stay null. The user confirmed the Tank Bund tower/flag link they had actually identifies the Buddha Statue (78.474973, 17.4155657; https://maps.app.goo.gl/4T857gRXLWVz7KUG9), a distinct nearby landmark, not this checkpoint's own flagpole/monument -- that one is still needed. Buddha Statue is 2.29 NM south of VOHY, consistent with the Tank Bund/Hussain Sagar area, so it's a useful nearby reference even though it isn't this checkpoint itself."
         },
         {
           "name": "Metro station / Police Tower",
