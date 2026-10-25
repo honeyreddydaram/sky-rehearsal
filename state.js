@@ -79,6 +79,15 @@ export const state = {
   yaw: 0, // look-around offset, radians, added to the flight heading
   pitch: -20, // look-around pitch, degrees
   viewRange: 230, // chase-camera distance, metres
+  // 'forward' | 'reverse' — which way around the (legacy) loop the model is built.
+  // Driven by the active runway in airport.js (app.js wires the two together): RWY 27
+  // departs west, so 'forward' (the loop's natural screenshot-derived order, which
+  // happens to also depart roughly west) matches it; RWY 09 departs east, the
+  // opposite way, so 'reverse' flies the same loop the other way around. This makes
+  // the simulated flight's *direction of travel* match the active runway's real
+  // circuit, even though the flyable path is still the legacy screenshot loop, not
+  // the literal real-circuit ground track (that still needs the GPX — see airport.js).
+  direction: 'forward',
 };
 
 // routes.json, once loaded and validated, plus the smoothed route geometry built from
@@ -87,20 +96,48 @@ export const state = {
 export let routeData = null;
 export let models = null;
 
+// Builds both loops' models from routeData, honoring state.direction: 'reverse'
+// flies the same closed loop in the opposite rotational order (start/end point is
+// unchanged — loops close back on themselves — only the order of the points in
+// between flips), which also reverses every course/heading sampled from it. Called
+// once from loadRouteData() at startup, and again by app.js whenever the active
+// runway changes state.direction (see the `state.direction` field comment above).
+//
+// Known limitation: this reverses geometry/heading only. The altitude/airspeed
+// profile (profileAt, sampled by plain progress 0..1) and routeData.places (the
+// fixed map labels — Hussain Sagar, Balkampet side, etc.) do NOT mirror along with
+// direction, so e.g. a profile frame authored for "descending into the first turn"
+// stays tied to the same progress value regardless of which way the loop is being
+// flown. Not wrong exactly (the demo profile's climb/cruise/descent shape is
+// reasonably symmetric), but not direction-aware either — flagged here rather than
+// silently assumed correct. Revisit once the real GPX lets playback move onto the
+// actual circuit geometry instead of this legacy loop.
+export function rebuildModels() {
+  const order = (loop) => (state.direction === 'reverse' ? [...loop].reverse() : loop);
+  models = {
+    inner: routeModel(order(routeData.loops.inner)),
+    outer: routeModel(order(routeData.loops.outer)),
+  };
+}
+
 export async function loadRouteData() {
   const response = await fetch('./routes.json');
   if (!response.ok) throw new Error('Route data request failed');
   const raw = await response.json();
   routeData = validateRouteData(raw); // throws on a malformed/incompatible file
-  models = {
-    inner: routeModel(routeData.loops.inner),
-    outer: routeModel(routeData.loops.outer),
-  };
+  rebuildModels();
 }
 
-// The five fixed study checkpoints along either loop. The eastern-turn name differs
-// by route (inner loop passes Malkajgiri side; outer loop passes Moula Ali side).
-export function waypoints() {
+// The five fixed study checkpoints along either loop, in increasing-progress order
+// (callers rely on this order for sequential numbering and gating). Positions are
+// defined for the 'forward' direction; when state.direction is 'reverse', each
+// physical waypoint is still reached at progress (1 - p) of the reversed model (the
+// reversed model samples the same path backward, so arc-length fraction q on it is
+// the same physical point as fraction (1 - q) on the forward model) — flipped then
+// re-sorted so they stay in increasing order for the direction actually being flown.
+// The eastern-turn name differs by route (inner loop passes Malkajgiri side; outer
+// loop passes Moula Ali side), independently of direction.
+function forwardWaypoints() {
   return [
     {p: 0.055, name: 'Begumpet Airport', cue: 'Orient yourself to the runway and surrounding city.'},
     {p: 0.205, name: 'Western turn', cue: 'Look toward Balkampet and the KBR Park side of the loop.'},
@@ -116,6 +153,12 @@ export function waypoints() {
       cue: 'Locate the airport again and recall the sequence of landmarks.',
     },
   ];
+}
+
+export function waypoints() {
+  const list = forwardWaypoints();
+  if (state.direction !== 'reverse') return list;
+  return list.map((w) => ({...w, p: 1 - w.p})).sort((a, b) => a.p - b.p);
 }
 
 // True bearing of the route itself at a given progress, sampled a hair before/after so
