@@ -19,6 +19,7 @@ import * as map from './map/map.js';
 import * as playback from './flight/playback.js';
 import * as quiz from './training/quiz.js';
 import * as progress from './progress/progress.js';
+import {wireRecording} from './progress/recording.js';
 import * as settings from './ui/settings.js';
 import * as airport from './aviation/airport.js';
 import * as airfield from './aviation/airfield.js';
@@ -148,4 +149,5 @@ if (airfieldAvailable) {
 } else {
   ui.$('airfield-panel')?.setAttribute('hidden', '');
 }
+wireRecording();
 playback.startLoop();

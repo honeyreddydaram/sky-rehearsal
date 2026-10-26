@@ -18,6 +18,7 @@ import {airport, activeCircuit, circuits, landmarks} from '../aviation/airport.j
 import {PUBLIC_ION_TOKEN} from './ion-token.js';
 
 import * as C from 'cesium';
+import {replay} from '../flight/recording.mjs';
 
 // Pilot-view tuning constants (see the ground-rules message for Phase 2b): a natural
 // forward-looking pitch and field of view so the Pilot camera reads like a real
@@ -128,6 +129,7 @@ function renderDiagram() {
   const coords = [
     ...models[state.route].points,
     ...getTrackPoints(),
+    ...recordedPoints.map((p) => p.position),
     ...routeData.places.map((p) => [p.lon, p.lat]),
     ...landmarkPoints,
     ...(airportLayer ? [...airportLayer.ends, ...airportLayer.checkpoints.map((c) => c.coords)] : []),
@@ -233,6 +235,7 @@ function renderDiagram() {
   });
   const title = node('text', {x: 30, y: 580, fill: '#829bb8', 'font-size': 11});
   title.textContent = 'ROUTE STUDY DIAGRAM · N ↑';
+  drawRecording();
 }
 export {renderDiagram};
 
@@ -285,6 +288,7 @@ export function wireIdentify() {
 // --- Position / camera ---------------------------------------------------------
 
 export function renderPosition(s) {
+  s = replay.sample ?? s;
   if (viewer) {
     currentPosition = C.Cartesian3.fromDegrees(...s.position, s.height);
     flightHeading = rad(s.possible ? s.heading : s.course);
@@ -428,7 +432,7 @@ export function fit() {
     return;
   }
   viewer.camera.lookAtTransform(C.Matrix4.IDENTITY);
-  const pts = [...models[state.route].points, ...getTrackPoints()];
+  const pts = [...models[state.route].points, ...getTrackPoints(), ...recordedPoints.map((p) => p.position)];
   const west = Math.min(...pts.map((p) => p[0])) - 0.014;
   const east = Math.max(...pts.map((p) => p[0])) + 0.014;
   const south = Math.min(...pts.map((p) => p[1])) - 0.012;
@@ -924,4 +928,40 @@ export async function init() {
     console.warn('Cesium failed to initialize, falling back to the SVG diagram:', err);
     fallback('3D is unavailable on this device.');
   }
+}
+
+// Imported recording is independent of the ideal and rehearsal paths.
+let recordedPoints = [];
+let recordingEntity = null;
+export function setRecording(points) {
+  recordedPoints = points;
+  if (recordingEntity && viewer) viewer.entities.remove(recordingEntity);
+  recordingEntity = null;
+  refreshRouteVisuals();
+  if (viewer && points.length) {
+    recordingEntity = viewer.entities.add({
+      polyline: {
+        positions: points.map((p) => C.Cartesian3.fromDegrees(...p.position, p.height)),
+        width: 3,
+        material: C.Color.CYAN,
+        arcType: C.ArcType.NONE,
+      },
+    });
+    viewer.flyTo(recordingEntity);
+  }
+}
+function drawRecording() {
+  if (viewer || !renderDiagram.project) return;
+  $('diagram-recording')?.remove();
+  if (!recordedPoints.length) return;
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  line.id = 'diagram-recording';
+  line.setAttribute(
+    'points',
+    recordedPoints.map((p) => renderDiagram.project(p.position).join(',')).join(' '),
+  );
+  line.setAttribute('fill', 'none');
+  line.setAttribute('stroke', '#22d3ee');
+  line.setAttribute('stroke-width', '3');
+  $('fallback-map').append(line);
 }

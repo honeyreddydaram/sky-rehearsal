@@ -1,4 +1,5 @@
 import React from 'react';
+import RecordingPanel from './RecordingPanel';
 export default function FlightPanel() {
   return (
     <section className="flight-column">
@@ -84,10 +85,10 @@ export default function FlightPanel() {
             <label>
               Playback{' '}
               <select id="rate" defaultValue="5">
-                <option defaultValue="1">1×</option>
-                <option defaultValue="5">5×</option>
-                <option defaultValue="15">15×</option>
-                <option defaultValue="30">30×</option>
+                <option value="1">1×</option>
+                <option value="5">5×</option>
+                <option value="15">15×</option>
+                <option value="30">30×</option>
               </select>
             </label>
             <span id="percentage">0%</span>
@@ -103,6 +104,7 @@ export default function FlightPanel() {
           </div>
         </div>
       </div>
+      <RecordingPanel />
       <div className="panel callout">
         <span className="callout-icon">◎</span>
         <div>

@@ -128,3 +128,54 @@ test('circuit drives playback and runway changes reset the active flight', async
   await page.click('[data-route="circuit"]');
   await expect(page.locator('#flight-phase')).toContainText('RWY 09 circuit');
 });
+
+test('recorded flight import, replay, cameras, rejection and clearing', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#flight-phase')).toContainText('RWY 27');
+  await page.locator('#recording-geoid').fill('-76');
+  const csv =
+    'timestamp,latitude,longitude,altitude_m\n2026-01-01T00:00:00Z,17.45,78.45,600\n2026-01-01T00:00:10Z,17.46,78.46,610';
+  await page
+    .locator('#recording-file')
+    .setInputFiles({name: 'flight.csv', mimeType: 'text/csv', buffer: Buffer.from(csv)});
+  await expect(page.locator('#recording-status')).toContainText('2 points loaded');
+  await page.locator('#recording-time').fill('500');
+  await expect(page.locator('#recording-telemetry')).toContainText('5.0 / 10.0 s');
+  await page.click('[data-view="follow"]');
+  await page.click('#recording-play');
+  await expect(page.locator('#recording-play')).toHaveText('Pause recording');
+  await page.click('#recording-play');
+  await page
+    .locator('#recording-file')
+    .setInputFiles({name: 'bad.csv', mimeType: 'text/csv', buffer: Buffer.from('wrong,columns\n1,2')});
+  await expect(page.locator('#recording-status')).toContainText('Import failed');
+  await expect(page.locator('#recording-clear')).toBeEnabled();
+  await page.click('#play');
+  await expect(page.locator('#play')).toHaveText('Pause');
+  await expect(page.locator('#recording-play')).toHaveText('Replay recording');
+  await page.click('#recording-clear');
+  await expect(page.locator('#recording-play')).toBeDisabled();
+  await expect(page.locator('#recording-status')).toHaveText('No recorded flight loaded.');
+});
+
+test('GPX overlay and replay work in diagram fallback', async ({page}) => {
+  await page.addInitScript(() => {
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      if (String(type).includes('webgl')) return null;
+      return getContext.call(this, type, ...args);
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('#engine-status')).toHaveText('Study diagram');
+  await page.locator('#recording-reference').selectOption('ELLIPSOID');
+  await page.locator('#recording-file').setInputFiles('public/examples/demo-flight.gpx');
+  await expect(page.locator('#diagram-recording')).toHaveCount(1);
+  const before = await page.locator('#diagram-plane').getAttribute('transform');
+  await page.locator('#recording-time').fill('700');
+  await expect(page.locator('#diagram-plane')).not.toHaveAttribute('transform', before);
+  await page.click('[data-route="inner"]');
+  await expect(page.locator('#diagram-recording')).toHaveCount(1);
+  await page.click('#recording-clear');
+  await expect(page.locator('#diagram-recording')).toHaveCount(0);
+});

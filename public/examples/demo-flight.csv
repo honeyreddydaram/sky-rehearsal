@@ -1,0 +1,4 @@
+timestamp,latitude,longitude,altitude_m,heading_true,speed_kt,vertical_speed_fpm
+2026-01-01T00:00:00Z,17.4534,78.4837,800,270,85,0
+2026-01-01T00:01:00Z,17.4529,78.4590,820,270,85,66
+2026-01-01T00:02:00Z,17.4510,78.4340,850,265,85,98

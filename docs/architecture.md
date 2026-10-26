@@ -48,3 +48,12 @@ static frontend files. AWS deployment and its security/operations work belong to
 The product remains ground-based familiarization software. Aviation data retains
 its source, confidence, and confirmation notes; unverified geometry is not promoted
 to an operational procedure by this migration.
+
+## Recording boundary (M3)
+
+`flight/recording.mjs` parses/normalizes tracks and interpolates by timestamp.
+`progress/recording.js` owns file input and the independent replay clock. A small
+shared `replay.sample` lets the map follow a recording without changing the scored
+rehearsal's state or route. The map owns the recording polyline and diagram overlay.
+No backend or new dependency is needed. Clearing removes the overlay and restores
+the simulated aircraft; import failure preserves the previous recording.

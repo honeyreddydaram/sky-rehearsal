@@ -94,3 +94,35 @@ incremental migration boundary, and [milestones](docs/milestones.md) for deliver
 The default illustrative runway circuit connects sourced turn pins, with an inferred final intercept; RWY 09 reverses that geometry. It is not instructor verified. Legacy inner/outer routes retain the screenshot geometry. Turns are instantaneous and flight values are demo targets. The included altitude and airspeed schedule is a demo, not recorded flight data. Operational procedures and flight values must come from the instructor; this prototype is not a navigation aid.
 
 CesiumJS, Esri World Imagery, and OpenStreetMap attribution remains visible beneath the map. No platform watermark is added.
+
+## Recorded-flight replay (M3)
+
+Import one `.gpx` or `.csv` in **Recorded flight**. Choose the altitude reference
+before import: GPX `ele` and CSV `altitude_m` are metres, but the recorder's altitude
+datum must be confirmed. MSL data requires the local geoid offset (ellipsoid minus
+MSL, metres); the app never guesses it. Files remain in tab memory until cleared or
+reloaded. They are not uploaded, saved as accounts, or counted as scored attempts.
+
+CSV requires the exact headers `timestamp,latitude,longitude,altitude_m`.
+Optional columns are `heading_true` (degrees), `speed_kt` (ground speed in knots),
+and `vertical_speed_fpm`. Time uses ISO 8601 with `Z` or a numeric timezone. The
+numeric/time CSV dialect accepts quoted fields but not embedded commas/newlines.
+GPX supports one continuous `trkseg` with `lat`, `lon`, `ele`, and `time` on every
+point. Missing heading/speed/vertical speed are derived from successive samples;
+derived heading is ground track, not aircraft nose heading. GPX extensions are not
+used. Multiple segments, missing altitude/time, duplicate or out-of-order times,
+files over 5 MB, and tracks outside 2–50,000 points are rejected without replacing
+a valid recording. No smoothing, resampling, or flight-physics correction is applied.
+
+The cyan recording overlays the purple ideal route and amber simulated wind track
+in Cesium and in the diagram fallback. Scrub or replay using the separate recorded
+time control; Pilot/Chase/Overview follows the recorded aircraft. The original
+telemetry panel remains the rehearsal's telemetry; recorded values have their own
+readout. Starting/changing a rehearsal exits recorded replay. Tracks use independent
+clocks rather than implying time-aligned comparisons or assessment scores.
+
+Synthetic [CSV](public/examples/demo-flight.csv) and [GPX](public/examples/demo-flight.gpx)
+examples are included; they are not actual flight data. For these Begumpet examples,
+MSL offset approximately -76.55 m places them consistently with the existing demo.
+Real recordings require their own source/datum verification. Cloud track storage,
+accounts, and debrief/scoring remain later milestones.

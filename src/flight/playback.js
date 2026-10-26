@@ -9,6 +9,7 @@
 // this module (reset(), refresh()) when an attempt ends — importing each other would
 // create a cycle. Instead app.js registers quiz.beginQuestion via setQuizHandler().
 
+import {replay} from './recording.mjs';
 import {distance, at, headingText} from './core.mjs';
 import {state, demo, routeLabel, flightFrame, models, waypoints, stateAt, secondsAt} from './state.js';
 import {$, all, text, toast, callout, selectStates, showDialog} from '../ui/ui.js';
@@ -61,6 +62,7 @@ export function waypointList() {
 // --- Session lifecycle --------------------------------------------------------------
 
 export function reset() {
+  replay.stop?.();
   state.playing = false;
   state.started = false;
   state.eligible = true;
