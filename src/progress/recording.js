@@ -1,4 +1,5 @@
 import {normalizeRecording, parseCsv, parseGpx, recordingAt, replay} from '../flight/recording.mjs';
+import {saveTrack, listTracks, readTrack} from '../cloud/firebase';
 import {refresh} from '../flight/playback.js';
 import {state, stateAt} from '../flight/state.js';
 import {renderPosition, setRecording} from '../map/map.js';
@@ -9,7 +10,11 @@ export function wireRecording() {
     seconds = 0,
     playing = false,
     previous = performance.now(),
-    request = 0;
+    request = 0,
+    savedRows = null,
+    savedName = null,
+    savedReference = null,
+    savedOffset = null;
   const show = () => {
     if (!recording) return;
     replay.sample = recordingAt(recording, seconds);
@@ -53,9 +58,14 @@ export function wireRecording() {
       state.playing = false;
       refresh();
       recording = imported;
+      savedRows = rows;
+      savedName = file.name;
+      savedReference = $('recording-reference').value;
+      savedOffset = offset === '' ? null : Number(offset);
       seconds = 0;
       setRecording(recording.points);
-      for (const id of ['recording-play', 'recording-clear', 'recording-time']) $(id).disabled = false;
+      for (const id of ['recording-play', 'recording-clear', 'recording-time', 'recording-save-cloud'])
+        $(id).disabled = false;
       text(
         'recording-status',
         `${file.name}: ${recording.points.length} points loaded. Altitude: ${recording.reference}. Replay is not scored.`,
@@ -88,12 +98,69 @@ export function wireRecording() {
     request++;
     stop();
     recording = null;
+    savedRows = null;
+    savedName = null;
     setRecording([]);
-    for (const id of ['recording-play', 'recording-clear', 'recording-time']) $(id).disabled = true;
+    for (const id of ['recording-play', 'recording-clear', 'recording-time', 'recording-save-cloud'])
+      $(id).disabled = true;
     $('recording-time').value = 0;
     text('recording-status', 'No recorded flight loaded.');
     text('recording-telemetry', '');
   };
+  $('recording-save-cloud').onclick = async () => {
+    try {
+      if (!savedRows) throw new Error('Import a flight first.');
+      await saveTrack(savedName, savedRows, savedReference, savedOffset);
+      text('recording-status', 'Flight saved to your account.');
+    } catch (error) {
+      text('recording-status', `Cloud save failed: ${error.message}`);
+    }
+  };
+  $('recording-list-cloud').onclick = async () => {
+    try {
+      const tracks = await listTracks();
+      $('recording-cloud-list').replaceChildren();
+      for (const track of tracks) {
+        const option = document.createElement('option');
+        option.value = track.id;
+        option.textContent = track.name;
+        $('recording-cloud-list').append(option);
+      }
+      text('recording-status', `${tracks.length} account flights available.`);
+    } catch (error) {
+      text('recording-status', `Cloud list failed: ${error.message}`);
+    }
+  };
+  $('recording-load-cloud').onclick = async () => {
+    try {
+      const track = await readTrack($('recording-cloud-list').value);
+      const imported = normalizeRecording(track.rows, {
+        reference: track.reference,
+        geoidOffsetM: track.geoidOffsetM,
+      });
+      stop();
+      state.playing = false;
+      refresh();
+      recording = imported;
+      seconds = 0;
+      savedRows = track.rows;
+      savedName = track.name;
+      savedReference = track.reference;
+      savedOffset = track.geoidOffsetM;
+      setRecording(recording.points);
+      for (const id of ['recording-play', 'recording-clear', 'recording-time', 'recording-save-cloud'])
+        $(id).disabled = false;
+      text('recording-status', `${track.name}: ${recording.points.length} points loaded from account.`);
+      show();
+    } catch (error) {
+      text('recording-status', `Cloud load failed: ${error.message}. Previous recording retained.`);
+    }
+  };
+  window.addEventListener('account-changed', () => {
+    $('recording-cloud-list').replaceChildren();
+    // Do not leave a signed-out account's private recording visible on a shared screen.
+    $('recording-clear').click();
+  });
   const controls =
     '[data-route], [data-mode], [data-runway], #play, #restart, #timeline, #wind-from, #wind-speed, #compensate, #flight-profile, #profile-open';
   for (const event of ['click', 'input', 'change']) {

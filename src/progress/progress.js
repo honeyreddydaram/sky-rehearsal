@@ -1,8 +1,7 @@
 // progress.js
-// Per-learner data: the localStorage-backed store of learners/sessions/imported
-// flight profiles, the profile picker + altitude chart, and backup/profile import.
-// Everything here stays on this browser — see README "Practice" for the user-facing
-// disclosure.
+// Guest learners use localStorage. A signed-in learner lives separately in memory
+// and saves through the injected Firebase callback. Guest data is never implicitly
+// merged into an account. This module also owns profile selection and backups.
 //
 // progress.js does not import playback.js or map.js. A few flows here (switching
 // learner, importing a profile, restoring a backup) need the simulation reset and the
@@ -44,11 +43,37 @@ function loadStore() {
 }
 
 let store = loadStore();
+let cloudLearner = null;
+let onCloudSave = null;
+export function activateAccount(account, persist = null) {
+  cloudLearner = account;
+  onCloudSave = persist;
+  profileOptions();
+  profilesUI();
+  renderProgress();
+  onContextChange();
+}
+export function guestProgress() {
+  return structuredClone(store.learners.find((p) => p.id === store.active));
+}
 export function learner() {
-  return store.learners.find((p) => p.id === store.active);
+  return cloudLearner ?? store.learners.find((p) => p.id === store.active);
 }
 
 export function save() {
+  if (cloudLearner) {
+    const account = cloudLearner;
+    text('save-status', 'Saving account progress…');
+    void onCloudSave(structuredClone(account))
+      .then(() => {
+        if (cloudLearner === account) text('save-status', 'Saved to your cloud account');
+      })
+      .catch(() => {
+        if (cloudLearner === account)
+          text('save-status', 'Cloud save failed · retry Sync or export a backup before leaving');
+      });
+    return;
+  }
   try {
     localStorage.setItem(KEY, JSON.stringify(store));
     text('save-status', 'Saved for ' + learner().name + ' · this browser');
@@ -135,6 +160,9 @@ export function setProfile(value) {
 export function profilesUI() {
   text('profile-open', learner().name);
   $('profile-list').replaceChildren();
+  $('new-profile').hidden = Boolean(cloudLearner);
+  $('restore-progress').disabled = Boolean(cloudLearner);
+  if (cloudLearner) return;
   store.learners.forEach((p) => {
     const b = document.createElement('button');
     b.textContent = (p.id === store.active ? '✓ ' : '') + p.name;
@@ -174,7 +202,7 @@ export function wireLearnerDialog() {
 // --- Progress dialog (flight log) ---------------------------------------------------
 
 export function renderProgress() {
-  text('progress-person', learner().name + ' · local browser profile');
+  text('progress-person', learner().name + (cloudLearner ? ' · cloud account' : ' · local browser profile'));
   const sessions = learner().sessions;
   const quizzes = sessions.filter((s) => s.mode === 'quiz');
   const best = quizzes.length

@@ -45,6 +45,17 @@ export default function RecordingPanel() {
       <button id="recording-play" disabled>
         Replay recording
       </button>
+      <button id="recording-save-cloud" disabled>
+        Save flight to account
+      </button>
+      <button id="recording-list-cloud">Refresh saved flights</button>
+      <label>
+        Account flights
+        <select id="recording-cloud-list">
+          <option value="">Choose saved flight</option>
+        </select>
+      </label>
+      <button id="recording-load-cloud">Load saved flight</button>
       <button id="recording-clear" disabled>
         Clear recording
       </button>

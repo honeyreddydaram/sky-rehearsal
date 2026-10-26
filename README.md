@@ -6,7 +6,7 @@ A browser-based route rehearsal prototype for the Begumpet area in Hyderabad.
 
 - Guided rehearsals with waypoint text and optional browser speech.
 - Five-question quizzes that pause before route stages, give feedback, and save completed scores.
-- Separate learner profiles with completed sessions and progress backup/import. Data stays in this browser; there is no account server or automatic cross-device sync.
+- Separate learner profiles with completed sessions and progress backup/import. Guest data stays in this browser; sign in through Account to sync completed sessions and profiles.
 - Animated aircraft, pilot/chase/overview cameras, and look-around controls.
 - Adjustable constant wind, ground-track drift, true heading/track, groundspeed, and optional wind correction.
 - Altitude and true airspeed profiles with a JSON importer for sourced flight data and custom callouts.
@@ -19,44 +19,64 @@ Use **Import profile → Download example** for the supported JSON structure. Re
 
 Importing a profile changes altitude, airspeed, and callouts; it does not replace the screenshot-derived horizontal route. Values interpolate between frames. Directions are true, not magnetic. Wind is a simplified constant-vector scenario, not a weather forecast or aircraft dynamics model.
 
-## Cloud direction
+## Cloud accounts (M4)
 
-Future milestones prioritize **Firebase and Google Cloud**: Firebase Authentication,
-Firestore, Cloud Storage, Firebase Hosting, and Cloud Run for FastAPI. See the
-[service plan](docs/google-cloud.md). The PostgreSQL instructions below describe
-the existing M1 scaffold; new account/session storage will use Firestore in M4.
-Firebase resources have not yet been configured or deployed.
+SkyRehearsal now uses Firebase Authentication, Firestore, and Cloud Storage.
+Use **Account** to sign in with Google or email/password, create a student account,
+or request a password reset. Completed sessions (including quiz answers/scores) and
+imported altitude profiles sync to the account. **Sync progress** refreshes records
+from another device. **Copy guest progress into account** is an explicit opt-in;
+signing in never silently merges a shared browser's learners. Signing out restores
+the guest profile and clears the visible private recording. Cloud progress is not
+written to the guest browser store. Export remains available if a cloud write fails.
+
+Imported GPX/CSV files stay in the tab until **Save flight to account** is selected.
+**Refresh saved flights** and **Load saved flight** retrieve private tracks on another
+computer. File bytes live in Storage; metadata lives in Firestore. Data is private
+to the signed-in UID. Static airport/aircraft reference packages remain versioned
+in `public/data`; assignment and school-review workflows arrive in M9.
 
 ## Develop
 
-Requires Node 24, Python 3.12+, and [uv](https://docs.astral.sh/uv/).
+Requires Node 24, Python 3.12+, [uv](https://docs.astral.sh/uv/), and Java 21 for
+Firebase emulators. Install and run guest rehearsal:
 
 ```sh
 npm ci
+uv sync --project backend --frozen
 npm run dev
 ```
 
-Vite serves the React/TypeScript interface. CesiumJS 1.121, workers, and globe assets
-are installed from npm and served locally. Satellite/street imagery still needs
-internet access. No backend or token is required for local rehearsal.
-
-For the API and PostgreSQL (requires Docker Compose):
+For local cloud-account development, start the emulators in one terminal:
 
 ```sh
-cp .env.example .env
-# Choose a local POSTGRES_PASSWORD in .env before starting PostgreSQL.
-docker compose up -d --wait db
-uv sync --project backend --frozen
-# Use the password chosen in .env; URL-encode special characters in DATABASE_URL.
-export DATABASE_URL='postgresql://sky_rehearsal:YOUR_LOCAL_PASSWORD@127.0.0.1:5432/sky_rehearsal'
-cd backend
+npm run emulators
+```
+
+Then start Vite in another terminal using the isolated demo project:
+
+```sh
+VITE_FIREBASE_PROJECT_ID=demo-sky-rehearsal VITE_FIREBASE_EMULATORS=true npm run dev
+```
+
+This connects Auth (9099), Firestore (8080), and Storage (9199) on loopback. It needs
+no real account, API key, billing, or service-account file. Emulator data is temporary;
+production accounts use the configuration described in [Firebase setup](docs/firebase.md).
+Guest mode remains available when no Firebase web configuration is supplied.
+
+The optional trusted API runs from `backend/`:
+
+```sh
+APP_ENV=development FIREBASE_PROJECT_ID=demo-sky-rehearsal \
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
 uv run --frozen uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-`GET /api/health` reports API liveness. `GET /api/ready` checks a real PostgreSQL
-connection and returns 503 if it is unavailable. API docs are at `/docs` on the
-API server. Vite forwards `/api` to port 8000 during development. The API currently
-provides infrastructure checks only; browser progress remains local until M4.
+`/api/health` checks liveness; `/api/ready` performs a Firestore read. `/api/me`
+requires a verified Firebase ID token; `/api/admin/health` additionally requires the
+trusted `platform_admin` claim. Emulators are rejected unless the API explicitly
+runs in development with the demo project and expected loopback addresses.
+PostgreSQL and its Compose scaffold have been removed.
 
 ## Check and build
 
@@ -72,15 +92,16 @@ npm run test:e2e
 uv run --project backend --frozen pytest backend/tests
 ```
 
-Set `DATABASE_URL` before backend tests to include the PostgreSQL integration test;
-otherwise that one test is explicitly skipped. To use an installed Chromium instead
+Run `npm run test:firebase` for actual Auth/Firestore/Storage rule tests, API token
+verification, and the cross-browser account/flight round trip. Backend emulator
+tests are explicitly skipped when running pytest without the emulator suite. To use an installed Chromium instead
 of downloading Playwright's browser, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to
 its executable. Browser checks cover boot, route/mode selection, airport data,
 runway switching, map identification, cameras, and settings. Pilot view requires WebGL.
 
 `npm run build` type-checks the new TypeScript interface and produces `dist/`.
 `npm run preview` serves that output. GitHub Pages builds and deploys `dist/` after
-frontend and PostgreSQL-backed API checks pass. It hosts the frontend only; API/Google Cloud
+frontend, API, and Firebase emulator checks pass. It hosts the frontend only; API/Google Cloud
 deployment comes later. Do not serve the source with Python's static server anymore.
 
 ## Cesium ion token
@@ -109,7 +130,7 @@ Import one `.gpx` or `.csv` in **Recorded flight**. Choose the altitude referenc
 before import: GPX `ele` and CSV `altitude_m` are metres, but the recorder's altitude
 datum must be confirmed. MSL data requires the local geoid offset (ellipsoid minus
 MSL, metres); the app never guesses it. Files remain in tab memory until cleared or
-reloaded. They are not uploaded, saved as accounts, or counted as scored attempts.
+reloaded. They are not uploaded unless you choose Save flight to account, and are never counted as scored attempts.
 
 CSV requires the exact headers `timestamp,latitude,longitude,altitude_m`.
 Optional columns are `heading_true` (degrees), `speed_kt` (ground speed in knots),
@@ -132,5 +153,4 @@ clocks rather than implying time-aligned comparisons or assessment scores.
 Synthetic [CSV](public/examples/demo-flight.csv) and [GPX](public/examples/demo-flight.gpx)
 examples are included; they are not actual flight data. For these Begumpet examples,
 MSL offset approximately -76.55 m places them consistently with the existing demo.
-Real recordings require their own source/datum verification. Cloud track storage,
-accounts, and debrief/scoring remain later milestones.
+Real recordings require their own source/datum verification. Cloud track storage and accounts are available through M4; detailed debrief/scoring remains a later milestone.

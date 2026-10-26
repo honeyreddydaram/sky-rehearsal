@@ -1,0 +1,55 @@
+import {test, expect} from '@playwright/test';
+
+test('account progress and flights follow the user across fresh browsers', async ({browser}) => {
+  test.setTimeout(60000);
+  const email = `student-${Date.now()}@example.test`,
+    password = 'Local-test-password-123';
+  const first = await browser.newContext();
+  const page = await first.newPage();
+  await page.goto('/');
+  await page.click('#account-open');
+  await page.fill('#account-email', email);
+  await page.fill('#account-password', password);
+  await page.click('#account-register');
+  await expect(page.locator('#account-status')).toContainText('Account progress loaded');
+  await page.locator('#account-dialog [data-close]').click();
+  // Complete an actual guided circuit quickly without skipping eligibility gates.
+  await page.evaluate(async () => {
+    const {state} = await import('/src/flight/state.js');
+    state.rate = 10000;
+  });
+  await page.click('#play');
+  await expect(page.locator('#results-dialog')).toBeVisible({timeout: 30000});
+  await page.locator('#results-dialog [data-close]').click();
+  await expect(page.locator('#save-status')).toHaveText('Saved to your cloud account');
+  await page.selectOption('#recording-reference', 'ELLIPSOID');
+  await page.locator('#recording-file').setInputFiles('public/examples/demo-flight.gpx');
+  await expect(page.locator('#recording-status')).toContainText('3 points loaded');
+  await page.click('#recording-save-cloud');
+  await expect(page.locator('#recording-status')).toHaveText('Flight saved to your account.');
+  const second = await browser.newContext();
+  const other = await second.newPage();
+  await other.goto('/');
+  await other.click('#account-open');
+  await other.fill('#account-email', email);
+  await other.fill('#account-password', password);
+  await other.click('#account-signin');
+  await expect(other.locator('#account-status')).toContainText('Account progress loaded');
+  await other.locator('#account-dialog [data-close]').click();
+  await other.click('#progress-open');
+  await expect(other.locator('#history .history-row')).toHaveCount(1);
+  await other.locator('#progress-dialog [data-close]').click();
+  await other.click('#recording-list-cloud');
+  await expect(other.locator('#recording-cloud-list option')).toHaveCount(1);
+  await other.click('#recording-load-cloud');
+  await expect(other.locator('#recording-status')).toContainText('3 points loaded from account');
+  await other.click('#account-open');
+  await other.click('#account-signout');
+  await expect(other.locator('#account-status')).toContainText('Guest practice');
+  await other.locator('#account-dialog [data-close]').click();
+  await other.click('#progress-open');
+  await expect(other.locator('#history .history-row')).toHaveCount(0);
+  await expect(other.locator('#recording-play')).toBeDisabled();
+  await first.close();
+  await second.close();
+});

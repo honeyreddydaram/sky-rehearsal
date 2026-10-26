@@ -1,7 +1,7 @@
 # Architecture
 
 The frontend is a React/TypeScript application built with Vite. The API is a small
-FastAPI service with PostgreSQL connectivity. Keep each system focused:
+FastAPI service that verifies Firebase ID tokens and checks Firestore readiness. Keep each system focused:
 
 | System          | Location                          | Responsibility                                                         |
 | --------------- | --------------------------------- | ---------------------------------------------------------------------- |
@@ -40,9 +40,8 @@ the derived circuit file. Side landmarks and null coordinates never become fligh
 vertices. Straight segments have instantaneous turns, not bank dynamics. All
 geometry remains unverified, and altitude/speed schedules are demo targets rather
 than reviewed aircraft performance. Instructor/recorded-flight validation is still
-required. The screenshot-derived loops remain available as legacy routes. Browser-only learners
-are not authenticated accounts (M4). No production database schema, Google Cloud resources,
-or authentication is implied by the health endpoints. GitHub Pages serves only
+required. The screenshot-derived loops remain available as legacy routes. Guest learners remain local; Firebase accounts sync private progress. No live
+Google Cloud deployment is implied by local emulator validation. GitHub Pages serves only
 static frontend files. Google Cloud deployment and its security/operations work belong to M10.
 
 The product remains ground-based familiarization software. Aviation data retains
@@ -55,14 +54,20 @@ to an operational procedure by this migration.
 `progress/recording.js` owns file input and the independent replay clock. A small
 shared `replay.sample` lets the map follow a recording without changing the scored
 rehearsal's state or route. The map owns the recording polyline and diagram overlay.
-No backend or new dependency is needed. Clearing removes the overlay and restores
+Local replay needs no backend; M4 adds explicit private Storage upload/download through the Firebase SDK. Clearing removes the overlay and restores
 the simulated aircraft; import failure preserves the previous recording.
 
 ## Cloud direction
 
-Future implementation prioritizes Firebase and Google Cloud as requested. See
-[service choices](google-cloud.md). The existing PostgreSQL health-check scaffold
-is a legacy M1 capability, not the database choice for new account/session features.
-M4 will replace that dependency with Firebase Auth, Firestore, and Cloud Storage
-and update readiness checks, local emulators, and CI together. These services are
-planned, not configured or deployed yet.
+Implementation uses Firebase Auth, Firestore sessions/profiles/track metadata, and
+Cloud Storage recording files. `cloud/firebase.ts` owns SDK access; `progress/account.js`
+connects account identity to existing learner/progress features. Guest state and
+cloud state are separate, and guest data is copied only by explicit user action.
+Completed sessions are immutable per ID, so devices add records without overwriting
+an entire progress snapshot. Cloud state is refreshed on sign-in or Sync; live
+concurrent editing and offline cloud persistence are not implemented.
+
+Rules enforce UID ownership; roles come from trusted custom claims. The FastAPI
+backend verifies Firebase tokens with revocation checks before applying role checks.
+Instructor/school roles do not grant blanket access to private user data. Assignments
+and delegated school access are deferred to M9. See [Firebase setup](firebase.md).

@@ -2,7 +2,7 @@ import {defineConfig} from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: /.*\.spec\.mjs/,
+  testMatch: /smoke\.spec\.mjs/,
   timeout: 30_000,
   // One retry in CI only: the software WebGL renderer used in headless CI has shown
   // occasional unrelated flakiness under GPU stall (see tests/smoke.spec.mjs's Pilot

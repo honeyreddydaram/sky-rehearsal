@@ -3,6 +3,7 @@ import Briefing from './ui/Briefing';
 import FlightPanel from './ui/FlightPanel';
 import FlightLab from './ui/FlightLab';
 import AirfieldPanel from './ui/AirfieldPanel';
+import AccountDialog from './ui/AccountDialog';
 import Dialogs from './ui/Dialogs';
 import {useEffect} from 'react';
 
@@ -26,6 +27,9 @@ export default function App() {
           </span>
         </a>
         <nav>
+          <button id="account-open" disabled>
+            Account
+          </button>
           <button id="progress-open">My progress</button>
           <button id="settings-open">Settings</button>
           <button id="profile-open" className="profile-pill">
@@ -55,6 +59,7 @@ export default function App() {
         <p id="notification" role="status" hidden></p>
       </main>
       <Dialogs />
+      <AccountDialog />
     </>
   );
 }

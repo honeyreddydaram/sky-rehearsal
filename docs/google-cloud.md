@@ -42,7 +42,7 @@ service exists. AI explains structured observations; deterministic code computes
 flight behavior and scores.
 
 M4 implements Auth, Firestore, Storage, emulator-backed tests, and matching readiness
-checks. Later milestones add the Google APIs they actually need. Cloud publication
+checks; see [Firebase setup](firebase.md). Later milestones add the Google APIs they actually need. Cloud publication
 requires a real project, enabled APIs, billing where required, and appropriately
 scoped identity/access. Do not invent project identifiers, credentials, or deployment
-results. No Firebase or Google Cloud resource has been provisioned by this decision.
+results. No production Firebase or Google Cloud resource is provisioned by local emulator tests.

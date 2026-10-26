@@ -7,3 +7,8 @@ public/cesium/
 __pycache__/
 .pytest_cache/
 .env
+.env.*
+!.env.example
+!.env.firebase.example
+.firebase/
+*-debug.log

@@ -19,6 +19,7 @@ import * as map from './map/map.js';
 import * as playback from './flight/playback.js';
 import * as quiz from './training/quiz.js';
 import * as progress from './progress/progress.js';
+import {wireAccount} from './progress/account.js';
 import {wireRecording} from './progress/recording.js';
 import * as settings from './ui/settings.js';
 import * as airport from './aviation/airport.js';
@@ -127,6 +128,8 @@ progress.profileOptions();
 rebuildTrace();
 map.refreshRouteVisuals();
 playback.reset();
+wireRecording();
+wireAccount();
 await map.init();
 // Pilot is the default camera mode, but only once a Cesium viewer actually exists to
 // put it in that mode (state.js's raw `view: 'overview'` stays as the pre-viewer
@@ -149,5 +152,4 @@ if (airfieldAvailable) {
 } else {
   ui.$('airfield-panel')?.setAttribute('hidden', '');
 }
-wireRecording();
 playback.startLoop();

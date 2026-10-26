@@ -45,8 +45,8 @@ export default function Dialogs() {
           </label>
         </div>
         <p className="micro">
-          Profiles are saved on this browser only. Export a backup to move them to another device. There is no
-          cloud account or automatic sync.
+          Guest profiles stay on this browser. Sign in through Account for cloud progress. Export a backup at
+          any time; restore backups in guest mode.
         </p>
       </dialog>
       <dialog id="profile-dialog">
