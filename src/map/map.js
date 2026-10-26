@@ -18,6 +18,7 @@ import {airport, activeCircuit, circuits, landmarks} from '../aviation/airport.j
 import {PUBLIC_ION_TOKEN} from './ion-token.js';
 
 import * as C from 'cesium';
+import {assistance} from '../training/engine.mjs';
 import {replay} from '../flight/recording.mjs';
 
 // Pilot-view tuning constants (see the ground-rules message for Phase 2b): a natural
@@ -115,6 +116,7 @@ function namedPoints() {
 // anywhere near the poles.
 function renderDiagram() {
   if (viewer) return;
+  const aids = assistance(state.mode, state.difficulty);
   const svg = $('fallback-map');
   svg.replaceChildren();
   const ns = 'http://www.w3.org/2000/svg';
@@ -152,14 +154,16 @@ function renderDiagram() {
   for (let y = 0; y <= 600; y += 50) node('path', {d: `M0 ${y}H900`, stroke: '#a9c3df0b'});
 
   const path = (pts) => pts.map((p) => renderDiagram.project(p).join(',')).join(' ');
-  node('polyline', {
-    points: path(models[state.route].points),
-    fill: 'none',
-    stroke: '#bda7fa',
-    'stroke-width': 4,
-    'stroke-linejoin': 'round',
-  });
-  if (state.windSpeed > 0) {
+  if (aids.route)
+    node('polyline', {
+      id: 'diagram-planned',
+      points: path(models[state.route].points),
+      fill: 'none',
+      stroke: '#bda7fa',
+      'stroke-width': 4,
+      'stroke-linejoin': 'round',
+    });
+  if (aids.route && state.windSpeed > 0) {
     node('polyline', {
       points: path(getTrackPoints()),
       fill: 'none',
@@ -168,10 +172,10 @@ function renderDiagram() {
       'stroke-dasharray': state.correctWind ? '8 6' : 'none',
     });
   }
-  if ($('labels').checked) {
+  if (aids.labels && $('labels').checked) {
     routeData.places.forEach((p) => {
       const [x, y] = renderDiagram.project([p.lon, p.lat]);
-      node('circle', {cx: x, cy: y, r: 4, fill: '#c1d8ee'});
+      if (aids.markers) node('circle', {cx: x, cy: y, r: 4, fill: '#c1d8ee'});
       const label = node('text', {
         x: x + 8,
         y: y - 10,
@@ -184,10 +188,10 @@ function renderDiagram() {
       label.textContent = p.name;
     });
   }
-  if (landmarks && $('labels').checked) {
+  if (landmarks && aids.labels && $('labels').checked) {
     landmarks.landmarks.forEach((l) => {
       const [x, y] = renderDiagram.project([l.lon, l.lat]);
-      node('circle', {cx: x, cy: y, r: 3.5, fill: '#8fe3bb'});
+      if (aids.markers) node('circle', {cx: x, cy: y, r: 3.5, fill: '#8fe3bb'});
       const label = node('text', {
         x: x + 7,
         y: y - 8,
@@ -209,10 +213,10 @@ function renderDiagram() {
       // Dashed = still only the approximate (computed) line; solid = real OSM geometry.
       'stroke-dasharray': airportLayer.isReal ? 'none' : '2 5',
     });
-    if ($('labels').checked) {
+    if (aids.labels && $('labels').checked) {
       airportLayer.checkpoints.forEach((c) => {
         const [x, y] = renderDiagram.project(c.coords);
-        node('circle', {cx: x, cy: y, r: 3.5, fill: '#7fd1ff'});
+        if (aids.markers) node('circle', {cx: x, cy: y, r: 3.5, fill: '#7fd1ff'});
         const label = node('text', {
           x: x + 7,
           y: y - 8,
@@ -245,6 +249,7 @@ export {renderDiagram};
 // places, the Landmarks layer, both runways' circuit checkpoints, and the runway
 // ends — so an unlocated checkpoint can be pinned by eye against known references.
 function showIdentify(lon, lat) {
+  if (!assistance(state.mode, state.difficulty).labels) return;
   const nearest = nearestNamedPoint([lon, lat], namedPoints());
   text('identify-coords', `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`);
   text(
@@ -318,7 +323,9 @@ export function updateRoutes() {
   windLine.polyline.positions = getTrackPoints().map((p, i) =>
     C.Cartesian3.fromDegrees(...p, heightAt(i / 240)),
   );
-  windLine.show = state.windSpeed > 0;
+  const aids = assistance(state.mode, state.difficulty);
+  planned.show = groundLine.show = aids.route;
+  windLine.show = aids.route && state.windSpeed > 0;
   groundLine.polyline.positions = models[state.route].points.map((p) => C.Cartesian3.fromDegrees(...p));
   viewer.scene.requestRender();
 }
@@ -391,7 +398,7 @@ export function refreshAirportLayer() {
     );
     viewer.scene.requestRender();
   }
-  renderDiagram();
+  applyTrainingAssistance();
 }
 
 // Draws the static Landmarks layer (named lakes/hills from data/landmarks.json).
@@ -422,7 +429,7 @@ export function refreshLandmarksLayer() {
     );
     viewer.scene.requestRender();
   }
-  renderDiagram();
+  applyTrainingAssistance();
 }
 
 export function fit() {
@@ -538,11 +545,31 @@ export async function loadImagery() {
 }
 
 export function setLabelsVisible(checked) {
-  labels.forEach((l) => {
-    l.show = checked;
+  $('labels').checked = checked;
+  applyTrainingAssistance();
+}
+
+export function applyTrainingAssistance() {
+  const aids = assistance(state.mode, state.difficulty);
+  const showLabels = aids.labels && $('labels').checked;
+  $('labels').disabled = !aids.labels;
+  if (!aids.labels) $('identify-panel').hidden = true;
+  labels.forEach((entity) => {
+    entity.show = showLabels;
+    entity.point.show = aids.markers;
   });
-  if (viewer) viewer.scene.requestRender();
-  else renderDiagram();
+  [...checkpointEntities, ...landmarkEntities].forEach((entity) => {
+    entity.label.show = showLabels;
+    entity.point.show = aids.markers && showLabels;
+  });
+  if (recordingEntity) recordingEntity.show = aids.route;
+  document.querySelector('.map-legend').hidden = !aids.route;
+  if (viewer) {
+    if (planned) planned.show = aids.route;
+    if (groundLine) groundLine.show = aids.route;
+    if (windLine) windLine.show = aids.route && state.windSpeed > 0;
+    viewer.scene.requestRender();
+  } else renderDiagram();
 }
 
 // The "Buildings" on/off switch in Scene detail. Independent of connecting/
@@ -911,6 +938,7 @@ export async function init() {
       fallback('The 3D renderer stopped.');
     });
 
+    applyTrainingAssistance();
     text('engine-status', 'Satellite / Cesium');
     updateRoutes();
     fit();
@@ -947,11 +975,12 @@ export function setRecording(points) {
         arcType: C.ArcType.NONE,
       },
     });
+    recordingEntity.show = assistance(state.mode, state.difficulty).route;
     viewer.flyTo(recordingEntity);
   }
 }
 function drawRecording() {
-  if (viewer || !renderDiagram.project) return;
+  if (viewer || !renderDiagram.project || !assistance(state.mode, state.difficulty).route) return;
   $('diagram-recording')?.remove();
   if (!recordedPoints.length) return;
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');

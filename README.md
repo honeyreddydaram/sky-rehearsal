@@ -154,3 +154,19 @@ Synthetic [CSV](public/examples/demo-flight.csv) and [GPX](public/examples/demo-
 examples are included; they are not actual flight data. For these Begumpet examples,
 MSL offset approximately -76.55 m places them consistently with the existing demo.
 Real recordings require their own source/datum verification. Cloud track storage and accounts are available through M4; detailed debrief/scoring remains a later milestone.
+
+## Training modes (M5)
+
+Choose **Guided**, **Practice**, **Landmark recognition**, **Decision training**,
+**Quiz**, **Exam**, or **Free explore**. Beginner → Intermediate → Advanced → Examiner
+progressively removes labels, route lines, checkpoint markers, phase/target hints,
+and on-demand help. Exam disables assistance at every level and defers answer
+feedback until all five questions are complete. Mode/difficulty changes restart
+the attempt. Results and cloud/backup history retain mode, difficulty and hint use.
+
+Question content follows the selected route's reference notes, including explicit
+uncertainty for unlocated landmarks. This is a self-study recall exercise; flight
+performance scoring/debrief comes in M6. See [training behavior](docs/training.md)
+for the mode differences and assistance matrix. Measured aircraft telemetry remains
+visible when target hints are hidden. The test runner starts its own Vite server;
+stop any old preview/dev server using 4173/4174 before running browser checks.

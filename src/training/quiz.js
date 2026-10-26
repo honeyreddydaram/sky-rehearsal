@@ -4,43 +4,37 @@
 // the attempt. playback.js calls into here via an injected handler (setQuizHandler in
 // playback.js) rather than an import, so the two files don't import each other.
 
-import {headingText} from '../flight/core.mjs';
-import {state, waypoints, planBearing} from '../flight/state.js';
+import {questionFor, assistance} from './engine.mjs';
+import {state, waypoints, planBearing, stateAt} from '../flight/state.js';
 import {$, all, text, toast, showDialog} from '../ui/ui.js';
-import {reset, resumeAfterCheckpoint} from '../flight/playback.js';
+import {reset, resumeAfterCheckpoint, requestHint} from '../flight/playback.js';
 
 export function beginQuestion(index) {
   state.pending = index;
   state.playing = false;
   const w = waypoints()[index];
-  const isHeading = index % 2 === 1; // alternate question type by checkpoint
   const course = planBearing(Math.min(1, w.p + 0.045));
-  const correct = isHeading ? headingText(course) : w.name;
-  let choices = isHeading
-    ? [correct, headingText(course + 90), headingText(course + 180), headingText(course + 270)]
-    : [
-        w.name,
-        ...waypoints()
-          .filter((_, j) => j !== index)
-          .map((x) => x.name)
-          .slice(0, 3),
-      ];
+  const question = questionFor({
+    mode: state.mode,
+    index,
+    waypoints: waypoints(),
+    course,
+    windSpeed: state.windSpeed,
+    windPossible: stateAt(w.p).possible,
+  });
+  const {correct} = question;
+  let choices = question.choices;
   choices = choices
     .map((value) => ({value, key: Math.random()}))
     .sort((a, b) => a.key - b.key)
     .map((x) => x.value);
 
   text('question-number', `CHECKPOINT ${index + 1} OF 5`);
-  text(
-    'question',
-    isHeading
-      ? 'What true track does the next leg of this route follow?'
-      : state.route.startsWith('circuit')
-        ? 'Which circuit leg comes next?'
-        : 'Which landmark or area comes next along this route?',
-  );
+  text('question', question.prompt);
   $('answers').replaceChildren();
   text('feedback', '');
+  text('question-hint-text', '');
+  $('question-hint').disabled = !assistance(state.mode, state.difficulty).hints;
   $('continue-quiz').disabled = true;
 
   choices.forEach((choice) => {
@@ -56,14 +50,29 @@ export function beginQuestion(index) {
         correct,
         passed: right,
         waypoint: w.name,
+        type: question.type,
       });
       all('#answers button').forEach((btn) => {
         btn.disabled = true;
-        btn.classList.toggle('correct', btn.textContent === correct);
-        btn.classList.toggle('incorrect', btn === b && !right);
+        btn.classList.toggle(
+          'correct',
+          assistance(state.mode, state.difficulty).feedback && btn.textContent === correct,
+        );
+        btn.classList.toggle(
+          'incorrect',
+          assistance(state.mode, state.difficulty).feedback && btn === b && !right,
+        );
       });
-      text('feedback', right ? 'Correct. ' + w.cue : 'The answer is ' + correct + '. ' + w.cue);
+      text(
+        'feedback',
+        state.mode === 'exam'
+          ? 'Answer recorded. Feedback is available after completion.'
+          : right
+            ? 'Correct. ' + question.explanation
+            : 'The answer is ' + correct + '. ' + question.explanation,
+      );
       $('continue-quiz').disabled = false;
+      $('question-hint').disabled = true;
     };
     $('answers').append(b);
   });
@@ -71,6 +80,7 @@ export function beginQuestion(index) {
 }
 
 export function wireQuizDialog() {
+  $('question-hint').onclick = requestHint;
   // The quiz dialog can't be dismissed with Escape — an attempt must be finished or
   // explicitly ended, so a half-answered checkpoint can't silently vanish.
   $('quiz-dialog').addEventListener('cancel', (e) => {

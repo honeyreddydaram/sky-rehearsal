@@ -7,6 +7,8 @@ export default function Dialogs() {
         <h2 id="quiz-title">Before the next turn…</h2>
         <p id="question"></p>
         <div id="answers" className="answers"></div>
+        <button id="question-hint">Request hint</button>
+        <p id="question-hint-text" className="micro" role="status"></p>
         <p id="feedback" aria-live="polite"></p>
         <div className="dialog-actions">
           <button id="end-quiz">End attempt</button>

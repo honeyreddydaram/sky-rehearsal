@@ -1,4 +1,5 @@
 import React from 'react';
+import {MODES, DIFFICULTIES, modeLabel} from '../training/engine.mjs';
 export default function Briefing() {
   return (
     <aside className="panel briefing">
@@ -31,19 +32,25 @@ export default function Briefing() {
         <h3>Practice mode</h3>
       </div>
       <div className="modes">
-        <button data-mode="guided" className="selected">
-          <b>Guided practice</b>
-          <small>Waypoint cues as you fly</small>
-        </button>
-        <button data-mode="quiz">
-          <b>Quiz flight</b>
-          <small>Pause, recall, then continue</small>
-        </button>
-        <button data-mode="explore">
-          <b>Free explore</b>
-          <small>Look around at your own pace</small>
-        </button>
+        {MODES.map((mode) => (
+          <button key={mode} data-mode={mode}>
+            {modeLabel(mode)}
+          </button>
+        ))}
       </div>
+      <label>
+        Difficulty
+        <select id="difficulty" defaultValue="beginner">
+          {DIFFICULTIES.map((level) => (
+            <option key={level} value={level}>
+              {level[0].toUpperCase() + level.slice(1)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p id="training-policy" className="micro"></p>
+      <button id="training-hint-button">Request hint</button>
+      <p id="training-hint" className="micro" role="status"></p>
       <ol id="waypoints" className="waypoints"></ol>
       <label className="check">
         <input type="checkbox" id="audio" /> Spoken callouts

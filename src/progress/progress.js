@@ -12,6 +12,7 @@
 // is the same inversion-of-control trick used in map.js (setInteractionHandler) and
 // playback.js (setQuizHandler) — see README "Architecture".
 
+import {assessed, modeLabel} from '../training/engine.mjs';
 import {validateProfile, validateProgressBackup} from '../flight/core.mjs';
 import {state, demo, routeLabel, flightFrame, EGM2008_UNDULATION_M_VOHY} from '../flight/state.js';
 import {$, text, toast, download, showDialog} from '../ui/ui.js';
@@ -204,7 +205,7 @@ export function wireLearnerDialog() {
 export function renderProgress() {
   text('progress-person', learner().name + (cloudLearner ? ' · cloud account' : ' · local browser profile'));
   const sessions = learner().sessions;
-  const quizzes = sessions.filter((s) => s.mode === 'quiz');
+  const quizzes = sessions.filter((s) => assessed(s.mode));
   const best = quizzes.length
     ? Math.max(...quizzes.map((s) => Math.round((s.score / s.total) * 100))) + '%'
     : '—';
@@ -212,7 +213,7 @@ export function renderProgress() {
   for (const [v, l] of [
     [sessions.length, 'Sessions'],
     [new Set(sessions.map((s) => s.route)).size, 'Routes rehearsed'],
-    [best, 'Best quiz'],
+    [best, 'Best recall score'],
   ]) {
     const d = document.createElement('div');
     const b = document.createElement('strong');
@@ -235,7 +236,7 @@ export function renderProgress() {
       const d = document.createElement('div');
       const sm = document.createElement('small');
       d.className = 'history-row';
-      d.textContent = `${routeLabel(s.route)} · ${s.mode === 'quiz' ? `Quiz ${s.score}/${s.total}` : 'Guided rehearsal'}`;
+      d.textContent = `${routeLabel(s.route)} · ${modeLabel(s.mode)}${assessed(s.mode) ? ` ${s.score}/${s.total}` : ''} · ${s.difficulty ?? 'beginner'} · ${s.hintsUsed ?? 0} hints`;
       sm.textContent = new Date(s.completedAt).toLocaleString() + ' · ' + s.profile;
       d.append(sm);
       $('history').append(d);
@@ -267,6 +268,8 @@ export function wireProgressDialog() {
           id: crypto.randomUUID(),
           route: s.route,
           mode: s.mode,
+          difficulty: s.difficulty ?? 'beginner',
+          hintsUsed: s.hintsUsed ?? 0,
           completedAt: s.completedAt,
           score: s.score,
           total: s.total,

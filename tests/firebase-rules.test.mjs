@@ -90,3 +90,37 @@ test('track metadata cannot point to another account', async () => {
     setDoc(doc(db, 'users/alice/tracks/foreign'), {...data, path: 'users/bob/tracks/foreign.json'}),
   );
 });
+
+test('new assessment modes persist difficulty and hint metadata without allowing invalid levels', async () => {
+  const db = environment.authenticatedContext('training-student').firestore();
+  for (const mode of ['landmarks', 'decisions', 'exam']) {
+    await assertSucceeds(
+      setDoc(doc(db, `users/training-student/sessions/${mode}`), {
+        ...session,
+        id: mode,
+        mode,
+        difficulty: 'advanced',
+        hintsUsed: 0,
+      }),
+    );
+  }
+  await assertSucceeds(
+    setDoc(doc(db, 'users/training-student/sessions/practice'), {
+      ...session,
+      id: 'practice',
+      mode: 'practice',
+      difficulty: 'intermediate',
+      hintsUsed: 2,
+      score: null,
+      total: null,
+    }),
+  );
+  await assertFails(
+    setDoc(doc(db, 'users/training-student/sessions/bad-level'), {
+      ...session,
+      id: 'bad-level',
+      mode: 'exam',
+      difficulty: 'invented',
+    }),
+  );
+});

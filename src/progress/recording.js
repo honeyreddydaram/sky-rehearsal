@@ -162,7 +162,7 @@ export function wireRecording() {
     $('recording-clear').click();
   });
   const controls =
-    '[data-route], [data-mode], [data-runway], #play, #restart, #timeline, #wind-from, #wind-speed, #compensate, #flight-profile, #profile-open';
+    '[data-route], [data-mode], [data-runway], #play, #restart, #timeline, #wind-from, #wind-speed, #compensate, #flight-profile, #profile-open, #difficulty';
   for (const event of ['click', 'input', 'change']) {
     document.addEventListener(
       event,

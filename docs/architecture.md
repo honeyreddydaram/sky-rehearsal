@@ -71,3 +71,13 @@ Rules enforce UID ownership; roles come from trusted custom claims. The FastAPI
 backend verifies Firebase tokens with revocation checks before applying role checks.
 Instructor/school roles do not grant blanket access to private user data. Assignments
 and delegated school access are deferred to M9. See [Firebase setup](firebase.md).
+
+## Training engine (M5)
+
+`training/engine.mjs` owns deterministic question generation and assistance policy.
+`training/quiz.js` owns the question dialog and feedback timing. The existing flight
+clock gates assessed modes; it does not change physics by training difficulty.
+Map entities and the fallback consult the same assistance policy. Completed records
+retain difficulty and hint counts, with backwards-compatible backup and Firestore
+validation. See [mode definitions](training.md). No AI or performance-score engine is
+introduced by this milestone.

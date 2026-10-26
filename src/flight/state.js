@@ -58,7 +58,10 @@ export const demo = {
 // original app.js kept at module scope.
 export const state = {
   route: 'outer', // 'inner' | 'outer'
-  mode: 'guided', // 'guided' | 'quiz' | 'explore'
+  mode: 'guided',
+  difficulty: 'beginner',
+  hintsUsed: 0,
+  hintLevels: {}, // 'guided' | 'quiz' | 'explore'
   // 'overview' | 'follow' | 'pilot'. This raw default only matters before a Cesium
   // viewer exists (map.js can't position a pilot/follow camera without one) -- once
   // map.init() resolves, app.js's bootstrap calls map.setView('pilot') to make Pilot
@@ -133,6 +136,8 @@ export function waypoints() {
   if (circuit)
     return circuit.stages.slice(1, 6).map((stage) => ({
       p: stage.start,
+      landmarks: stage.landmarks,
+      nextLeg: stage.nextLeg,
       name: stage.name,
       cue: `${stage.expectedAction} Reference landmarks: ${stage.landmarks.map((c) => c.name + (c.side ? ` (${c.side})` : '')).join(', ')}. Geometry and flight values are illustrative, not instructor verified.`,
     }));

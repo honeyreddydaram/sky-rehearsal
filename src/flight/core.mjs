@@ -224,12 +224,16 @@ export function validateProgressBackup(d) {
     fail('This is not a supported progress backup.');
   for (const s of p.sessions) {
     const quizScoreOk =
-      s.mode !== 'quiz' || (Number.isInteger(s.score) && s.score >= 0 && s.score <= 5 && s.total === 5);
+      !['quiz', 'exam', 'landmarks', 'decisions'].includes(s.mode) ||
+      (Number.isInteger(s.score) && s.score >= 0 && s.score <= 5 && s.total === 5);
     if (
       !['inner', 'outer', 'circuit27', 'circuit09'].includes(s.route) ||
-      !['quiz', 'guided'].includes(s.mode) ||
+      !['quiz', 'guided', 'practice', 'landmarks', 'decisions', 'exam'].includes(s.mode) ||
       !Number.isFinite(Date.parse(s.completedAt)) ||
       typeof s.profile !== 'string' ||
+      (s.difficulty !== undefined &&
+        !['beginner', 'intermediate', 'advanced', 'examiner'].includes(s.difficulty)) ||
+      (s.hintsUsed !== undefined && (!Number.isInteger(s.hintsUsed) || s.hintsUsed < 0)) ||
       !quizScoreOk
     )
       fail('Backup contains invalid session data.');

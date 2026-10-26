@@ -179,3 +179,83 @@ test('GPX overlay and replay work in diagram fallback', async ({page}) => {
   await page.click('#recording-clear');
   await expect(page.locator('#diagram-recording')).toHaveCount(0);
 });
+
+test('difficulty removes diagram assistance and exam defers answer feedback', async ({page}) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      return String(type).includes('webgl') ? null : original.call(this, type, ...args);
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('#engine-status')).toHaveText('Study diagram');
+  await expect(page.locator('#diagram-planned')).toHaveCount(1);
+  await page.selectOption('#difficulty', 'intermediate');
+  await expect(page.locator('#waypoints')).toBeHidden();
+  await expect(page.locator('#diagram-planned')).toHaveCount(1);
+  await page.selectOption('#difficulty', 'advanced');
+  await expect(page.locator('#diagram-planned')).toHaveCount(0);
+  await expect(page.locator('#flight-phase')).toBeHidden();
+  await page.click('#training-hint-button');
+  await expect(page.locator('#training-hint')).toContainText('Recall the circuit sequence');
+  await page.click('[data-mode="exam"]');
+  await expect(page.locator('#training-hint-button')).toBeDisabled();
+  await expect(page.locator('#timeline')).toBeDisabled();
+  await expect(page.locator('#airfield-panel')).toBeHidden();
+  await page.evaluate(async () => {
+    const {state} = await import('/src/flight/state.js');
+    state.rate = 10000;
+  });
+  await page.click('#play');
+  for (let index = 0; index < 5; index++) {
+    await expect(page.locator('#quiz-dialog')).toBeVisible();
+    await expect(page.locator('#question-number')).toHaveText(`CHECKPOINT ${index + 1} OF 5`);
+    await expect(page.locator('#question-hint')).toBeDisabled();
+    await page.locator('#answers button').first().click();
+    await expect(page.locator('#answers .correct, #answers .incorrect')).toHaveCount(0);
+    await expect(page.locator('#feedback')).toContainText('after completion');
+    await page.click('#continue-quiz');
+  }
+  await expect(page.locator('#results-dialog')).toBeVisible();
+  await expect(page.locator('#result-review .review-row')).toHaveCount(5);
+  const sessions = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sky-rehearsal-learners-v1')).learners[0].sessions,
+  );
+  expect(sessions).toHaveLength(1);
+  expect(sessions[0]).toMatchObject({mode: 'exam', difficulty: 'advanced', hintsUsed: 0, total: 5});
+  await page.locator('#results-dialog [data-close]').click();
+  await page.click('[data-mode="guided"]');
+  await page.selectOption('#difficulty', 'beginner');
+  await expect(page.locator('#diagram-planned')).toHaveCount(1);
+  await expect(page.locator('#waypoints')).toBeVisible();
+});
+
+test('landmark and decision exercises use checkpoint questions; changing difficulty resets them', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).toContainText('NM');
+  await page.click('[data-mode="landmarks"]');
+  await page.evaluate(async () => {
+    const {state} = await import('/src/flight/state.js');
+    state.rate = 10000;
+  });
+  await page.click('#play');
+  await expect(page.locator('#question')).toContainText('reference notes');
+  await page.click('#question-hint');
+  await expect(page.locator('#question-hint-text')).toContainText('Recall the circuit sequence');
+  await page.locator('#answers button').first().click();
+  await expect(page.locator('#feedback')).not.toBeEmpty();
+  await page.click('#end-quiz');
+  await page.click('[data-mode="decisions"]');
+  await page.click('#play');
+  await expect(page.locator('#question')).toContainText('What follows');
+  await page.click('#end-quiz');
+  await page.click('[data-mode="practice"]');
+  await page.click('#training-hint-button');
+  await expect(page.locator('#training-hint')).not.toBeEmpty();
+  await page.selectOption('#difficulty', 'examiner');
+  await expect(page.locator('#training-hint')).toBeEmpty();
+  await expect(page.locator('#training-hint-button')).toBeDisabled();
+  await expect(page.locator('#percentage')).toHaveText('0%');
+});

@@ -9,11 +9,12 @@
 // this module (reset(), refresh()) when an attempt ends — importing each other would
 // create a cycle. Instead app.js registers quiz.beginQuestion via setQuizHandler().
 
+import {assessed, assistance, modeLabel, modeDescription, trainingHint} from '../training/engine.mjs';
 import {replay} from './recording.mjs';
 import {distance, at, headingText} from './core.mjs';
 import {state, demo, routeLabel, flightFrame, models, waypoints, stateAt, secondsAt} from './state.js';
 import {$, all, text, toast, callout, selectStates, showDialog} from '../ui/ui.js';
-import {renderPosition} from '../map/map.js';
+import {renderPosition, applyTrainingAssistance} from '../map/map.js';
 import {learner, save} from '../progress/progress.js';
 
 let onQuizCheckpoint = null;
@@ -39,7 +40,7 @@ export function waypointList() {
     title.textContent = w.name;
     b.append(num, title);
     b.onclick = () => {
-      if (state.mode === 'quiz') {
+      if (assessed(state.mode)) {
         toast('Complete each question in order during a quiz.');
         return;
       }
@@ -70,6 +71,10 @@ export function reset() {
   state.seen.clear();
   state.customSeen.clear();
   state.answers = [];
+  state.hintsUsed = 0;
+  state.hintLevels = {};
+  text('question-hint-text', '');
+  text('training-hint', '');
   state.pending = null;
   state.t = 0;
   state.sessionId = crypto.randomUUID();
@@ -77,10 +82,21 @@ export function reset() {
   window.speechSynthesis?.cancel();
   waypointList();
   selectStates(state);
+  $('difficulty').value = state.difficulty;
+  applyTrainingAssistance();
+  const aids = assistance(state.mode, state.difficulty);
+  $('training-hint-button').disabled = !aids.hints;
+  $('waypoints').hidden = !aids.markers;
+  $('flight-phase').hidden = !aids.headingHints;
+  $('airfield-panel').hidden = !aids.reference;
+  text(
+    'training-policy',
+    `${modeLabel(state.mode)} · ${state.difficulty}. ${modeDescription(state.mode)} Changing mode or difficulty restarts the attempt.`,
+  );
   refresh();
   callout(
     'READY WHEN YOU ARE',
-    state.mode === 'quiz'
+    assessed(state.mode)
       ? 'The flight will pause before each checkpoint. Answer five questions to complete your attempt.'
       : 'Start your rehearsal. Listen for cues, pause, and look around.',
     false,
@@ -115,7 +131,7 @@ export function refresh() {
     `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')} elapsed`,
   );
   $('timeline').value = Math.round(state.t * 1000);
-  $('timeline').disabled = state.mode === 'quiz';
+  $('timeline').disabled = assessed(state.mode);
   text(
     'play',
     state.playing
@@ -146,15 +162,17 @@ function finish() {
   state.playing = false;
   state.completed = true;
   const loggable =
-    state.eligible && state.mode !== 'explore' && (state.mode !== 'quiz' || state.answers.length === 5);
+    state.eligible && state.mode !== 'explore' && (!assessed(state.mode) || state.answers.length === 5);
   if (loggable) {
     const record = {
       id: state.sessionId,
       route: state.route,
       mode: state.mode,
+      difficulty: state.difficulty,
+      hintsUsed: state.hintsUsed,
       completedAt: new Date().toISOString(),
-      score: state.mode === 'quiz' ? state.answers.filter((a) => a.passed).length : null,
-      total: state.mode === 'quiz' ? 5 : null,
+      score: assessed(state.mode) ? state.answers.filter((a) => a.passed).length : null,
+      total: assessed(state.mode) ? 5 : null,
       profile: state.profile.name,
       windFrom: state.windFrom,
       windSpeed: state.windSpeed,
@@ -166,20 +184,24 @@ function finish() {
       learner().sessions = learner().sessions.slice(-300);
       save();
     }
-    text('result-title', state.mode === 'quiz' ? `${record.score} / 5 — quiz complete` : 'Route rehearsed');
+    text(
+      'result-title',
+      assessed(state.mode) ? `${record.score} / 5 — ${modeLabel(state.mode)} complete` : 'Route rehearsed',
+    );
     text('result-body', `${routeLabel()} saved to ${learner().name}’s flight log.`);
     $('result-review').replaceChildren();
     state.answers.forEach((a) => {
       const p = document.createElement('p');
       p.className = 'review-row';
-      p.textContent = (a.passed ? '✓ ' : '↺ ') + a.waypoint + ' · ' + a.correct;
+      p.textContent =
+        (a.passed ? '✓ ' : '↺ ') + a.waypoint + ' · Your answer: ' + a.selected + ' · Expected: ' + a.correct;
       $('result-review').append(p);
     });
     showDialog('results-dialog');
   } else {
     callout(
       'EXPLORATION COMPLETE',
-      'Start a full guided rehearsal or quiz to add a session to your flight log.',
+      'Complete a full training session without skipping to add it to your flight log.',
       false,
     );
   }
@@ -201,21 +223,22 @@ function step(dt) {
   for (const [i, w] of waypoints().entries()) {
     // In quiz mode the gate sits slightly before the waypoint so the question
     // appears just ahead of it, not exactly on top of it.
-    const gate = state.mode === 'quiz' ? Math.max(0, w.p - 0.028) : w.p;
+    const gate = assessed(state.mode) ? Math.max(0, w.p - 0.028) : w.p;
     if (!state.seen.has(i) && state.t <= gate && next >= gate) {
       state.t = gate;
-      if (state.mode === 'quiz') {
+      if (assessed(state.mode)) {
         onQuizCheckpoint?.(i);
         return;
       }
       state.seen.add(i);
-      if (state.mode === 'guided') callout(w.name, w.cue);
+      if (state.mode === 'guided' && assistance(state.mode, state.difficulty).hints)
+        callout(w.name, trainingHint(w, state.difficulty, 1));
     }
   }
   for (const [i, c] of (state.profile.callouts || []).entries()) {
     if (!state.customSeen.has(i) && c.progress >= state.t && c.progress <= next) {
       state.customSeen.add(i);
-      if (state.mode === 'guided') callout('PROFILE CALLOUT', c.text);
+      if (state.mode === 'guided' && state.difficulty === 'beginner') callout('PROFILE CALLOUT', c.text);
     }
   }
   state.t = next;
@@ -242,7 +265,8 @@ export function startLoop() {
 export function resumeAfterCheckpoint(index) {
   state.seen.add(index);
   const w = waypoints()[index];
-  callout(w.name, w.cue);
+  if (state.mode === 'exam') callout('EXAM IN PROGRESS', 'Continue to the next question.', false);
+  else callout(w.name, w.cue);
   state.pending = null;
   state.playing = true;
   last = performance.now();
@@ -260,7 +284,7 @@ export function wireControls() {
       state.started = true;
       if (state.t !== 0) state.eligible = false; // resuming mid-route won't be logged
       callout(
-        state.mode === 'quiz' ? 'QUIZ FLIGHT' : 'REHEARSAL IN PROGRESS',
+        assessed(state.mode) ? modeLabel(state.mode).toUpperCase() : 'REHEARSAL IN PROGRESS',
         'Follow the route and study the surroundings.',
       );
     }
@@ -273,7 +297,7 @@ export function wireControls() {
     state.rate = +e.target.value;
   };
   $('timeline').oninput = (e) => {
-    if (state.mode === 'quiz') return;
+    if (assessed(state.mode)) return;
     state.t = +e.target.value / 1000;
     state.playing = false;
     state.eligible = false;
@@ -288,4 +312,20 @@ export function wireControls() {
     );
     refresh();
   };
+}
+
+export function requestHint() {
+  if (!assistance(state.mode, state.difficulty).hints) return;
+  const checkpoints = waypoints();
+  const index =
+    state.pending ??
+    Math.max(
+      0,
+      checkpoints.findLastIndex((w) => w.p <= state.t),
+    );
+  const hint = trainingHint(checkpoints[index], state.difficulty, state.hintLevels[index] ?? 0);
+  text('training-hint', hint);
+  text('question-hint-text', hint);
+  state.hintLevels[index] = (state.hintLevels[index] ?? 0) + 1;
+  state.hintsUsed++;
 }

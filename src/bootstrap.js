@@ -91,6 +91,12 @@ ui.all('[data-mode]').forEach((b) => {
   };
 });
 
+ui.$('difficulty').onchange = (event) => {
+  state.difficulty = event.target.value;
+  playback.reset();
+};
+ui.$('training-hint-button').onclick = playback.requestHint;
+
 ui.$('flight-profile').onchange = (e) => progress.setProfile(e.target.value);
 
 // Wind scenario sliders — changing any of them restarts the session so the logged
