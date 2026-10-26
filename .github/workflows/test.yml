@@ -3,18 +3,45 @@ name: Test
 on:
   push:
   pull_request:
+  workflow_call:
 
 jobs:
-  test:
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - run: npm test
       - run: npm run lint
       - run: npm run format:check
+      - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: sky_rehearsal
+          POSTGRES_USER: sky_rehearsal
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sky_rehearsal -d sky_rehearsal"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sky_rehearsal:ci-only-password@localhost:5432/sky_rehearsal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: uv sync --project backend --frozen
+      - run: uv run --project backend --frozen pytest backend/tests

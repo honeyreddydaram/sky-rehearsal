@@ -12,16 +12,16 @@
 // pattern (map.setInteractionHandler, playback.setQuizHandler,
 // progress.setContextChangeHandler) wired up below.
 
-import {headingText} from './core.mjs';
-import {state, loadRouteData, rebuildTrace} from './state.js';
-import * as ui from './ui.js';
-import * as map from './map.js';
-import * as playback from './playback.js';
-import * as quiz from './quiz.js';
-import * as progress from './progress.js';
-import * as settings from './settings.js';
-import * as airport from './airport.js';
-import * as airfield from './airfield.js';
+import {headingText} from './flight/core.mjs';
+import {state, loadRouteData, rebuildTrace} from './flight/state.js';
+import * as ui from './ui/ui.js';
+import * as map from './map/map.js';
+import * as playback from './flight/playback.js';
+import * as quiz from './training/quiz.js';
+import * as progress from './progress/progress.js';
+import * as settings from './ui/settings.js';
+import * as airport from './aviation/airport.js';
+import * as airfield from './aviation/airfield.js';
 
 try {
   await loadRouteData();

@@ -6,7 +6,7 @@
 // data/aircraft/*.json — see airport.js for why it is not yet tied to the live
 // simulated flight.
 
-import {$, text, all} from './ui.js';
+import {$, text, all} from '../ui/ui.js';
 import {
   airport,
   airportState,
@@ -15,7 +15,7 @@ import {
   setActiveRunway,
   setSelectedRegistration,
 } from './airport.js';
-import {refreshAirportLayer, refreshLandmarksLayer, wireIdentify} from './map.js';
+import {refreshAirportLayer, refreshLandmarksLayer, wireIdentify} from '../map/map.js';
 
 function renderRunwaySelector() {
   all('[data-runway]').forEach((b) => {

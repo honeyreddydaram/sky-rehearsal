@@ -4,10 +4,10 @@
 // the attempt. playback.js calls into here via an injected handler (setQuizHandler in
 // playback.js) rather than an import, so the two files don't import each other.
 
-import {headingText} from './core.mjs';
-import {state, waypoints, planBearing} from './state.js';
-import {$, all, text, toast, showDialog} from './ui.js';
-import {reset, resumeAfterCheckpoint} from './playback.js';
+import {headingText} from '../flight/core.mjs';
+import {state, waypoints, planBearing} from '../flight/state.js';
+import {$, all, text, toast, showDialog} from '../ui/ui.js';
+import {reset, resumeAfterCheckpoint} from '../flight/playback.js';
 
 export function beginQuestion(index) {
   state.pending = index;

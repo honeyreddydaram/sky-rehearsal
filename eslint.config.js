@@ -1,40 +1,19 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
-export default [
+export default tseslint.config(
+  {ignores: ['node_modules/**', 'dist/**', 'public/cesium/**', 'test-results/**', 'playwright-report/**']},
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   prettier,
   {
-    ignores: ['node_modules/**'],
-  },
-  {
-    // Browser-facing modules: app.js, state.js, ui.js, map.js, playback.js, quiz.js,
-    // progress.js, settings.js, core.mjs.
-    files: ['*.js', '*.mjs'],
-    ignores: ['core.test.mjs'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        ...globals.browser,
-      },
-    },
+    files: ['**/*.{js,mjs,ts,tsx}'],
+    languageOptions: {globals: {...globals.browser, ...globals.node}},
     rules: {
-      'no-unused-vars': ['warn', {argsIgnorePattern: '^_'}],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', {argsIgnorePattern: '^_'}],
     },
   },
-  {
-    // Test files, one-off data-generation scripts, and e2e config all run under Node
-    // via the CLI, not in the browser. tests/smoke.spec.mjs executes in Node too (it
-    // drives a browser via Playwright, but the test file itself is a Node script).
-    files: ['core.test.mjs', 'scripts/**/*.mjs', 'tests/**/*.mjs', 'playwright.config.mjs'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-      },
-    },
-  },
-];
+);

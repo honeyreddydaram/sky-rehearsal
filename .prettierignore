@@ -6,3 +6,6 @@ aircraft.gltf
 style.css
 index.html
 README.md
+public/cesium/
+dist/
+.venv/

@@ -13,9 +13,9 @@
 // is the same inversion-of-control trick used in map.js (setInteractionHandler) and
 // playback.js (setQuizHandler) — see README "Architecture".
 
-import {profileAt, validateProfile, validateProgressBackup} from './core.mjs';
-import {state, demo, EGM2008_UNDULATION_M_VOHY} from './state.js';
-import {$, text, toast, download, showDialog} from './ui.js';
+import {profileAt, validateProfile, validateProgressBackup} from '../flight/core.mjs';
+import {state, demo, EGM2008_UNDULATION_M_VOHY} from '../flight/state.js';
+import {$, text, toast, download, showDialog} from '../ui/ui.js';
 
 const KEY = 'sky-rehearsal-learners-v1';
 

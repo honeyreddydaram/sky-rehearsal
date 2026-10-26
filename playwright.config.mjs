@@ -10,9 +10,14 @@ export default defineConfig({
   // failure, which wouldn't go away on retry.
   retries: process.env.CI ? 1 : 0,
   webServer: {
-    command: 'node tests/static-server.mjs',
+    command: 'npm run dev -- --host 127.0.0.1 --port 4173 --strictPort',
     url: 'http://localhost:4173/index.html',
     reuseExistingServer: !process.env.CI,
   },
-  use: {baseURL: 'http://localhost:4173'},
+  use: {
+    baseURL: 'http://localhost:4173',
+    launchOptions: {
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+    },
+  },
 });

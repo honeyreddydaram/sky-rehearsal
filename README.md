@@ -19,21 +19,75 @@ Use **Import profile → Download example** for the supported JSON structure. Re
 
 Importing a profile changes altitude, airspeed, and callouts; it does not replace the screenshot-derived horizontal route. Values interpolate between frames. Directions are true, not magnetic. Wind is a simplified constant-vector scenario, not a weather forecast or aircraft dynamics model.
 
-## Run and check
+## Develop
 
-Serve this folder with `python -m http.server 8000`, then open `http://localhost:8000`. Run `node core.test.mjs` for bearing, interpolation, profile validation, and wind-vector tests.
+Requires Node 24, Python 3.12+, and [uv](https://docs.astral.sh/uv/).
 
-GitHub Pages deploys via `.github/workflows/deploy.yml` on every push to `main` (after the same checks as above pass): it builds no bundle, just substitutes the real Cesium ion token into a copy of `ion-token.js` for the deployed output only, then publishes it. CesiumJS 1.121 and map assets require an internet connection.
+```sh
+npm ci
+npm run dev
+```
+
+Vite serves the React/TypeScript interface. CesiumJS 1.121, workers, and globe assets
+are installed from npm and served locally. Satellite/street imagery still needs
+internet access. No backend or token is required for local rehearsal.
+
+For the API and PostgreSQL (requires Docker Compose):
+
+```sh
+cp .env.example .env
+# Choose a local POSTGRES_PASSWORD in .env before starting PostgreSQL.
+docker compose up -d --wait db
+uv sync --project backend --frozen
+# Use the password chosen in .env; URL-encode special characters in DATABASE_URL.
+export DATABASE_URL='postgresql://sky_rehearsal:YOUR_LOCAL_PASSWORD@127.0.0.1:5432/sky_rehearsal'
+cd backend
+uv run --frozen uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+`GET /api/health` reports API liveness. `GET /api/ready` checks a real PostgreSQL
+connection and returns 503 if it is unavailable. API docs are at `/docs` on the
+API server. Vite forwards `/api` to port 8000 during development. The API currently
+provides infrastructure checks only; browser progress remains local until M4.
+
+## Check and build
+
+From the repository root:
+
+```sh
+npm test
+npm run lint
+npm run format:check
+npm run build
+npx playwright install --with-deps chromium
+npm run test:e2e
+uv run --project backend --frozen pytest backend/tests
+```
+
+Set `DATABASE_URL` before backend tests to include the PostgreSQL integration test;
+otherwise that one test is explicitly skipped. To use an installed Chromium instead
+of downloading Playwright's browser, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to
+its executable. Browser checks cover boot, route/mode selection, airport data,
+runway switching, map identification, cameras, and settings. Pilot view requires WebGL.
+
+`npm run build` type-checks the new TypeScript interface and produces `dist/`.
+`npm run preview` serves that output. GitHub Pages builds and deploys `dist/` after
+frontend and PostgreSQL-backed API checks pass. It hosts the frontend only; API/AWS
+deployment comes later. Do not serve the source with Python's static server anymore.
 
 ## Cesium ion token
 
-`ion-token.js` is committed with an empty `PUBLIC_ION_TOKEN`, so this repository's source and git history never contain a real token. The deploy workflow fills it in from the `CESIUM_ION_TOKEN` repository secret (Settings → Secrets and variables → Actions) only in what gets deployed — set or rotate it with:
+Basic globe and imagery need no token. For optional terrain and 3D buildings, paste
+a read-only Cesium ion token into Settings; it remains in that page session.
+GitHub Pages can supply the existing `CESIUM_ION_TOKEN` Actions secret as
+`VITE_CESIUM_ION_TOKEN` at build time. Every `VITE_` value is visible in the browser:
+restrict this token's allowed URLs and asset scope in Cesium ion. Never use a private
+server credential. Nothing writes tokens into committed source.
 
-```
-gh secret set CESIUM_ION_TOKEN
-```
+## Architecture and milestones
 
-That still means the token is visible to every visitor of the deployed page (view source, devtools, network tab) — Cesium ion tokens work like Mapbox/Google Maps JS keys, verified by domain restriction and asset scope, not by secrecy. In the Cesium ion dashboard (cesium.com/ion/tokens), restrict the token's **Allowed URLs** to this site's GitHub Pages domain and scope it to only the assets this app uses (Cesium World Terrain, OSM Buildings, and `geocode` if Google 3D should also work for visitors) — that way, if it's ever copied out and reused elsewhere, it won't work off this domain and can be rotated without touching broader account access. Running locally or on a branch other than `main`, `ion-token.js` stays empty and 3D detail requires pasting a token into Settings, same as before this existed.
+See [architecture](docs/architecture.md) for module responsibilities and the
+incremental migration boundary, and [milestones](docs/milestones.md) for delivery order.
 
 ## Scope and credits
 

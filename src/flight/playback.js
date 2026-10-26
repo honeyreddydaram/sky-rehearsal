@@ -11,9 +11,9 @@
 
 import {distance, at, headingText, elapsedAt} from './core.mjs';
 import {state, demo, models, waypoints, stateAt, secondsAt} from './state.js';
-import {$, all, text, toast, callout, selectStates, showDialog} from './ui.js';
-import {renderPosition} from './map.js';
-import {learner, save} from './progress.js';
+import {$, all, text, toast, callout, selectStates, showDialog} from '../ui/ui.js';
+import {renderPosition} from '../map/map.js';
+import {learner, save} from '../progress/progress.js';
 
 let onQuizCheckpoint = null;
 export function setQuizHandler(fn) {

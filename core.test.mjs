@@ -23,7 +23,7 @@ import {
   validateAircraftType,
   validateLandmarksData,
   nearestNamedPoint,
-} from './core.mjs';
+} from './src/flight/core.mjs';
 assert.equal(bearing([0, 0], [0, 1]), 0);
 assert.equal(bearing([0, 0], [1, 0]), 90);
 assert.equal(headingText(359.8), '000°T');
@@ -254,7 +254,7 @@ assert.throws(() => validateAircraftType({...goodAircraft, registrations: 'VT-AK
 // Integration check: every shipped data file must actually validate against its
 // schema, and the Cessna profile merge must work on the real files, not just fixtures.
 // This catches a data-file typo or schema drift at test time, before it reaches the UI.
-const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const readJson = (path) => JSON.parse(readFileSync(`public/${path}`, 'utf8'));
 
 validateRouteData(readJson('routes.json'));
 validateAirportData(readJson('data/airport-vohy.json'));

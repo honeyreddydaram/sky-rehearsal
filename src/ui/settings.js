@@ -7,8 +7,8 @@
 // so it's free to import playback.js directly for refresh() without risking a cycle.
 
 import {$, showDialog} from './ui.js';
-import {refresh} from './playback.js';
-import * as map from './map.js';
+import {refresh} from '../flight/playback.js';
+import * as map from '../map/map.js';
 
 export function init() {
   $('settings-open').onclick = () => showDialog('settings-dialog');

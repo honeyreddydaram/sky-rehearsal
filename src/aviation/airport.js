@@ -21,7 +21,7 @@ import {
   validateAircraftType,
   validateLandmarksData,
   resolveAircraftProfile,
-} from './core.mjs';
+} from '../flight/core.mjs';
 
 export let airport = null;
 export const circuits = {}; // '27' | '09' -> validated circuit data

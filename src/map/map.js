@@ -11,13 +11,13 @@
 // Instead the app bootstrap (app.js) hands this module a callback via
 // setInteractionHandler(), and we call that instead of importing playback.js.
 
-import {rad, deg, resolveRunwayEnds, nearestNamedPoint} from './core.mjs';
-import {state, models, routeData, getTrackPoints, heightAt} from './state.js';
-import {$, all, text, toast, selectStates} from './ui.js';
-import {airport, activeCircuit, circuits, landmarks} from './airport.js';
+import {rad, deg, resolveRunwayEnds, nearestNamedPoint} from '../flight/core.mjs';
+import {state, models, routeData, getTrackPoints, heightAt} from '../flight/state.js';
+import {$, all, text, toast, selectStates} from '../ui/ui.js';
+import {airport, activeCircuit, circuits, landmarks} from '../aviation/airport.js';
 import {PUBLIC_ION_TOKEN} from './ion-token.js';
 
-const C = window.Cesium;
+import * as C from 'cesium';
 
 // Pilot-view tuning constants (see the ground-rules message for Phase 2b): a natural
 // forward-looking pitch and field of view so the Pilot camera reads like a real
