@@ -19,6 +19,14 @@ Use **Import profile → Download example** for the supported JSON structure. Re
 
 Importing a profile changes altitude, airspeed, and callouts; it does not replace the screenshot-derived horizontal route. Values interpolate between frames. Directions are true, not magnetic. Wind is a simplified constant-vector scenario, not a weather forecast or aircraft dynamics model.
 
+## Cloud direction
+
+Future milestones prioritize **Firebase and Google Cloud**: Firebase Authentication,
+Firestore, Cloud Storage, Firebase Hosting, and Cloud Run for FastAPI. See the
+[service plan](docs/google-cloud.md). The PostgreSQL instructions below describe
+the existing M1 scaffold; new account/session storage will use Firestore in M4.
+Firebase resources have not yet been configured or deployed.
+
 ## Develop
 
 Requires Node 24, Python 3.12+, and [uv](https://docs.astral.sh/uv/).
@@ -72,7 +80,7 @@ runway switching, map identification, cameras, and settings. Pilot view requires
 
 `npm run build` type-checks the new TypeScript interface and produces `dist/`.
 `npm run preview` serves that output. GitHub Pages builds and deploys `dist/` after
-frontend and PostgreSQL-backed API checks pass. It hosts the frontend only; API/AWS
+frontend and PostgreSQL-backed API checks pass. It hosts the frontend only; API/Google Cloud
 deployment comes later. Do not serve the source with Python's static server anymore.
 
 ## Cesium ion token

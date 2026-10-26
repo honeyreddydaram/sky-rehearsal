@@ -41,9 +41,9 @@ vertices. Straight segments have instantaneous turns, not bank dynamics. All
 geometry remains unverified, and altitude/speed schedules are demo targets rather
 than reviewed aircraft performance. Instructor/recorded-flight validation is still
 required. The screenshot-derived loops remain available as legacy routes. Browser-only learners
-are not authenticated accounts (M4). No production database schema, AWS resources,
+are not authenticated accounts (M4). No production database schema, Google Cloud resources,
 or authentication is implied by the health endpoints. GitHub Pages serves only
-static frontend files. AWS deployment and its security/operations work belong to M10.
+static frontend files. Google Cloud deployment and its security/operations work belong to M10.
 
 The product remains ground-based familiarization software. Aviation data retains
 its source, confidence, and confirmation notes; unverified geometry is not promoted
@@ -57,3 +57,12 @@ shared `replay.sample` lets the map follow a recording without changing the scor
 rehearsal's state or route. The map owns the recording polyline and diagram overlay.
 No backend or new dependency is needed. Clearing removes the overlay and restores
 the simulated aircraft; import failure preserves the previous recording.
+
+## Cloud direction
+
+Future implementation prioritizes Firebase and Google Cloud as requested. See
+[service choices](google-cloud.md). The existing PostgreSQL health-check scaffold
+is a legacy M1 capability, not the database choice for new account/session features.
+M4 will replace that dependency with Firebase Auth, Firestore, and Cloud Storage
+and update readiness checks, local emulators, and CI together. These services are
+planned, not configured or deployed yet.
