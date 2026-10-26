@@ -8,6 +8,7 @@ from firebase_admin import auth, firestore, credentials
 from google.auth.credentials import AnonymousCredentials
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from app.conditions import AudioRequest, latest_metar, transcribe
 from app.instructor import CoachingContext, configuration, generate, reserve_request
 
 app = FastAPI(title="SkyRehearsal API", version="0.2.0")
@@ -92,3 +93,16 @@ def instructor(context: CoachingContext, user: Annotated[dict, Depends(identity)
     config = configuration()
     reserve_request(firebase_app(), user["uid"])
     return generate(context, config)
+
+
+@app.get("/api/weather/metar")
+def metar():
+    return latest_metar()
+
+
+@app.post("/api/radio/transcribe")
+def radio_transcribe(body: AudioRequest, user: Annotated[dict, Depends(identity)]):
+    if not os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("FIREBASE_AUTH_EMULATOR_HOST"):
+        raise HTTPException(503, "Google Cloud Speech is not configured")
+    reserve_request(firebase_app(), user["uid"])
+    return transcribe(body)

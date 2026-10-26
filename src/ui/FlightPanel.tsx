@@ -110,6 +110,44 @@ export default function FlightPanel() {
         <button id="instructor-hint">Study hint / next hint</button>
         <div id="instructor-content" aria-live="polite"></div>
       </section>
+      <section className="panel" aria-label="Radio practice">
+        <h2>Radio readback practice</h2>
+        <p className="micro">
+          Ground exercise using local fleet call signs; not live ATC. Phraseology needs instructor review.
+          Radio results stay separate from flight scores.
+        </p>
+        <label>
+          Leg
+          <select id="radio-phase" defaultValue="downwind">
+            <option value="downwind">Downwind</option>
+            <option value="base">Base</option>
+            <option value="final">Final</option>
+          </select>
+        </label>
+        <button id="radio-new">New tower prompt</button>
+        <button id="radio-listen" disabled>
+          Listen to tower
+        </button>
+        <p id="radio-tower"></p>
+        <label>
+          Your readback
+          <textarea id="radio-readback" rows={2} maxLength={500} />
+        </label>
+        <button id="radio-check" disabled>
+          Check readback
+        </button>
+        <button id="radio-record" disabled>
+          Record with Google transcription
+        </button>
+        <button id="radio-stop" disabled>
+          Stop recording
+        </button>
+        <p id="radio-result" role="status"></p>
+        <p className="micro">
+          Recording sends up to 15 seconds of audio to Google Cloud Speech-to-Text when you stop. Sign-in
+          required; typing works without cloud access. Review the transcript before checking.
+        </p>
+      </section>
       <RecordingPanel />
       <div className="panel callout">
         <span className="callout-icon">◎</span>

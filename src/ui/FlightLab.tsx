@@ -6,13 +6,38 @@ export default function FlightLab() {
         <h2>Flight lab</h2>
         <span className="step">02</span>
       </div>
+      <h3>Weather rehearsal</h3>
+      <label>
+        Scenario
+        <select id="weather-scenario" defaultValue="calm">
+          <option value="calm">Calm / standard</option>
+          <option value="westerly">Westerly wind</option>
+          <option value="crosswind">Crosswind exercise</option>
+        </select>
+      </label>
+      <button id="weather-load">Load latest VOHY METAR</button>
+      <label>
+        Or paste METAR
+        <textarea id="weather-metar" maxLength={1500} rows={2} />
+      </label>
+      <button id="weather-decode">Decode observation</button>
+      <button id="weather-apply" disabled>
+        Practice these conditions
+      </button>
+      <p id="weather-status" role="status" className="micro">
+        Training scenario · calm / standard.
+      </p>
+      <p className="micro">
+        Only steady wind drives the route. QNH and temperature affect imported aircraft IAS-to-TAS conversion.
+        Visibility, clouds and gusts are briefing values; no cloud or turbulence physics.
+      </p>
       <h3>Wind scenario</h3>
       <p className="micro">
-        Compare the planned route with a steady wind’s effect. This is a training scenario, not live weather.
+        Compare the planned route with a steady wind’s effect. Manual changes create a new training scenario.
       </p>
       <label>
         Wind from <span id="wind-from-value">270°T</span>
-        <input id="wind-from" type="range" min="0" max="350" step="10" defaultValue="270" />
+        <input id="wind-from" type="range" min="0" max="360" step="1" defaultValue="270" />
       </label>
       <label>
         Wind speed <span id="wind-speed-value">0 kt</span>
@@ -39,6 +64,25 @@ export default function FlightLab() {
         Without correction, the aircraft follows the planned heading while wind moves its ground track.
       </p>
       <hr />
+      <h3>Aircraft performance</h3>
+      <label>
+        Training type
+        <select id="performance-type" defaultValue="none">
+          <option value="none">Demo — no reviewed type performance</option>
+          <option value="c152">C152</option>
+          <option value="c172r">C172R</option>
+          <option value="c172s">C172S</option>
+          <option value="da42ng">DA42 NG</option>
+        </select>
+      </label>
+      <button id="performance-template">Download POH input template</button>
+      <label>
+        Import reviewed aircraft JSON
+        <input type="file" id="performance-file" accept=".json,application/json" />
+      </label>
+      <p id="performance-status" role="status" className="micro">
+        No reviewed POH values supplied. Demo speeds remain active.
+      </p>
       <h3>Altitude &amp; speed</h3>
       <select id="flight-profile" aria-label="Flight profile">
         <option defaultValue="demo">Demo familiarization profile</option>

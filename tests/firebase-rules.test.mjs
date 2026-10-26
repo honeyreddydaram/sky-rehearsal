@@ -157,3 +157,84 @@ test('debrief summaries can be saved on private sessions/tracks; unsupported ver
     ),
   );
 });
+
+test('completed sessions retain bounded weather and aircraft inputs privately', async () => {
+  const db = environment.authenticatedContext('conditions-owner').firestore();
+  const conditions = {
+    version: 1,
+    weather: {
+      source: 'Training scenario',
+      observedAt: null,
+      qnh: 1008,
+      temperature: 30,
+      visibilityM: 8000,
+      clouds: 'SCT030',
+      gustKt: null,
+    },
+    aircraft: null,
+  };
+  await assertSucceeds(
+    setDoc(doc(db, 'users/conditions-owner/sessions/weather'), {
+      ...session,
+      id: 'weather',
+      environment: conditions,
+    }),
+  );
+  await assertFails(
+    getDoc(
+      doc(
+        environment.authenticatedContext('other-student').firestore(),
+        'users/conditions-owner/sessions/weather',
+      ),
+    ),
+  );
+  await assertFails(
+    setDoc(doc(db, 'users/conditions-owner/sessions/bad-weather'), {
+      ...session,
+      id: 'bad-weather',
+      environment: {...conditions, weather: {...conditions.weather, qnh: 0}},
+    }),
+  );
+});
+
+test('aircraft performance snapshots require bounded numeric phase speeds', async () => {
+  const db = environment.authenticatedContext('performance-owner').firestore();
+  const weather = {
+    source: 'Training scenario',
+    observedAt: null,
+    qnh: 1013,
+    temperature: 20,
+    visibilityM: 10000,
+    clouds: 'Clear',
+    gustKt: null,
+  };
+  const aircraft = {
+    version: 1,
+    typeCode: 'c152',
+    source: 'Fixture',
+    reference: 'Synthetic, not POH',
+    reviewedBy: 'Test reviewer',
+    bankDeg: 20,
+    phaseSpeedsKias: Object.fromEntries(
+      ['takeoff', 'upwind', 'crosswind', 'downwind', 'base', 'final', 'landing'].map((p) => [p, 80]),
+    ),
+  };
+  await assertSucceeds(
+    setDoc(doc(db, 'users/performance-owner/sessions/performance'), {
+      ...session,
+      id: 'performance',
+      environment: {version: 1, weather, aircraft},
+    }),
+  );
+  await assertFails(
+    setDoc(doc(db, 'users/performance-owner/sessions/bad-performance'), {
+      ...session,
+      id: 'bad-performance',
+      environment: {
+        version: 1,
+        weather,
+        aircraft: {...aircraft, phaseSpeedsKias: {...aircraft.phaseSpeedsKias, final: 'invalid'}},
+      },
+    }),
+  );
+});

@@ -359,3 +359,162 @@ test('adaptive instructor progresses hints and respects assessment policy', asyn
   await page.click('#instructor-hint');
   await expect(page.locator('#instructor-content')).toContainText('What comes next?');
 });
+
+test('weather observations require fresh steady wind and apply a reproducible scenario', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).toContainText('NM');
+  const now = new Date();
+  const stamp = [now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes()]
+    .map((n) => String(n).padStart(2, '0'))
+    .join('');
+  await page.route('**/api/weather/metar', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({raw: `VOHY ${stamp}Z 27010G20KT 8000 SCT030 30/22 Q1008`}),
+    }),
+  );
+  await page.click('#weather-load');
+  await expect(page.locator('#weather-status')).toContainText('QNH 1008');
+  await page.click('#play');
+  await page.click('#weather-apply');
+  await expect(page.locator('#percentage')).toHaveText('0%');
+  await expect(page.locator('#weather-status')).toContainText('Applied VOHY observation');
+  expect(
+    await page.evaluate(async () => {
+      const {state} = await import('/src/flight/state.js');
+      return [state.windSpeed, state.weather.qnh];
+    }),
+  ).toEqual([10, 1008]);
+  await page.fill('#weather-metar', `VOHY ${stamp}Z VRB05KT CAVOK 20/10 Q1013`);
+  await page.click('#weather-decode');
+  await expect(page.locator('#weather-apply')).toBeDisabled();
+  await expect(page.locator('#weather-status')).toContainText('Variable wind');
+  await page.selectOption('#weather-scenario', 'crosswind');
+  expect(
+    await page.evaluate(async () => {
+      const {state} = await import('/src/flight/state.js');
+      return state.windSpeed;
+    }),
+  ).toBe(12);
+  await page.locator('#wind-speed').press('ArrowRight');
+  await expect(page.locator('#weather-status')).toContainText('Manual scenario');
+});
+
+test('reviewed aircraft inputs change the flight and radio readbacks stay separate from scores', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).toContainText('NM');
+  const upload = async (type, speed) =>
+    page.locator('#performance-file').setInputFiles({
+      name: `${type}.json`,
+      mimeType: 'application/json',
+      buffer: Buffer.from(
+        JSON.stringify({
+          version: 1,
+          typeCode: type,
+          source: 'Synthetic test source',
+          reference: 'Fixture — not POH',
+          reviewedBy: 'Test reviewer',
+          bankDeg: 20,
+          phaseSpeedsKias: Object.fromEntries(
+            ['takeoff', 'upwind', 'crosswind', 'downwind', 'base', 'final', 'landing'].map((phase) => [
+              phase,
+              speed,
+            ]),
+          ),
+        }),
+      ),
+    });
+  const duration = () =>
+    page.evaluate(async () => {
+      const {secondsAt} = await import('/src/flight/state.js');
+      return secondsAt(1);
+    });
+  await upload('c152', 65);
+  await expect(page.locator('#performance-status')).toContainText('C152');
+  const slower = await duration();
+  await upload('da42ng', 100);
+  await expect(page.locator('#performance-status')).toContainText('DA42NG');
+  expect(await duration()).toBeLessThan(slower);
+  await page.click('[data-route="inner"]');
+  expect(
+    await page.evaluate(async () => {
+      const {activePerformance} = await import('/src/flight/state.js');
+      return activePerformance();
+    }),
+  ).toBeNull();
+  await expect(page.locator('#profile-source')).toContainText('Demo altitude');
+  await page.click('[data-route="circuit"]');
+  await page.selectOption('#performance-type', 'c172r');
+  await expect(page.locator('#performance-status')).toContainText('Demo speeds remain active');
+  await page.click('#radio-new');
+  await expect(page.locator('#radio-tower')).toContainText('November, report downwind runway 2 7');
+  await page.fill('#radio-readback', 'November downwind runway two seven');
+  await page.click('#radio-check');
+  await expect(page.locator('#radio-result')).toContainText('expected call sign');
+  await page.fill('#radio-readback', 'November base runway zero nine');
+  await page.click('#radio-check');
+  await expect(page.locator('#radio-result')).toContainText('correct circuit leg, correct runway');
+  await page.click('#radio-record');
+  await expect(page.locator('#radio-result')).toContainText('Sign in for Google transcription');
+  await page.click('[data-mode="exam"]');
+  await expect(page.locator('#radio-tower')).toHaveText('Choose a tower prompt.');
+  await page.click('#radio-new');
+  await expect(page.locator('#radio-result')).toContainText('separate from exams');
+});
+
+test('restored progress retains weather and wind settings', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).toContainText('NM');
+  const environment = {
+    version: 1,
+    aircraft: null,
+    weather: {
+      source: 'Fixture weather',
+      observedAt: null,
+      qnh: 1008,
+      temperature: 30,
+      visibilityM: 8000,
+      clouds: 'SCT030',
+      gustKt: null,
+    },
+  };
+  const backup = {
+    schemaVersion: 1,
+    learner: {
+      name: 'Backup fixture',
+      flightProfiles: [],
+      sessions: [
+        {
+          route: 'circuit27',
+          mode: 'guided',
+          completedAt: new Date().toISOString(),
+          profile: 'Demo',
+          windFrom: 270,
+          windSpeed: 10,
+          correctWind: true,
+          environment,
+        },
+      ],
+    },
+  };
+  await page.click('#profile-open');
+  await page.locator('#restore-progress').setInputFiles({
+    name: 'backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup)),
+  });
+  await expect(page.locator('#profile-open')).toContainText('Backup fixture');
+  const restored = await page.evaluate(async () => {
+    const {learner} = await import('/src/progress/progress.js');
+    const session = learner().sessions[0];
+    return {
+      windFrom: session.windFrom,
+      windSpeed: session.windSpeed,
+      correctWind: session.correctWind,
+      environment: session.environment,
+    };
+  });
+  expect(restored).toEqual({windFrom: 270, windSpeed: 10, correctWind: true, environment});
+});

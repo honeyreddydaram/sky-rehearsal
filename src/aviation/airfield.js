@@ -76,7 +76,7 @@ function renderConcepts() {
   add('AGL', 'Above Ground Level — height above the ground directly below the aircraft, not sea level.');
   add(
     'QNH',
-    'The altimeter setting that makes it read AMSL at the field; shown on today’s METAR once Phase 3 adds live weather.',
+    'The altimeter setting that makes it read AMSL at the field; available in the weather rehearsal panel when an observation can be decoded.',
   );
   const alt = airport.circuitAltitude;
   add(
@@ -123,7 +123,7 @@ function refreshAll() {
   refreshAirportLayer();
 }
 
-export function init(onRunwayChange = () => {}) {
+export function init(onRunwayChange = () => {}, onAircraftChange = () => {}) {
   renderConcepts();
   renderAircraftOptions();
   refreshAll();
@@ -141,5 +141,6 @@ export function init(onRunwayChange = () => {}) {
   $('aircraft-select').onchange = (e) => {
     setSelectedRegistration(e.target.value || null);
     renderAircraftNote();
+    onAircraftChange();
   };
 }

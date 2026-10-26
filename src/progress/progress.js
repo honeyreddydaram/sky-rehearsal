@@ -15,7 +15,14 @@
 import {renderDebrief} from '../training/debrief.js';
 import {assessed, modeLabel} from '../training/engine.mjs';
 import {validateProfile, validateProgressBackup} from '../flight/core.mjs';
-import {state, demo, routeLabel, flightFrame, EGM2008_UNDULATION_M_VOHY} from '../flight/state.js';
+import {
+  state,
+  demo,
+  routeLabel,
+  flightFrame,
+  EGM2008_UNDULATION_M_VOHY,
+  activePerformance,
+} from '../flight/state.js';
 import {$, text, toast, download, showDialog} from '../ui/ui.js';
 
 const KEY = 'sky-rehearsal-learners-v1';
@@ -129,11 +136,13 @@ function chart() {
     `<text x="0" y="10" fill="#97a7bf" font-size="9">${Math.round(min)}–${Math.round(max)} ft · ${state.profile === demo ? 'demo' : state.profile.altitudeReference}</text>`;
 }
 
-function profileCopy() {
+export function profileCopy() {
   text(
     'profile-source',
     state.profile === demo
-      ? 'Demo altitude and TAS schedule · ft AMSL.'
+      ? activePerformance()
+        ? `${state.performance.typeCode.toUpperCase()} reviewed-input IAS converted to TAS using scenario density · demo altitude schedule.`
+        : 'Demo altitude and TAS schedule · ft AMSL.'
       : state.profile.source +
           ' · ' +
           (state.profile.altitudeReference === 'MSL' ? 'ft AMSL' : 'ellipsoid height') +
@@ -241,6 +250,11 @@ export function renderProgress() {
       d.textContent = `${routeLabel(s.route)} · ${modeLabel(s.mode)}${assessed(s.mode) ? ` ${s.score}/${s.total}` : ''} · ${s.difficulty ?? 'beginner'} · ${s.hintsUsed ?? 0} hints`;
       sm.textContent = new Date(s.completedAt).toLocaleString() + ' · ' + s.profile;
       d.append(sm);
+      if (s.environment) {
+        const conditions = document.createElement('small');
+        conditions.textContent = `${s.environment.aircraft?.typeCode.toUpperCase() ?? 'Profile schedule'} · ${s.environment.weather.source} · QNH ${s.environment.weather.qnh} hPa · ${s.environment.weather.temperature}°C`;
+        d.append(conditions);
+      }
       if (s.debrief) {
         const button = document.createElement('button');
         button.textContent = 'View debrief';
@@ -284,6 +298,10 @@ export function wireProgressDialog() {
           profile: s.profile,
           answers: [],
           debrief: s.debrief ?? null,
+          ...(s.environment ? {environment: s.environment} : {}),
+          ...(s.windFrom !== undefined ? {windFrom: s.windFrom} : {}),
+          ...(s.windSpeed !== undefined ? {windSpeed: s.windSpeed} : {}),
+          ...(s.correctWind !== undefined ? {correctWind: s.correctWind} : {}),
         })),
         flightProfiles: checked.flightProfiles.map((f) => ({...validateProfile(f), id: crypto.randomUUID()})),
       };

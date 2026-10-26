@@ -1,7 +1,7 @@
 import {test, expect} from '@playwright/test';
 
 test('account progress and flights follow the user across fresh browsers', async ({browser}) => {
-  test.setTimeout(60000);
+  test.setTimeout(90000);
   const email = `student-${Date.now()}@example.test`,
     password = 'Local-test-password-123';
   const first = await browser.newContext();
@@ -39,6 +39,54 @@ test('account progress and flights follow the user across fresh browsers', async
   available = false;
   await page.locator('#instructor-content button').click();
   await expect(page.locator('#instructor-content')).toContainText('Gemini is unavailable');
+  // Exercise microphone lifecycle and transcript review with synthetic audio/model output.
+  await page.evaluate(() => {
+    window.testMicrophoneStopped = false;
+    navigator.mediaDevices.getUserMedia = async () => ({
+      getTracks: () => [
+        {
+          stop: () => {
+            window.testMicrophoneStopped = true;
+          },
+        },
+      ],
+    });
+    window.MediaRecorder = class {
+      static isTypeSupported() {
+        return true;
+      }
+      state = 'inactive';
+      start() {
+        this.state = 'recording';
+      }
+      stop() {
+        this.state = 'inactive';
+        this.ondataavailable({data: new Blob([new Uint8Array([26, 69, 223, 163, 0])])});
+        void this.onstop();
+      }
+    };
+  });
+  await page.route('**/api/radio/transcribe', async (route) => {
+    expect(route.request().headers().authorization).toMatch(/^Bearer /);
+    expect(route.request().postDataJSON().audio).toBeTruthy();
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        transcript: 'November downwind runway two seven',
+        source: 'Google Cloud Speech-to-Text',
+      }),
+    });
+  });
+  await page.click('#radio-new');
+  await page.click('#radio-record');
+  await expect(page.locator('#radio-result')).toContainText('Recording');
+  await page.click('#radio-stop');
+  await expect(page.locator('#radio-result')).toContainText('Review it, then check');
+  await expect(page.locator('#radio-readback')).toHaveValue('November downwind runway two seven');
+  expect(await page.evaluate(() => window.testMicrophoneStopped)).toBe(true);
+  await page.click('#radio-check');
+  await expect(page.locator('#radio-result')).toContainText('expected call sign');
+  await page.selectOption('#weather-scenario', 'westerly');
   // Complete an actual guided circuit quickly without skipping eligibility gates.
   await page.evaluate(async () => {
     const {state} = await import('/src/flight/state.js');
@@ -66,6 +114,7 @@ test('account progress and flights follow the user across fresh browsers', async
   await other.locator('#account-dialog [data-close]').click();
   await other.click('#progress-open');
   await expect(other.locator('#history .history-row')).toHaveCount(1);
+  await expect(other.locator('#history')).toContainText('QNH 1008 hPa');
   await other.locator('#history button').filter({hasText: 'View debrief'}).click();
   await expect(other.locator('#history-debrief')).toContainText('Criteria v1');
   await other.locator('#progress-dialog [data-close]').click();

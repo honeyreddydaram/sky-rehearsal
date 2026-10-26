@@ -93,3 +93,21 @@ review uses an unlogged bounded replay. Report snapshots accompany session recor
 or private flight metadata; stored reports are not silently rescored. No model/AI
 service is involved. See [assessment method](assessment.md) for missing-data policy
 and the distinction between exploratory comparisons, recall and proficiency scores.
+
+## Coaching and conditions (M7–M8)
+
+`training/coaching.mjs` builds bounded teaching facts; `backend/app/instructor.py`
+uses Gemini / Vertex AI for optional explanations. Scores and flight math never
+call the model. Firebase tokens and a transactional Firestore quota protect paid
+Google requests.
+
+`aviation/conditions.mjs` validates METAR/performance inputs and computes density
+and turn estimates. `conditions.js` wires controls through one reset/rebuild callback.
+`flight/state.js` applies reviewed-input speeds only to demo circuit schedules;
+imported TAS profiles take precedence. Completed sessions retain their environment
+snapshot and wind settings through account storage and backup restoration.
+`training/radio.mjs` checks constrained readbacks deterministically; `radio.js`
+owns microphone capture and transcript review. `backend/app/conditions.py` provides
+a fixed-source METAR cache and Google Cloud Speech-to-Text, sharing the Google
+request quota. These modules do not supply unreviewed aircraft performance values
+or expand the flight model into a full aircraft dynamics simulator.

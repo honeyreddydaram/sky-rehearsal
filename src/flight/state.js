@@ -1,3 +1,4 @@
+import {WEATHER, trueAirspeed} from '../aviation/conditions.mjs';
 // state.js
 // Shared, mutable "flight session" state, plus the pure-ish math that derives a
 // position/heading/speed from it at any point along the route.
@@ -78,6 +79,8 @@ export const state = {
   answers: [], // quiz answers for the current attempt
   pending: null, // waypoint index of the quiz question currently open, or null
   profile: demo,
+  weather: {...WEATHER.calm, source: 'Training scenario'},
+  performance: null,
   windFrom: 270, // degrees true, the direction the wind is blowing FROM
   windSpeed: 0, // knots
   correctWind: false, // apply a heading correction to hold the planned track
@@ -107,15 +110,36 @@ export function routeLabel(route = state.route) {
     ? `RWY ${route.slice(7)} circuit (illustrative)`
     : `${route === 'inner' ? 'Inner' : 'Outer'} legacy loop`;
 }
+export function activePerformance() {
+  return state.profile === demo && flightCircuits[state.route] ? state.performance : null;
+}
 export function flightFrame(progress) {
   const circuit = flightCircuits[state.route];
   if (!circuit || state.profile !== demo) return profileAt(state.profile.frames, progress);
   const frames = circuit.stages.map((stage) => ({
     progress: stage.start,
     altitudeFt: stage.altitudeFt,
-    tasKt: stage.speedKt,
+    tasKt: state.performance
+      ? trueAirspeed(
+          state.performance.phaseSpeedsKias[stage.name],
+          stage.altitudeFt,
+          state.weather,
+          airport.elevation.ft,
+        )
+      : stage.speedKt,
   }));
-  frames.push({progress: 1, altitudeFt: airport.elevation.ft, tasKt: 30});
+  frames.push({
+    progress: 1,
+    altitudeFt: airport.elevation.ft,
+    tasKt: state.performance
+      ? trueAirspeed(
+          state.performance.phaseSpeedsKias.landing,
+          airport.elevation.ft,
+          state.weather,
+          airport.elevation.ft,
+        )
+      : 30,
+  });
   return profileAt(frames, progress);
 }
 

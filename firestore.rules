@@ -5,16 +5,40 @@ service cloud.firestore {
     function session() {
       let d = request.resource.data;
       return d.keys().hasAll(['id','route','mode','completedAt','profile'])
-        && d.keys().hasOnly(['id','route','mode','completedAt','profile','score','total','windFrom','windSpeed','correctWind','answers','difficulty','hintsUsed','debrief'])
+        && d.keys().hasOnly(['id','route','mode','completedAt','profile','score','total','windFrom','windSpeed','correctWind','answers','difficulty','hintsUsed','debrief','environment'])
         && d.id is string && d.id.size() <= 128
         && d.route in ['inner','outer','circuit27','circuit09']
         && d.mode in ['guided','practice','landmarks','decisions','quiz','exam']
         && (!('difficulty' in d) || d.difficulty in ['beginner','intermediate','advanced','examiner'])
         && (!('hintsUsed' in d) || (d.hintsUsed is int && d.hintsUsed >= 0))
         && (!('debrief' in d) || d.debrief == null || (d.debrief is map && d.debrief.version == 1 && d.debrief.events is list && d.debrief.events.size() <= 20))
+        && (!('environment' in d) || environment(d.environment))
         && d.completedAt is string && d.completedAt.size() <= 40
         && d.profile is string && d.profile.size() <= 200
         && (!(d.mode in ['quiz','exam','landmarks','decisions']) || (d.total == 5 && d.score is int && d.score >= 0 && d.score <= 5));
+    }
+    function speed(v) { return v is number && v >= 30 && v <= 200; }
+    function environment(e) {
+      return e is map && e.keys().hasOnly(['version','weather','aircraft']) && e.version == 1
+        && e.weather is map && e.weather.keys().hasOnly(['source','observedAt','qnh','temperature','visibilityM','clouds','gustKt'])
+        && e.weather.source is string && e.weather.source.size() <= 100
+        && e.weather.qnh is number && e.weather.qnh >= 850 && e.weather.qnh <= 1100
+        && e.weather.temperature is number && e.weather.temperature >= -60 && e.weather.temperature <= 60
+        && (e.weather.visibilityM == null || (e.weather.visibilityM is number && e.weather.visibilityM >= 0 && e.weather.visibilityM <= 10000))
+        && e.weather.clouds is string && e.weather.clouds.size() <= 300
+        && (e.weather.gustKt == null || (e.weather.gustKt is number && e.weather.gustKt >= 0 && e.weather.gustKt <= 150))
+        && (e.weather.observedAt == null || (e.weather.observedAt is string && e.weather.observedAt.size() <= 40))
+        && (e.aircraft == null || (e.aircraft is map && e.aircraft.keys().hasOnly(['version','typeCode','source','reference','reviewedBy','bankDeg','phaseSpeedsKias'])
+          && e.aircraft.version == 1 && e.aircraft.typeCode in ['c152','c172r','c172s','da42ng']
+          && e.aircraft.source is string && e.aircraft.source.size() <= 200
+          && e.aircraft.reference is string && e.aircraft.reference.size() <= 200
+          && e.aircraft.reviewedBy is string && e.aircraft.reviewedBy.size() <= 100
+          && e.aircraft.bankDeg is number && e.aircraft.bankDeg >= 5 && e.aircraft.bankDeg <= 30
+          && e.aircraft.phaseSpeedsKias is map && e.aircraft.phaseSpeedsKias.keys().hasOnly(['takeoff','upwind','crosswind','downwind','base','final','landing'])
+          && speed(e.aircraft.phaseSpeedsKias.takeoff) && speed(e.aircraft.phaseSpeedsKias.upwind)
+          && speed(e.aircraft.phaseSpeedsKias.crosswind) && speed(e.aircraft.phaseSpeedsKias.downwind)
+          && speed(e.aircraft.phaseSpeedsKias.base) && speed(e.aircraft.phaseSpeedsKias.final)
+          && speed(e.aircraft.phaseSpeedsKias.landing)));
     }
     match /users/{uid}/sessions/{id} {
       allow read: if owner(uid);

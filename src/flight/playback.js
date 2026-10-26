@@ -1,3 +1,5 @@
+import {environmentSnapshot} from '../aviation/conditions.mjs';
+import {resetRadio} from '../training/radio.js';
 import {resetInstructor} from '../training/instructor.js';
 // playback.js
 // The simulation clock: advances progress along the route, gates waypoints/quiz
@@ -16,7 +18,17 @@ import {comparisonTrace} from '../training/reference.mjs';
 import {renderDebrief} from '../training/debrief.js';
 import {replay} from './recording.mjs';
 import {distance, at, headingText} from './core.mjs';
-import {state, demo, routeLabel, flightFrame, models, waypoints, stateAt, secondsAt} from './state.js';
+import {
+  state,
+  demo,
+  routeLabel,
+  flightFrame,
+  models,
+  waypoints,
+  stateAt,
+  secondsAt,
+  activePerformance,
+} from './state.js';
 import {$, all, text, toast, callout, selectStates, showDialog} from '../ui/ui.js';
 import {renderPosition, applyTrainingAssistance, showDeviation} from '../map/map.js';
 import {learner, save} from '../progress/progress.js';
@@ -68,6 +80,7 @@ export function waypointList() {
 // --- Session lifecycle --------------------------------------------------------------
 
 export function reset() {
+  resetRadio();
   resetInstructor();
   replay.stop?.();
   replayUntil = null;
@@ -189,6 +202,7 @@ function finish() {
       windSpeed: state.windSpeed,
       correctWind: state.correctWind,
       answers: [...state.answers],
+      environment: environmentSnapshot(state.weather, activePerformance()),
     };
     try {
       const {samples, reference} = comparisonTrace();

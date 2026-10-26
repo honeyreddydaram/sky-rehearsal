@@ -1,3 +1,5 @@
+import {wireConditions, manualWeather} from './aviation/conditions.js';
+import {wireRadio, resetRadio} from './training/radio.js';
 import {wireInstructor} from './training/instructor.js';
 // app.js
 // Entry point loaded by index.html. Wires together the feature modules (state, ui,
@@ -103,12 +105,13 @@ ui.$('flight-profile').onchange = (e) => progress.setProfile(e.target.value);
 // Wind scenario sliders — changing any of them restarts the session so the logged
 // score and ground track reflect one consistent wind, rather than mixing scenarios
 // mid-attempt.
-function windChanged() {
+function windChanged(event) {
   state.windFrom = +ui.$('wind-from').value;
   state.windSpeed = +ui.$('wind-speed').value;
   state.correctWind = ui.$('compensate').checked;
   ui.text('wind-from-value', headingText(state.windFrom));
   ui.text('wind-speed-value', state.windSpeed + ' kt');
+  if (event?.target.id !== 'compensate') manualWeather();
   const wasStarted = state.started;
   playback.reset();
   rebuildTrace();
@@ -136,6 +139,14 @@ rebuildTrace();
 map.refreshRouteVisuals();
 playback.reset();
 wireInstructor(playback.refresh);
+wireRadio(playback.refresh);
+wireConditions(() => {
+  playback.reset();
+  rebuildTrace();
+  progress.profileCopy();
+  map.refreshRouteVisuals();
+  playback.refresh();
+});
 wireRecording();
 wireAccount();
 await map.init();
@@ -148,15 +159,22 @@ await map.init();
 // if WebGL isn't available, same as switching to Pilot manually would.
 map.setView('pilot');
 if (airfieldAvailable) {
-  airfield.init(() => {
-    if (!state.route.startsWith('circuit')) return;
-    state.route = `circuit${airport.airportState.activeRunway}`;
-    progress.profileOptions();
-    playback.reset();
-    rebuildTrace();
-    map.refreshRouteVisuals();
-    map.fit();
-  });
+  airfield.init(
+    () => {
+      if (!state.route.startsWith('circuit')) return;
+      state.route = `circuit${airport.airportState.activeRunway}`;
+      progress.profileOptions();
+      playback.reset();
+      rebuildTrace();
+      map.refreshRouteVisuals();
+      map.fit();
+    },
+    () => {
+      resetRadio();
+      ui.$('performance-type').value = airport.selectedAircraft()?.typeCode ?? 'none';
+      ui.$('performance-type').onchange();
+    },
+  );
 } else {
   ui.$('airfield-panel')?.setAttribute('hidden', '');
 }

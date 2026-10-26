@@ -1,3 +1,4 @@
+import {validEnvironment} from '../aviation/conditions.mjs';
 import {validDebrief} from '../training/debrief-schema.mjs';
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export const rad = (x) => (x * Math.PI) / 180,
@@ -236,6 +237,10 @@ export function validateProgressBackup(d) {
         !['beginner', 'intermediate', 'advanced', 'examiner'].includes(s.difficulty)) ||
       (s.hintsUsed !== undefined && (!Number.isInteger(s.hintsUsed) || s.hintsUsed < 0)) ||
       (s.debrief != null && !validDebrief(s.debrief)) ||
+      (s.environment !== undefined && !validEnvironment(s.environment)) ||
+      (s.windFrom !== undefined && (!Number.isFinite(s.windFrom) || s.windFrom < 0 || s.windFrom > 360)) ||
+      (s.windSpeed !== undefined && (!Number.isFinite(s.windSpeed) || s.windSpeed < 0 || s.windSpeed > 35)) ||
+      (s.correctWind !== undefined && typeof s.correctWind !== 'boolean') ||
       !quizScoreOk
     )
       fail('Backup contains invalid session data.');

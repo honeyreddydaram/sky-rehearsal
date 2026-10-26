@@ -193,3 +193,11 @@ Gemini / Vertex AI explanations use structured training facts and deterministic
 debriefs. AI cannot change flight physics or scores. See [instructor setup and
 limits](docs/instructor.md). Live Gemini needs a configured Google Cloud project
 and workload identity; local coaching works without either.
+
+### Milestone 8 — weather, aircraft and radio
+
+Weather presets and fresh METAR inputs drive steady-wind rehearsal. Reviewed
+C152/C172R/C172S/DA42 NG performance imports change circuit speeds and wind
+correction; no unreviewed POH values are invented. Radio prompts support typed
+readbacks and optional Google Cloud Speech-to-Text. See [setup, data requirements
+and simulation limits](docs/conditions.md).

@@ -226,7 +226,7 @@ export function wireRecording() {
     $('recording-clear').click();
   });
   const controls =
-    '[data-route], [data-mode], [data-runway], #play, #restart, #timeline, #wind-from, #wind-speed, #compensate, #flight-profile, #profile-open, #difficulty';
+    '[data-route], [data-mode], [data-runway], #play, #restart, #timeline, #wind-from, #wind-speed, #compensate, #flight-profile, #profile-open, #difficulty, #weather-scenario, #weather-apply, #performance-type, #performance-file, #aircraft-select';
   for (const event of ['click', 'input', 'change']) {
     document.addEventListener(
       event,
@@ -234,7 +234,7 @@ export function wireRecording() {
         if (e.target.closest(controls)) stop();
         if (
           e.target.closest(
-            '[data-route], [data-runway], #wind-from, #wind-speed, #compensate, #flight-profile, #import-profile',
+            '[data-route], [data-runway], #wind-from, #wind-speed, #compensate, #flight-profile, #import-profile, #weather-scenario, #weather-apply, #performance-type, #performance-file, #aircraft-select',
           )
         ) {
           lastReport = null;
