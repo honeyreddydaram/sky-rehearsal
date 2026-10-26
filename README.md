@@ -153,7 +153,7 @@ clocks rather than implying time-aligned comparisons or assessment scores.
 Synthetic [CSV](public/examples/demo-flight.csv) and [GPX](public/examples/demo-flight.gpx)
 examples are included; they are not actual flight data. For these Begumpet examples,
 MSL offset approximately -76.55 m places them consistently with the existing demo.
-Real recordings require their own source/datum verification. Cloud track storage and accounts are available through M4; detailed debrief/scoring remains a later milestone.
+Real recordings require their own source/datum verification. Cloud track storage and accounts are available through M4; deterministic comparison and replayable debriefs are available through M6.
 
 ## Training modes (M5)
 
@@ -185,3 +185,11 @@ additional measurements. The minute-spaced replay demo is too sparse for the def
 30-second assessment gap limit; use suitably sampled flight data. Current illustrative
 references and automatically generated rehearsals do not receive an overall flight
 proficiency score. See [assessment methods and limits](docs/assessment.md).
+
+### Milestone 7 — adaptive instructor
+
+Progressive local hints now adapt to recent recall weaknesses. Optional signed-in
+Gemini / Vertex AI explanations use structured training facts and deterministic
+debriefs. AI cannot change flight physics or scores. See [instructor setup and
+limits](docs/instructor.md). Live Gemini needs a configured Google Cloud project
+and workload identity; local coaching works without either.

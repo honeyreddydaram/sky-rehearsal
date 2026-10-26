@@ -8,6 +8,7 @@ from firebase_admin import auth, firestore, credentials
 from google.auth.credentials import AnonymousCredentials
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from app.instructor import CoachingContext, configuration, generate, reserve_request
 
 app = FastAPI(title="SkyRehearsal API", version="0.2.0")
 bearer = HTTPBearer(auto_error=False)
@@ -84,3 +85,10 @@ def admin_health(user: Annotated[dict, Depends(identity)]):
     if user["role"] != "platform_admin":
         raise HTTPException(403, "Platform administrator required")
     return {"status": "ok"}
+
+
+@app.post("/api/instructor")
+def instructor(context: CoachingContext, user: Annotated[dict, Depends(identity)]):
+    config = configuration()
+    reserve_request(firebase_app(), user["uid"])
+    return generate(context, config)

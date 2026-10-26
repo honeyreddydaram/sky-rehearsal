@@ -29,6 +29,9 @@ def test_real_token_verification_roles_and_disabled_account():
     assert identity.json()["role"] == "student"
     assert identity.json()["uid"] == user["localId"]
     assert client.get("/api/admin/health", headers=headers).status_code == 403
+    coaching = {"kind": "hint", "phase": "Downwind", "focus": "recall", "attempts": 0,
+                "level": 0, "facts": ["Unverified reference"]}
+    assert client.post("/api/instructor", json=coaching, headers=headers).status_code == 503
     application = main.firebase_app()
     auth.set_custom_user_claims(user["localId"], {"role": "platform_admin"}, app=application)
     signed_in = httpx.post(base + "signInWithPassword?key=demo-key", json=payload)
@@ -45,3 +48,16 @@ def test_firestore_readiness():
     response = TestClient(main.app).get("/api/ready")
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
+
+
+@pytest.mark.skipif(os.getenv("RUN_FIREBASE_FULL_SUITE") != "true", reason="requires Firestore emulator")
+def test_real_transactional_coaching_quota():
+    from app.instructor import reserve_request
+    from fastapi import HTTPException
+    application = main.firebase_app()
+    uid = f"quota-{uuid.uuid4()}"
+    for _ in range(6):
+        reserve_request(application, uid)
+    with pytest.raises(HTTPException) as error:
+        reserve_request(application, uid)
+    assert error.value.status_code == 429

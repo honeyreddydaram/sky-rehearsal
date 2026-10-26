@@ -104,6 +104,12 @@ export default function FlightPanel() {
           </div>
         </div>
       </div>
+      <section className="panel" aria-label="Adaptive instructor">
+        <h2>Adaptive instructor</h2>
+        <p id="instructor-policy" className="micro"></p>
+        <button id="instructor-hint">Study hint / next hint</button>
+        <div id="instructor-content" aria-live="polite"></div>
+      </section>
       <RecordingPanel />
       <div className="panel callout">
         <span className="callout-icon">◎</span>

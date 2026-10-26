@@ -1,3 +1,4 @@
+import {wireInstructor} from './training/instructor.js';
 // app.js
 // Entry point loaded by index.html. Wires together the feature modules (state, ui,
 // map, playback, quiz, progress, settings) and starts the simulation loop.
@@ -134,6 +135,7 @@ progress.profileOptions();
 rebuildTrace();
 map.refreshRouteVisuals();
 playback.reset();
+wireInstructor(playback.refresh);
 wireRecording();
 wireAccount();
 await map.init();

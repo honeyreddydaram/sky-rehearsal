@@ -13,6 +13,32 @@ test('account progress and flights follow the user across fresh browsers', async
   await page.click('#account-register');
   await expect(page.locator('#account-status')).toContainText('Account progress loaded');
   await page.locator('#account-dialog [data-close]').click();
+  // Mock only the optional model response; real Firebase Auth still signs the request.
+  const coachingRequests = [];
+  let available = true;
+  await page.route('**/api/instructor', async (route) => {
+    coachingRequests.push({
+      body: route.request().postDataJSON(),
+      authorization: route.request().headers().authorization,
+    });
+    await route.fulfill({
+      status: available ? 200 : 503,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        available ? {message: '<b>Recall the next checkpoint.</b>'} : {detail: 'Unavailable'},
+      ),
+    });
+  });
+  await page.click('#instructor-hint');
+  await page.locator('#instructor-content button').click();
+  await expect(page.locator('#instructor-content')).toContainText('Gemini / Vertex AI');
+  await expect(page.locator('#instructor-content b')).toHaveCount(0);
+  expect(coachingRequests[0].authorization).toMatch(/^Bearer /);
+  expect(coachingRequests[0].body.kind).toBe('hint');
+  expect(JSON.stringify(coachingRequests[0].body)).not.toContain(email);
+  available = false;
+  await page.locator('#instructor-content button').click();
+  await expect(page.locator('#instructor-content')).toContainText('Gemini is unavailable');
   // Complete an actual guided circuit quickly without skipping eligibility gates.
   await page.evaluate(async () => {
     const {state} = await import('/src/flight/state.js');

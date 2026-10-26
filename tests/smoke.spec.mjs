@@ -336,3 +336,26 @@ test('completed rehearsal retains an honest debrief and can replay a difference 
       .first(),
   ).toBeDisabled();
 });
+
+test('adaptive instructor progresses hints and respects assessment policy', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).toContainText('NM');
+  await page.click('#play');
+  await expect(page.locator('#play')).toHaveText('Pause');
+  await page.click('#instructor-hint');
+  await expect(page.locator('#play')).toHaveText('Resume');
+  await expect(page.locator('#instructor-content')).toContainText('What comes next?');
+  await page.getByRole('button', {name: 'Ask Gemini to explain', exact: true}).click();
+  await expect(page.locator('#instructor-content')).toContainText('Sign in to use Gemini');
+  await page.click('#instructor-hint');
+  await expect(page.locator('#instructor-content')).toContainText('You are studying');
+  await page.click('[data-mode="exam"]');
+  await expect(page.locator('#instructor-hint')).toBeDisabled();
+  await expect(page.locator('#instructor-content')).toBeEmpty();
+  await page.click('[data-mode="practice"]');
+  await page.selectOption('#difficulty', 'examiner');
+  await expect(page.locator('#instructor-hint')).toBeDisabled();
+  await page.selectOption('#difficulty', 'beginner');
+  await page.click('#instructor-hint');
+  await expect(page.locator('#instructor-content')).toContainText('What comes next?');
+});

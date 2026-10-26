@@ -1,3 +1,5 @@
+import {debriefContext} from './coaching.mjs';
+import {addGeminiExplanation} from './instructor-service.js';
 import {validDebrief} from './debrief-schema.mjs';
 import {showDeviation} from '../map/map.js';
 import {download} from '../ui/ui.js';
@@ -64,6 +66,7 @@ export function renderDebrief(container, report, replayAt = null) {
     'p',
     'Altitude differences use common ellipsoid heights after conversion. Scores use teaching tolerances, not aircraft operating limits. Unavailable measurements do not become zeros. Simulated altitude and speed follow the profile automatically.',
   ).className = 'micro';
+  addGeminiExplanation(container, debriefContext(report));
   add('h4', 'Replay comparison differences');
   if (!report.events.length)
     add(

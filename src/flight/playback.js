@@ -1,3 +1,4 @@
+import {resetInstructor} from '../training/instructor.js';
 // playback.js
 // The simulation clock: advances progress along the route, gates waypoints/quiz
 // checkpoints/custom callouts as they're reached, and keeps the telemetry HUD
@@ -67,6 +68,7 @@ export function waypointList() {
 // --- Session lifecycle --------------------------------------------------------------
 
 export function reset() {
+  resetInstructor();
   replay.stop?.();
   replayUntil = null;
   showDeviation();
