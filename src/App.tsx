@@ -1,3 +1,4 @@
+import SchoolDialog from './ui/SchoolDialog';
 import React from 'react';
 import Briefing from './ui/Briefing';
 import FlightPanel from './ui/FlightPanel';
@@ -27,6 +28,7 @@ export default function App() {
           </span>
         </a>
         <nav>
+          <button id="school-open">Flight school</button>
           <button id="account-open" disabled>
             Account
           </button>
@@ -46,6 +48,7 @@ export default function App() {
           </div>
           <span className="subtle-pill">Ground rehearsal</span>
         </section>
+        <p id="assignment-status" role="status"></p>
         <div className="layout">
           <Briefing />
           <FlightPanel />
@@ -60,6 +63,7 @@ export default function App() {
       </main>
       <Dialogs />
       <AccountDialog />
+      <SchoolDialog />
     </>
   );
 }

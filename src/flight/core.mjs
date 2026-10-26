@@ -238,6 +238,12 @@ export function validateProgressBackup(d) {
       (s.hintsUsed !== undefined && (!Number.isInteger(s.hintsUsed) || s.hintsUsed < 0)) ||
       (s.debrief != null && !validDebrief(s.debrief)) ||
       (s.environment !== undefined && !validEnvironment(s.environment)) ||
+      (s.assignment !== undefined &&
+        (!s.assignment ||
+          !['schoolId', 'assignmentId'].every(
+            (key) =>
+              typeof s.assignment[key] === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(s.assignment[key]),
+          ))) ||
       (s.windFrom !== undefined && (!Number.isFinite(s.windFrom) || s.windFrom < 0 || s.windFrom > 360)) ||
       (s.windSpeed !== undefined && (!Number.isFinite(s.windSpeed) || s.windSpeed < 0 || s.windSpeed > 35)) ||
       (s.correctWind !== undefined && typeof s.correctWind !== 'boolean') ||

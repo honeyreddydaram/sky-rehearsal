@@ -144,3 +144,8 @@ export function init(onRunwayChange = () => {}, onAircraftChange = () => {}) {
     onAircraftChange();
   };
 }
+
+export function refreshSelection() {
+  refreshAll();
+  renderAircraftOptions();
+}

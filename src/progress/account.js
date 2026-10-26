@@ -53,7 +53,9 @@ export function wireAccount() {
     const role = ['student', 'instructor', 'school_admin', 'platform_admin'].includes(token.claims.role)
       ? token.claims.role
       : 'student';
-    status(`Signed in as ${user.email || user.uid} · ${role}. Account progress loaded.`);
+    status(
+      `Signed in as ${user.email || user.uid} · ${role}. Account progress loaded. Your account ID for school enrollment: ${user.uid}`,
+    );
     text('account-open', 'My account');
     text('save-status', 'Account progress loaded');
   };

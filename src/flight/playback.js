@@ -80,6 +80,8 @@ export function waypointList() {
 // --- Session lifecycle --------------------------------------------------------------
 
 export function reset() {
+  state.assignment = null;
+  window.dispatchEvent(new Event('assignment-cleared'));
   resetRadio();
   resetInstructor();
   replay.stop?.();
@@ -202,6 +204,7 @@ function finish() {
       windSpeed: state.windSpeed,
       correctWind: state.correctWind,
       answers: [...state.answers],
+      ...(state.assignment ? {assignment: {...state.assignment}} : {}),
       environment: environmentSnapshot(state.weather, activePerformance()),
     };
     try {

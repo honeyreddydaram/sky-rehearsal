@@ -8,6 +8,11 @@ import {state, stateAt, routeLabel} from '../flight/state.js';
 import {renderPosition, setRecording, showDeviation} from '../map/map.js';
 import {$, text} from '../ui/ui.js';
 
+let acceptSharedRecording = null;
+export function reviewSharedRecording(track) {
+  if (!acceptSharedRecording) throw Error('Recording player is not ready.');
+  acceptSharedRecording(track);
+}
 export function wireRecording() {
   let recording = null,
     seconds = 0,
@@ -40,6 +45,38 @@ export function wireRecording() {
     renderPosition(stateAt(state.t));
   };
   replay.stop = stop;
+  acceptSharedRecording = (track) => {
+    const imported = normalizeRecording(track.rows, {
+      reference: track.reference,
+      geoidOffsetM: track.geoidOffsetM,
+    });
+    stop();
+    state.playing = false;
+    refresh();
+    recording = imported;
+    seconds = 0;
+    lastReport = null;
+    replayEnd = null;
+    savedRows = track.rows;
+    savedName = track.name;
+    savedReference = track.reference;
+    savedOffset = track.geoidOffsetM;
+    $('recording-debrief').replaceChildren();
+    setRecording(recording.points);
+    for (const id of [
+      'recording-play',
+      'recording-clear',
+      'recording-time',
+      'recording-save-cloud',
+      'recording-assess',
+    ])
+      $(id).disabled = false;
+    text(
+      'recording-status',
+      `Shared with your school: ${track.name} · ${recording.points.length} points. Original file remains owned by the student.`,
+    );
+    show();
+  };
   $('recording-file').onchange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;

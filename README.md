@@ -201,3 +201,11 @@ C152/C172R/C172S/DA42 NG performance imports change circuit speeds and wind
 correction; no unreviewed POH values are invented. Radio prompts support typed
 readbacks and optional Google Cloud Speech-to-Text. See [setup, data requirements
 and simulation limits](docs/conditions.md).
+
+### Milestone 9 — instructor and flight-school platform
+
+School administrators manage enrollment and teaching rosters. Instructors create
+and publish scenario configurations, assign exercises, review explicitly submitted
+scores/debriefs, replay shared recordings and leave review notes. Students launch
+assigned settings and choose what to submit. Private history remains private.
+See [school setup, workflow and limits](docs/schools.md).

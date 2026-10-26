@@ -5,7 +5,7 @@ service cloud.firestore {
     function session() {
       let d = request.resource.data;
       return d.keys().hasAll(['id','route','mode','completedAt','profile'])
-        && d.keys().hasOnly(['id','route','mode','completedAt','profile','score','total','windFrom','windSpeed','correctWind','answers','difficulty','hintsUsed','debrief','environment'])
+        && d.keys().hasOnly(['id','route','mode','completedAt','profile','score','total','windFrom','windSpeed','correctWind','answers','difficulty','hintsUsed','debrief','environment','assignment'])
         && d.id is string && d.id.size() <= 128
         && d.route in ['inner','outer','circuit27','circuit09']
         && d.mode in ['guided','practice','landmarks','decisions','quiz','exam']
@@ -13,6 +13,7 @@ service cloud.firestore {
         && (!('hintsUsed' in d) || (d.hintsUsed is int && d.hintsUsed >= 0))
         && (!('debrief' in d) || d.debrief == null || (d.debrief is map && d.debrief.version == 1 && d.debrief.events is list && d.debrief.events.size() <= 20))
         && (!('environment' in d) || environment(d.environment))
+        && (!('assignment' in d) || (d.assignment is map && d.assignment.keys().hasOnly(['schoolId','assignmentId']) && d.assignment.schoolId is string && d.assignment.schoolId.size() <= 128 && d.assignment.assignmentId is string && d.assignment.assignmentId.size() <= 128))
         && d.completedAt is string && d.completedAt.size() <= 40
         && d.profile is string && d.profile.size() <= 200
         && (!(d.mode in ['quiz','exam','landmarks','decisions']) || (d.total == 5 && d.score is int && d.score >= 0 && d.score <= 5));

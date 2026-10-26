@@ -1,3 +1,5 @@
+import {wireSchool} from './progress/school.js';
+import {applySchoolConditions} from './aviation/conditions.js';
 import {wireConditions, manualWeather} from './aviation/conditions.js';
 import {wireRadio, resetRadio} from './training/radio.js';
 import {wireInstructor} from './training/instructor.js';
@@ -149,6 +151,26 @@ wireConditions(() => {
 });
 wireRecording();
 wireAccount();
+wireSchool((config, assignment) => {
+  airport.setActiveRunway(config.runway);
+  if (config.aircraft !== 'demo')
+    airport.setSelectedRegistration(
+      airport.fleet.aircraft.find((a) => a.typeCode === config.aircraft)?.registration ?? null,
+    );
+  state.route = `circuit${config.runway}`;
+  if (!models[state.route]) throw Error('Assigned circuit is unavailable.');
+  progress.profileOptions();
+  applySchoolConditions(config);
+  state.mode = config.mode;
+  state.difficulty = config.difficulty;
+  playback.reset();
+  rebuildTrace();
+  progress.profileCopy();
+  map.refreshRouteVisuals();
+  playback.refresh();
+  airfield.refreshSelection();
+  state.assignment = assignment;
+});
 await map.init();
 // Pilot is the default camera mode, but only once a Cesium viewer actually exists to
 // put it in that mode (state.js's raw `view: 'overview'` stays as the pre-viewer

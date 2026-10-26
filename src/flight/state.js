@@ -86,6 +86,7 @@ export const state = {
   correctWind: false, // apply a heading correction to hold the planned track
   rate: 5, // playback speed multiplier
   sessionId: '',
+  assignment: null,
   yaw: 0, // look-around offset, radians, added to the flight heading
   pitch: -20, // look-around pitch, degrees
   viewRange: 230, // chase-camera distance, metres

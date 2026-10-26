@@ -238,3 +238,18 @@ test('aircraft performance snapshots require bounded numeric phase speeds', asyn
     }),
   );
 });
+
+test('school records and submitted evidence cannot be edited directly by clients', async () => {
+  for (const role of ['student', 'instructor', 'school_admin', 'platform_admin']) {
+    const db = environment.authenticatedContext(`school-${role}`, {role}).firestore();
+    for (const path of [
+      'schools/test/members/anyone',
+      'schools/test/scenarios/draft',
+      'schools/test/assignments/exercise',
+      'schools/test/submissions/evidence',
+    ]) {
+      await assertFails(setDoc(doc(db, path), {role: 'school_admin', active: true}));
+      await assertFails(getDoc(doc(db, path)));
+    }
+  }
+});

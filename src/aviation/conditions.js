@@ -150,3 +150,35 @@ export function wireConditions(changed) {
     event.target.value = '';
   };
 }
+
+// The school launch callback owns the reset/rebuild; never trigger partial changes here.
+export function applySchoolConditions(config) {
+  state.performance = config.performance ? validatePerformance(config.performance) : null;
+  if (state.performance) profiles.set(config.aircraft, state.performance);
+  $('performance-type').value = config.aircraft === 'demo' ? 'none' : config.aircraft;
+  state.weather = {
+    ...WEATHER[config.weather],
+    source: 'School assignment',
+    windFrom: config.windFrom,
+    windSpeed: config.windSpeed,
+  };
+  state.windFrom = config.windFrom;
+  state.windSpeed = config.windSpeed;
+  state.correctWind = true;
+  $('weather-scenario').value = config.weather;
+  $('wind-from').value = config.windFrom;
+  $('wind-speed').value = config.windSpeed;
+  $('compensate').checked = true;
+  text('wind-from-value', `${config.windFrom}°T`);
+  text('wind-speed-value', `${config.windSpeed} kt`);
+  text(
+    'weather-status',
+    `School assignment · ${config.weather} · QNH ${state.weather.qnh} hPa · ${state.weather.temperature}°C · wind ${config.windFrom}°T / ${config.windSpeed} kt.`,
+  );
+  text(
+    'performance-status',
+    state.performance
+      ? `${config.aircraft.toUpperCase()} · ${state.performance.source} · ${state.performance.reference} · reviewed by ${state.performance.reviewedBy}. User-declared review; simplified model.`
+      : 'Assignment explicitly uses demo aircraft speeds.',
+  );
+}

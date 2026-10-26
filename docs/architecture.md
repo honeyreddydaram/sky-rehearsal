@@ -111,3 +111,15 @@ owns microphone capture and transcript review. `backend/app/conditions.py` provi
 a fixed-source METAR cache and Google Cloud Speech-to-Text, sharing the Google
 request quota. These modules do not supply unreviewed aircraft performance values
 or expand the flight model into a full aircraft dynamics simulator.
+
+## Flight schools (M9)
+
+`backend/app/school.py` owns school validation and authorization. School writes and
+shared-track reads use the Admin SDK only after membership, staff-claim and roster
+checks; direct client Rules remain denied. Frozen assignments point to published
+scenario configurations. Submissions copy bounded debriefs and optionally reference
+an explicitly shared owned recording; instructor reviews are separate fields.
+`progress/school.js` renders the dashboard, `school-client.js` handles authenticated
+requests, and the bootstrap injects an atomic simulator launch callback. Assignment
+labels are cleared by ordinary training resets. `training/school.mjs` contains pure
+scenario checks and submitted-recall summaries. See [school workflows](schools.md).
