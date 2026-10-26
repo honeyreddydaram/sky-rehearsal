@@ -13,7 +13,7 @@
 // progress.setContextChangeHandler) wired up below.
 
 import {headingText} from './flight/core.mjs';
-import {state, loadRouteData, rebuildTrace} from './flight/state.js';
+import {state, loadRouteData, loadCircuits, models, rebuildTrace} from './flight/state.js';
 import * as ui from './ui/ui.js';
 import * as map from './map/map.js';
 import * as playback from './flight/playback.js';
@@ -37,6 +37,7 @@ try {
 let airfieldAvailable = true;
 try {
   await airport.loadAirportData();
+  loadCircuits();
 } catch (err) {
   console.warn('Airfield/circuit reference data failed to load:', err);
   airfieldAvailable = false;
@@ -68,7 +69,12 @@ map.wireViewControls();
 // changing mode only needs a fresh session.
 ui.all('[data-route]').forEach((b) => {
   b.onclick = () => {
-    state.route = b.dataset.route;
+    state.route =
+      b.dataset.route === 'circuit' ? `circuit${airport.airportState.activeRunway}` : b.dataset.route;
+    if (!models[state.route]) {
+      state.route = 'outer';
+      ui.toast('Circuit unavailable; using the legacy loop.');
+    }
     progress.profileOptions();
     playback.reset();
     rebuildTrace();
@@ -130,7 +136,15 @@ await map.init();
 // if WebGL isn't available, same as switching to Pilot manually would.
 map.setView('pilot');
 if (airfieldAvailable) {
-  airfield.init();
+  airfield.init(() => {
+    if (!state.route.startsWith('circuit')) return;
+    state.route = `circuit${airport.airportState.activeRunway}`;
+    progress.profileOptions();
+    playback.reset();
+    rebuildTrace();
+    map.refreshRouteVisuals();
+    map.fit();
+  });
 } else {
   ui.$('airfield-panel')?.setAttribute('hidden', '');
 }

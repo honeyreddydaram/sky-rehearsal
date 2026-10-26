@@ -7,12 +7,16 @@ export default function Briefing() {
         <span className="step">01</span>
       </div>
       <div className="segmented" aria-label="Select route">
+        <button data-route="circuit">Runway circuit</button>
         <button data-route="inner">Inner loop</button>
         <button data-route="outer" className="selected">
           Outer loop
         </button>
       </div>
-      <p className="micro">Recreated from the shared route screenshots.</p>
+      <p className="micro">
+        Circuit uses sourced turn pins with an inferred runway intercept. Unverified geometry; RWY 09 is
+        derived. Inner/outer loops retain legacy screenshots.
+      </p>
       <div className="route-facts">
         <div>
           <strong id="route-distance">—</strong>
@@ -20,7 +24,7 @@ export default function Briefing() {
         </div>
         <div>
           <strong id="route-duration">—</strong>
-          <small>Still-air time</small>
+          <small>Estimated time</small>
         </div>
       </div>
       <div className="section-head">

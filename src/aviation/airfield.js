@@ -3,8 +3,7 @@
 // aircraft/call-sign picker, the Concepts blurb (ARP/AMSL/AGL/QNH/circuit altitude),
 // and a read-only checklist of the active circuit's legs and checkpoints. All of this
 // is reference material built from data/airport-vohy.json, data/circuits/*.json, and
-// data/aircraft/*.json — see airport.js for why it is not yet tied to the live
-// simulated flight.
+// data/aircraft/*.json. Runway selection notifies bootstrap to reset the live circuit.
 
 import {$, text, all} from '../ui/ui.js';
 import {
@@ -124,7 +123,7 @@ function refreshAll() {
   refreshAirportLayer();
 }
 
-export function init() {
+export function init(onRunwayChange = () => {}) {
   renderConcepts();
   renderAircraftOptions();
   refreshAll();
@@ -134,6 +133,7 @@ export function init() {
   all('[data-runway]').forEach((b) => {
     b.onclick = () => {
       setActiveRunway(b.dataset.runway);
+      onRunwayChange();
       refreshAll();
     };
   });

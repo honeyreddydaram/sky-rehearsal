@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Ground-based VFR circuit rehearsal with React, TypeScript and Cesium",
   "scripts": {
-    "test": "node core.test.mjs && tsx tests/html-structure.test.tsx",
+    "test": "node core.test.mjs && node tests/circuit.test.mjs && tsx tests/html-structure.test.tsx",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",

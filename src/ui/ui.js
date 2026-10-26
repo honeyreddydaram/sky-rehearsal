@@ -56,8 +56,14 @@ export function callout(title, message, speak = true) {
 // aria-pressed state in sync with the current session state.
 export function selectStates(state) {
   all('[data-route]').forEach((b) => {
-    b.classList.toggle('selected', b.dataset.route === state.route);
-    b.setAttribute('aria-pressed', b.dataset.route === state.route);
+    b.classList.toggle(
+      'selected',
+      b.dataset.route === state.route || (b.dataset.route === 'circuit' && state.route.startsWith('circuit')),
+    );
+    b.setAttribute(
+      'aria-pressed',
+      b.dataset.route === state.route || (b.dataset.route === 'circuit' && state.route.startsWith('circuit')),
+    );
   });
   all('[data-mode]').forEach((b) => {
     b.classList.toggle('selected', b.dataset.mode === state.mode);

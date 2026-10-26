@@ -91,6 +91,6 @@ incremental migration boundary, and [milestones](docs/milestones.md) for deliver
 
 ## Scope and credits
 
-The route geometry is recreated from screenshots for ground-based familiarization. The included altitude and airspeed schedule is a demo, not recorded flight data. Operational procedures and flight values must come from the instructor; this prototype is not a navigation aid.
+The default illustrative runway circuit connects sourced turn pins, with an inferred final intercept; RWY 09 reverses that geometry. It is not instructor verified. Legacy inner/outer routes retain the screenshot geometry. Turns are instantaneous and flight values are demo targets. The included altitude and airspeed schedule is a demo, not recorded flight data. Operational procedures and flight values must come from the instructor; this prototype is not a navigation aid.
 
 CesiumJS, Esri World Imagery, and OpenStreetMap attribution remains visible beneath the map. No platform watermark is added.

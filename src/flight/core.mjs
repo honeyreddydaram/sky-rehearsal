@@ -108,8 +108,8 @@ export function validateProfile(d) {
   const fail = (m) => {
     throw Error(m);
   };
-  if (!d || d.schemaVersion !== 1 || !['inner', 'outer'].includes(d.route))
-    fail('Use schemaVersion 1 and route inner or outer.');
+  if (!d || d.schemaVersion !== 1 || !['inner', 'outer', 'circuit27', 'circuit09'].includes(d.route))
+    fail('Use schemaVersion 1 and route inner, outer, circuit27 or circuit09.');
   if (
     typeof d.name !== 'string' ||
     !d.name.trim() ||
@@ -226,7 +226,7 @@ export function validateProgressBackup(d) {
     const quizScoreOk =
       s.mode !== 'quiz' || (Number.isInteger(s.score) && s.score >= 0 && s.score <= 5 && s.total === 5);
     if (
-      !['inner', 'outer'].includes(s.route) ||
+      !['inner', 'outer', 'circuit27', 'circuit09'].includes(s.route) ||
       !['quiz', 'guided'].includes(s.mode) ||
       !Number.isFinite(Date.parse(s.completedAt)) ||
       typeof s.profile !== 'string' ||

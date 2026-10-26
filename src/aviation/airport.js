@@ -5,15 +5,9 @@
 // aircraft fleet. Also owns the two small pieces of state this data introduces:
 // which runway is active, and which aircraft the pilot picked.
 //
-// This is deliberately a reference/briefing layer, not the flight simulator: the
-// circuit pattern here is NOT used as the flyable route (see routes.json and
-// state.js for that — the "legacy screenshot reconstruction" loop is still what the
-// guided/quiz rehearsal actually flies). Several circuit checkpoints have no
-// confirmed coordinates yet, so there isn't enough geometry to fly the real pattern
-// until more of them are confirmed or a recorded GPX flight fills the gaps. Blending
-// the two now would risk implying the plane is "on" a real-world checkpoint it isn't
-// actually near — so for now this module only drives a reference panel and the map's
-// static runway/checkpoint markers.
+// The flight engine consumes these validated records to build an explicitly
+// illustrative circuit. Missing checkpoints remain missing; side landmarks are
+// reference cues, not aircraft track vertices. See flight/circuit.mjs.
 
 import {
   validateAirportData,

@@ -14,7 +14,7 @@ export default function Dialogs() {
             Continue flight
           </button>
         </div>
-        <p className="micro">Questions refer to this reconstructed route. Headings use true north.</p>
+        <p className="micro">Questions refer to the selected illustrative route. Headings use true north.</p>
       </dialog>
       <dialog id="results-dialog">
         <p className="eyebrow">SESSION COMPLETE</p>

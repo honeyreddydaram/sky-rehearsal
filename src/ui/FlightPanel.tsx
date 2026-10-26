@@ -54,6 +54,7 @@ export default function FlightPanel() {
           </div>
         </div>
         <div id="credits"></div>
+        <p id="flight-phase" className="micro" aria-live="polite"></p>
         <div className="telemetry">
           <div>
             <small>HEADING · TRUE</small>

@@ -9,8 +9,8 @@
 // this module (reset(), refresh()) when an attempt ends — importing each other would
 // create a cycle. Instead app.js registers quiz.beginQuestion via setQuizHandler().
 
-import {distance, at, headingText, elapsedAt} from './core.mjs';
-import {state, demo, models, waypoints, stateAt, secondsAt} from './state.js';
+import {distance, at, headingText} from './core.mjs';
+import {state, demo, routeLabel, flightFrame, models, waypoints, stateAt, secondsAt} from './state.js';
 import {$, all, text, toast, callout, selectStates, showDialog} from '../ui/ui.js';
 import {renderPosition} from '../map/map.js';
 import {learner, save} from '../progress/progress.js';
@@ -125,9 +125,14 @@ export function refresh() {
           : 'Start rehearsal',
   );
   text('route-distance', (models[state.route].total / 1852).toFixed(1) + ' NM');
-  // "Still-air time" intentionally ignores wind (elapsedAt integrates TAS only) —
-  // it's meant as a stable reference figure, not the wind-affected ETA.
-  text('route-duration', Math.round(elapsedAt(models[state.route], state.profile.frames, 1) / 60) + ' min');
+  // Use the same integrated schedule and wind as live playback.
+  text('route-duration', Math.round(secondsAt(1) / 60) + ' min');
+  text(
+    'flight-phase',
+    s.phase
+      ? `${routeLabel()} · ${s.phase} · ${Math.round(flightFrame(state.t).altitudeFt)} ft / ${Math.round(s.tasKt)} kt targets (demo)`
+      : routeLabel(),
+  );
   all('#waypoints li').forEach((li, i) => {
     li.classList.toggle('passed', state.seen.has(i));
     li.classList.toggle('active', !state.seen.has(i) && (i === 0 || state.seen.has(i - 1)));
@@ -160,10 +165,7 @@ function finish() {
       save();
     }
     text('result-title', state.mode === 'quiz' ? `${record.score} / 5 — quiz complete` : 'Route rehearsed');
-    text(
-      'result-body',
-      `${state.route === 'inner' ? 'Inner' : 'Outer'} loop saved to ${learner().name}’s flight log.`,
-    );
+    text('result-body', `${routeLabel()} saved to ${learner().name}’s flight log.`);
     $('result-review').replaceChildren();
     state.answers.forEach((a) => {
       const p = document.createElement('p');

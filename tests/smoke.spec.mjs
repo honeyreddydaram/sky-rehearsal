@@ -111,3 +111,20 @@ test('Phase 2b: Google 3D (beta) checkbox exists, unchecked, no network by defau
 
   expect(pageErrors.map((e) => e.message)).toEqual([]);
 });
+
+test('circuit drives playback and runway changes reset the active flight', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#flight-phase')).toContainText('RWY 27 circuit');
+  await expect(page.locator('#waypoints li').first()).toContainText('upwind');
+  await page.click('#play');
+  await page.locator('#timeline').fill('500');
+  await expect(page.locator('#flight-phase')).toContainText('downwind');
+  await page.click('[data-runway="09"]');
+  await expect(page.locator('#flight-phase')).toContainText('RWY 09 circuit');
+  await expect(page.locator('#percentage')).toHaveText('0%');
+  await expect(page.locator('#play')).toHaveText('Start rehearsal');
+  await page.click('[data-route="inner"]');
+  await expect(page.locator('#flight-phase')).toContainText('Inner legacy loop');
+  await page.click('[data-route="circuit"]');
+  await expect(page.locator('#flight-phase')).toContainText('RWY 09 circuit');
+});

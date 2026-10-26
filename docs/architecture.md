@@ -33,8 +33,14 @@ versions together and run both build and browser tests.
 
 ## Deliberately deferred
 
-The current flyable route remains the screenshot-derived legacy route. The real
-circuit reference data does not yet drive the aircraft (M2). Browser-only learners
+The default flight now follows the illustrative circuit engine in `src/flight/circuit.mjs`.
+RWY 27 uses explicit turn-point pins; its final intercept is inferred by projecting
+the base turn onto the runway line. RWY 09 reverses that geometry, consistent with
+the derived circuit file. Side landmarks and null coordinates never become flight
+vertices. Straight segments have instantaneous turns, not bank dynamics. All
+geometry remains unverified, and altitude/speed schedules are demo targets rather
+than reviewed aircraft performance. Instructor/recorded-flight validation is still
+required. The screenshot-derived loops remain available as legacy routes. Browser-only learners
 are not authenticated accounts (M4). No production database schema, AWS resources,
 or authentication is implied by the health endpoints. GitHub Pages serves only
 static frontend files. AWS deployment and its security/operations work belong to M10.

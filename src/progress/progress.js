@@ -13,8 +13,8 @@
 // is the same inversion-of-control trick used in map.js (setInteractionHandler) and
 // playback.js (setQuizHandler) — see README "Architecture".
 
-import {profileAt, validateProfile, validateProgressBackup} from '../flight/core.mjs';
-import {state, demo, EGM2008_UNDULATION_M_VOHY} from '../flight/state.js';
+import {validateProfile, validateProgressBackup} from '../flight/core.mjs';
+import {state, demo, routeLabel, flightFrame, EGM2008_UNDULATION_M_VOHY} from '../flight/state.js';
 import {$, text, toast, download, showDialog} from '../ui/ui.js';
 
 const KEY = 'sky-rehearsal-learners-v1';
@@ -87,14 +87,14 @@ export function profileOptions() {
 }
 
 function chart() {
-  const frames = state.profile.frames;
+  const frames = Array.from({length: 81}, (_, i) => flightFrame(i / 80));
   const min = Math.min(...frames.map((f) => f.altitudeFt));
   const max = Math.max(...frames.map((f) => f.altitudeFt));
   const lo = min - 100;
   const hi = max + 100;
   const points = Array.from(
     {length: 81},
-    (_, i) => `${i * 3},${60 - ((profileAt(frames, i / 80).altitudeFt - lo) / (hi - lo)) * 45}`,
+    (_, i) => `${i * 3},${60 - ((frames[i].altitudeFt - lo) / (hi - lo)) * 45}`,
   ).join(' ');
   $('altitude-chart').innerHTML =
     `<path d="M0 60H240" stroke="#344159"/>` +
@@ -118,7 +118,7 @@ function profileCopy() {
       ? 'Demo geometry and flight values support familiarization. Import a sourced flight profile for your own altitude and airspeed schedule.'
       : 'Using “' +
           state.profile.name +
-          '” on the screenshot-based route. Confirm the geometry and profile with your instructor before using it for training.',
+          '” on the selected rehearsal route. Confirm the geometry and profile with your instructor before using it for training.',
   );
   chart();
 }
@@ -207,7 +207,7 @@ export function renderProgress() {
       const d = document.createElement('div');
       const sm = document.createElement('small');
       d.className = 'history-row';
-      d.textContent = `${s.route === 'inner' ? 'Inner' : 'Outer'} loop · ${s.mode === 'quiz' ? `Quiz ${s.score}/${s.total}` : 'Guided rehearsal'}`;
+      d.textContent = `${routeLabel(s.route)} · ${s.mode === 'quiz' ? `Quiz ${s.score}/${s.total}` : 'Guided rehearsal'}`;
       sm.textContent = new Date(s.completedAt).toLocaleString() + ' · ' + s.profile;
       d.append(sm);
       $('history').append(d);

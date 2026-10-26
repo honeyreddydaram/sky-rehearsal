@@ -14,6 +14,9 @@
 // read `state` too. Anything here that needs rendering to react (rebuildTrace) just
 // recomputes data — the caller is responsible for telling map.js to redraw.
 
+import {buildCircuit, circuitStage} from './circuit.mjs';
+import {airport, circuits} from '../aviation/airport.js';
+
 import {bearing, routeModel, at, profileAt, windTriangle, driftPoint, validateRouteData} from './core.mjs';
 
 // Geoid undulation (N) at VOHY: the height of the geoid (mean sea level) above the
@@ -86,6 +89,31 @@ export const state = {
 // points, so the aircraft doesn't visibly cut corners).
 export let routeData = null;
 export let models = null;
+export const flightCircuits = {};
+export function loadCircuits() {
+  for (const runway of ['27', '09']) {
+    const route = `circuit${runway}`;
+    flightCircuits[route] = buildCircuit(airport, circuits, runway);
+    models[route] = flightCircuits[route].model;
+  }
+  state.route = 'circuit27';
+}
+export function routeLabel(route = state.route) {
+  return route.startsWith('circuit')
+    ? `RWY ${route.slice(7)} circuit (illustrative)`
+    : `${route === 'inner' ? 'Inner' : 'Outer'} legacy loop`;
+}
+export function flightFrame(progress) {
+  const circuit = flightCircuits[state.route];
+  if (!circuit || state.profile !== demo) return profileAt(state.profile.frames, progress);
+  const frames = circuit.stages.map((stage) => ({
+    progress: stage.start,
+    altitudeFt: stage.altitudeFt,
+    tasKt: stage.speedKt,
+  }));
+  frames.push({progress: 1, altitudeFt: airport.elevation.ft, tasKt: 30});
+  return profileAt(frames, progress);
+}
 
 export async function loadRouteData() {
   const response = await fetch('./routes.json');
@@ -101,6 +129,13 @@ export async function loadRouteData() {
 // The five fixed study checkpoints along either loop. The eastern-turn name differs
 // by route (inner loop passes Malkajgiri side; outer loop passes Moula Ali side).
 export function waypoints() {
+  const circuit = flightCircuits[state.route];
+  if (circuit)
+    return circuit.stages.slice(1, 6).map((stage) => ({
+      p: stage.start,
+      name: stage.name,
+      cue: `${stage.expectedAction} Reference landmarks: ${stage.landmarks.map((c) => c.name + (c.side ? ` (${c.side})` : '')).join(', ')}. Geometry and flight values are illustrative, not instructor verified.`,
+    }));
   return [
     {p: 0.055, name: 'Begumpet Airport', cue: 'Orient yourself to the runway and surrounding city.'},
     {p: 0.205, name: 'Western turn', cue: 'Look toward Balkampet and the KBR Park side of the loop.'},
@@ -139,7 +174,7 @@ export function rebuildTrace() {
   for (let i = 0; i <= n; i++) {
     const p = i / n;
     const point = at(models[state.route], p);
-    const frame = profileAt(state.profile.frames, p);
+    const frame = flightFrame(p);
     const wind = windTriangle(
       planBearing(p),
       frame.tasKt,
@@ -173,15 +208,22 @@ export function positionAt(progress) {
 }
 
 export function heightAt(progress) {
-  const frame = profileAt(state.profile.frames, progress);
+  const frame = flightFrame(progress);
   return frame.altitudeFt * 0.3048 + (state.profile.geoidOffsetM || 0); // ft -> metres, ellipsoid height
 }
 
 // The full derived flight state at a point along the route: position, height, course,
 // and the wind-triangle result (heading/track/groundspeed/crosswind/correction/...).
 export function stateAt(progress) {
-  const frame = profileAt(state.profile.frames, progress);
+  const frame = flightFrame(progress);
   const course = planBearing(progress);
   const wind = windTriangle(course, frame.tasKt, state.windFrom, state.windSpeed, state.correctWind);
-  return {...frame, ...wind, course, position: positionAt(progress), height: heightAt(progress)};
+  return {
+    ...frame,
+    ...wind,
+    phase: flightCircuits[state.route] ? circuitStage(flightCircuits[state.route], progress).name : null,
+    course,
+    position: positionAt(progress),
+    height: heightAt(progress),
+  };
 }

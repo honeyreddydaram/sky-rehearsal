@@ -35,7 +35,9 @@ export function beginQuestion(index) {
     'question',
     isHeading
       ? 'What true track does the next leg of this route follow?'
-      : 'Which landmark or area comes next along this route?',
+      : state.route.startsWith('circuit')
+        ? 'Which circuit leg comes next?'
+        : 'Which landmark or area comes next along this route?',
   );
   $('answers').replaceChildren();
   text('feedback', '');
