@@ -23,6 +23,7 @@ export default function Dialogs() {
         <h2 id="result-title"></h2>
         <p id="result-body"></p>
         <div id="result-review"></div>
+        <div id="result-debrief"></div>
         <button data-close className="primary">
           Done
         </button>
@@ -37,6 +38,7 @@ export default function Dialogs() {
         <p id="progress-person" className="micro"></p>
         <div id="progress-stats" className="stats"></div>
         <div id="history"></div>
+        <div id="history-debrief"></div>
         <div className="dialog-actions">
           <button id="export-progress" className="secondary">
             Export progress

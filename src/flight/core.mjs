@@ -1,3 +1,4 @@
+import {validDebrief} from '../training/debrief-schema.mjs';
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export const rad = (x) => (x * Math.PI) / 180,
   deg = (x) => (x * 180) / Math.PI;
@@ -234,6 +235,7 @@ export function validateProgressBackup(d) {
       (s.difficulty !== undefined &&
         !['beginner', 'intermediate', 'advanced', 'examiner'].includes(s.difficulty)) ||
       (s.hintsUsed !== undefined && (!Number.isInteger(s.hintsUsed) || s.hintsUsed < 0)) ||
+      (s.debrief != null && !validDebrief(s.debrief)) ||
       !quizScoreOk
     )
       fail('Backup contains invalid session data.');

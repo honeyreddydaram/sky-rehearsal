@@ -51,6 +51,7 @@ export function beginQuestion(index) {
         passed: right,
         waypoint: w.name,
         type: question.type,
+        skill: question.skill,
       });
       all('#answers button').forEach((btn) => {
         btn.disabled = true;

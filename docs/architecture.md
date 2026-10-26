@@ -81,3 +81,15 @@ Map entities and the fallback consult the same assistance policy. Completed reco
 retain difficulty and hint counts, with backwards-compatible backup and Firestore
 validation. See [mode definitions](training.md). No AI or performance-score engine is
 introduced by this milestone.
+
+## Assessment and debrief (M6)
+
+`training/assessment.mjs` is a pure, deterministic metrics engine.
+`training/reference.mjs` adapts the current route/profile/wind into reference and
+simulation samples; `training/debrief.js` renders reports and replay actions.
+`training/debrief-schema.mjs` validates persisted reports without browser dependencies.
+Recording comparison reuses the existing replay clock, while completed rehearsal
+review uses an unlogged bounded replay. Report snapshots accompany session records
+or private flight metadata; stored reports are not silently rescored. No model/AI
+service is involved. See [assessment method](assessment.md) for missing-data policy
+and the distinction between exploratory comparisons, recall and proficiency scores.

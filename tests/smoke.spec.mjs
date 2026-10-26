@@ -259,3 +259,80 @@ test('landmark and decision exercises use checkpoint questions; changing difficu
   await expect(page.locator('#training-hint-button')).toBeDisabled();
   await expect(page.locator('#percentage')).toHaveText('0%');
 });
+
+test('recorded comparison shows missing sensors and replays the largest path difference', async ({page}) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      return String(type).includes('webgl') ? null : original.call(this, type, ...args);
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('#engine-status')).toHaveText('Study diagram');
+  await page.selectOption('#recording-reference', 'ELLIPSOID');
+  await page.locator('#recording-file').setInputFiles({
+    name: 'comparison.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(
+      'timestamp,latitude,longitude,altitude_m\n2026-01-01T00:00:00Z,17.50,78.60,900\n2026-01-01T00:00:10Z,17.501,78.601,910\n2026-01-01T00:00:20Z,17.502,78.602,920',
+    ),
+  });
+  await expect(page.locator('#recording-assess')).toBeEnabled();
+  await page.click('#recording-assess');
+  await expect(page.locator('#recording-debrief')).toContainText('Overall flight score unavailable');
+  await expect(page.locator('#recording-debrief')).toContainText('No measured true airspeed');
+  await expect(page.locator('#recording-debrief')).toContainText('GPS track is not nose heading');
+  const replay = page
+    .locator('#recording-debrief button')
+    .filter({hasText: /^Replay /})
+    .first();
+  await expect(replay).toBeEnabled();
+  await replay.click();
+  await expect(page.locator('#diagram-deviation')).toHaveCount(1);
+  await expect(page.locator('#recording-play')).toHaveText('Pause recording');
+  await page.click('#recording-clear');
+  await expect(page.locator('#recording-debrief')).toBeEmpty();
+  await expect(page.locator('#diagram-deviation')).toHaveCount(0);
+  await expect(page.locator('#recording-assess')).toBeDisabled();
+});
+
+test('completed rehearsal retains an honest debrief and can replay a difference without logging again', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#route-distance')).toContainText('NM');
+  await page.fill('#wind-speed', '20');
+  await page.evaluate(async () => {
+    const {state} = await import('/src/flight/state.js');
+    state.rate = 10000;
+  });
+  await page.click('#play');
+  await expect(page.locator('#results-dialog')).toBeVisible();
+  await expect(page.locator('#result-debrief')).toContainText('not independently measured pilot control');
+  await expect(page.locator('#result-debrief')).toContainText('Overall flight score unavailable');
+  const before = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sky-rehearsal-learners-v1')).learners[0].sessions,
+  );
+  expect(before).toHaveLength(1);
+  expect(before[0].debrief.version).toBe(1);
+  await page
+    .locator('#result-debrief button')
+    .filter({hasText: /^Replay /})
+    .first()
+    .click();
+  await expect(page.locator('#results-dialog')).not.toBeVisible();
+  await expect(page.locator('#callout-title')).toHaveText('DEBRIEF REPLAY COMPLETE');
+  const after = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sky-rehearsal-learners-v1')).learners[0].sessions,
+  );
+  expect(after).toHaveLength(1);
+  await page.click('#progress-open');
+  await page.locator('#history button').filter({hasText: 'View debrief'}).click();
+  await expect(page.locator('#history-debrief')).toContainText('Criteria v1');
+  await expect(
+    page
+      .locator('#history-debrief button')
+      .filter({hasText: /^Replay /})
+      .first(),
+  ).toBeDisabled();
+});

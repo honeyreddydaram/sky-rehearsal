@@ -61,6 +61,7 @@ export const state = {
   mode: 'guided',
   difficulty: 'beginner',
   hintsUsed: 0,
+  reviewing: false,
   hintLevels: {}, // 'guided' | 'quiz' | 'explore'
   // 'overview' | 'follow' | 'pilot'. This raw default only matters before a Cesium
   // viewer exists (map.js can't position a pilot/follow camera without one) -- once

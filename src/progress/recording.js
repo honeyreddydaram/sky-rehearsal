@@ -1,8 +1,11 @@
 import {normalizeRecording, parseCsv, parseGpx, recordingAt, replay} from '../flight/recording.mjs';
+import {assessFlight} from '../training/assessment.mjs';
+import {comparisonTrace} from '../training/reference.mjs';
+import {renderDebrief} from '../training/debrief.js';
 import {saveTrack, listTracks, readTrack} from '../cloud/firebase';
 import {refresh} from '../flight/playback.js';
-import {state, stateAt} from '../flight/state.js';
-import {renderPosition, setRecording} from '../map/map.js';
+import {state, stateAt, routeLabel} from '../flight/state.js';
+import {renderPosition, setRecording, showDeviation} from '../map/map.js';
 import {$, text} from '../ui/ui.js';
 
 export function wireRecording() {
@@ -14,7 +17,9 @@ export function wireRecording() {
     savedRows = null,
     savedName = null,
     savedReference = null,
-    savedOffset = null;
+    savedOffset = null,
+    lastReport = null,
+    replayEnd = null;
   const show = () => {
     if (!recording) return;
     replay.sample = recordingAt(recording, seconds);
@@ -29,6 +34,7 @@ export function wireRecording() {
   };
   const stop = () => {
     playing = false;
+    replayEnd = null;
     replay.sample = null;
     text('recording-play', 'Replay recording');
     renderPosition(stateAt(state.t));
@@ -58,13 +64,21 @@ export function wireRecording() {
       state.playing = false;
       refresh();
       recording = imported;
+      lastReport = null;
+      $('recording-debrief').replaceChildren();
       savedRows = rows;
       savedName = file.name;
       savedReference = $('recording-reference').value;
       savedOffset = offset === '' ? null : Number(offset);
       seconds = 0;
       setRecording(recording.points);
-      for (const id of ['recording-play', 'recording-clear', 'recording-time', 'recording-save-cloud'])
+      for (const id of [
+        'recording-play',
+        'recording-clear',
+        'recording-time',
+        'recording-save-cloud',
+        'recording-assess',
+      ])
         $(id).disabled = false;
       text(
         'recording-status',
@@ -81,6 +95,7 @@ export function wireRecording() {
     if (!recording) return;
     state.playing = false;
     refresh();
+    replayEnd = null;
     if (seconds >= recording.duration) seconds = 0;
     playing = !playing;
     previous = performance.now();
@@ -91,26 +106,63 @@ export function wireRecording() {
     state.playing = false;
     refresh();
     playing = false;
+    replayEnd = null;
     seconds = (Number(event.target.value) / 1000) * recording.duration;
     show();
   };
   $('recording-clear').onclick = () => {
     request++;
     stop();
+    showDeviation();
     recording = null;
+    lastReport = null;
+    $('recording-debrief').replaceChildren();
     savedRows = null;
     savedName = null;
     setRecording([]);
-    for (const id of ['recording-play', 'recording-clear', 'recording-time', 'recording-save-cloud'])
+    for (const id of [
+      'recording-play',
+      'recording-clear',
+      'recording-time',
+      'recording-save-cloud',
+      'recording-assess',
+    ])
       $(id).disabled = true;
     $('recording-time').value = 0;
     text('recording-status', 'No recorded flight loaded.');
     text('recording-telemetry', '');
   };
+  $('recording-assess').onclick = () => {
+    try {
+      if (!recording) throw new Error('Import a recording first.');
+      stop();
+      state.playing = false;
+      refresh();
+      const {reference} = comparisonTrace();
+      const report = assessFlight({
+        samples: recording.points,
+        reference,
+        source: 'recording',
+        referenceName: routeLabel() + ' · ' + state.profile.name,
+        verified: false,
+        windKnown: false,
+      });
+      lastReport = report;
+      renderDebrief($('recording-debrief'), report, (event) => {
+        seconds = Math.max(0, event.atSeconds - 5);
+        playing = true;
+        replayEnd = Math.min(recording.duration, event.atSeconds + 5);
+        previous = performance.now();
+        show();
+      });
+    } catch (error) {
+      text('recording-status', `Comparison unavailable: ${error.message}`);
+    }
+  };
   $('recording-save-cloud').onclick = async () => {
     try {
       if (!savedRows) throw new Error('Import a flight first.');
-      await saveTrack(savedName, savedRows, savedReference, savedOffset);
+      await saveTrack(savedName, savedRows, savedReference, savedOffset, lastReport);
       text('recording-status', 'Flight saved to your account.');
     } catch (error) {
       text('recording-status', `Cloud save failed: ${error.message}`);
@@ -142,14 +194,26 @@ export function wireRecording() {
       state.playing = false;
       refresh();
       recording = imported;
+      lastReport = null;
+      $('recording-debrief').replaceChildren();
       seconds = 0;
       savedRows = track.rows;
       savedName = track.name;
       savedReference = track.reference;
       savedOffset = track.geoidOffsetM;
       setRecording(recording.points);
-      for (const id of ['recording-play', 'recording-clear', 'recording-time', 'recording-save-cloud'])
+      for (const id of [
+        'recording-play',
+        'recording-clear',
+        'recording-time',
+        'recording-save-cloud',
+        'recording-assess',
+      ])
         $(id).disabled = false;
+      if (track.debrief) {
+        lastReport = track.debrief;
+        renderDebrief($('recording-debrief'), track.debrief);
+      }
       text('recording-status', `${track.name}: ${recording.points.length} points loaded from account.`);
       show();
     } catch (error) {
@@ -168,6 +232,14 @@ export function wireRecording() {
       event,
       (e) => {
         if (e.target.closest(controls)) stop();
+        if (
+          e.target.closest(
+            '[data-route], [data-runway], #wind-from, #wind-speed, #compensate, #flight-profile, #import-profile',
+          )
+        ) {
+          lastReport = null;
+          $('recording-debrief').replaceChildren();
+        }
       },
       true,
     );
@@ -178,6 +250,11 @@ export function wireRecording() {
         recording.duration,
         seconds + Math.min((now - previous) / 1000, 0.25) * Number($('recording-rate').value),
       );
+      if (replayEnd !== null && seconds >= replayEnd) {
+        seconds = replayEnd;
+        playing = false;
+        replayEnd = null;
+      }
       if (seconds >= recording.duration) playing = false;
       show();
     }

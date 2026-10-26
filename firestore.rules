@@ -5,12 +5,13 @@ service cloud.firestore {
     function session() {
       let d = request.resource.data;
       return d.keys().hasAll(['id','route','mode','completedAt','profile'])
-        && d.keys().hasOnly(['id','route','mode','completedAt','profile','score','total','windFrom','windSpeed','correctWind','answers','difficulty','hintsUsed'])
+        && d.keys().hasOnly(['id','route','mode','completedAt','profile','score','total','windFrom','windSpeed','correctWind','answers','difficulty','hintsUsed','debrief'])
         && d.id is string && d.id.size() <= 128
         && d.route in ['inner','outer','circuit27','circuit09']
         && d.mode in ['guided','practice','landmarks','decisions','quiz','exam']
         && (!('difficulty' in d) || d.difficulty in ['beginner','intermediate','advanced','examiner'])
         && (!('hintsUsed' in d) || (d.hintsUsed is int && d.hintsUsed >= 0))
+        && (!('debrief' in d) || d.debrief == null || (d.debrief is map && d.debrief.version == 1 && d.debrief.events is list && d.debrief.events.size() <= 20))
         && d.completedAt is string && d.completedAt.size() <= 40
         && d.profile is string && d.profile.size() <= 200
         && (!(d.mode in ['quiz','exam','landmarks','decisions']) || (d.total == 5 && d.score is int && d.score >= 0 && d.score <= 5));
@@ -36,7 +37,8 @@ service cloud.firestore {
     match /users/{uid}/tracks/{id} {
       allow read, delete: if owner(uid);
       allow create, update: if owner(uid)
-        && request.resource.data.keys().hasOnly(['name','createdAt','path','reference','geoidOffsetM'])
+        && request.resource.data.keys().hasOnly(['name','createdAt','path','reference','geoidOffsetM','debrief'])
+        && (!('debrief' in request.resource.data) || request.resource.data.debrief == null || (request.resource.data.debrief is map && request.resource.data.debrief.version == 1 && request.resource.data.debrief.events.size() <= 20))
         && request.resource.data.name is string && request.resource.data.name.size() <= 200
         && request.resource.data.createdAt is string
         && request.resource.data.reference in ['MSL','ELLIPSOID']

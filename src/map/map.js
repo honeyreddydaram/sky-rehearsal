@@ -19,6 +19,8 @@ import {PUBLIC_ION_TOKEN} from './ion-token.js';
 
 import * as C from 'cesium';
 import {assistance} from '../training/engine.mjs';
+const mapAids = () =>
+  assistance(state.reviewing ? 'guided' : state.mode, state.reviewing ? 'beginner' : state.difficulty);
 import {replay} from '../flight/recording.mjs';
 
 // Pilot-view tuning constants (see the ground-rules message for Phase 2b): a natural
@@ -116,7 +118,7 @@ function namedPoints() {
 // anywhere near the poles.
 function renderDiagram() {
   if (viewer) return;
-  const aids = assistance(state.mode, state.difficulty);
+  const aids = mapAids();
   const svg = $('fallback-map');
   svg.replaceChildren();
   const ns = 'http://www.w3.org/2000/svg';
@@ -240,6 +242,7 @@ function renderDiagram() {
   const title = node('text', {x: 30, y: 580, fill: '#829bb8', 'font-size': 11});
   title.textContent = 'ROUTE STUDY DIAGRAM · N ↑';
   drawRecording();
+  drawDeviation();
 }
 export {renderDiagram};
 
@@ -249,7 +252,7 @@ export {renderDiagram};
 // places, the Landmarks layer, both runways' circuit checkpoints, and the runway
 // ends — so an unlocated checkpoint can be pinned by eye against known references.
 function showIdentify(lon, lat) {
-  if (!assistance(state.mode, state.difficulty).labels) return;
+  if (!mapAids().labels) return;
   const nearest = nearestNamedPoint([lon, lat], namedPoints());
   text('identify-coords', `${lat.toFixed(5)}°, ${lon.toFixed(5)}°`);
   text(
@@ -323,7 +326,7 @@ export function updateRoutes() {
   windLine.polyline.positions = getTrackPoints().map((p, i) =>
     C.Cartesian3.fromDegrees(...p, heightAt(i / 240)),
   );
-  const aids = assistance(state.mode, state.difficulty);
+  const aids = mapAids();
   planned.show = groundLine.show = aids.route;
   windLine.show = aids.route && state.windSpeed > 0;
   groundLine.polyline.positions = models[state.route].points.map((p) => C.Cartesian3.fromDegrees(...p));
@@ -550,7 +553,7 @@ export function setLabelsVisible(checked) {
 }
 
 export function applyTrainingAssistance() {
-  const aids = assistance(state.mode, state.difficulty);
+  const aids = mapAids();
   const showLabels = aids.labels && $('labels').checked;
   $('labels').disabled = !aids.labels;
   if (!aids.labels) $('identify-panel').hidden = true;
@@ -563,6 +566,7 @@ export function applyTrainingAssistance() {
     entity.point.show = aids.markers && showLabels;
   });
   if (recordingEntity) recordingEntity.show = aids.route;
+  if (deviationEntity) deviationEntity.show = aids.route;
   document.querySelector('.map-legend').hidden = !aids.route;
   if (viewer) {
     if (planned) planned.show = aids.route;
@@ -975,12 +979,12 @@ export function setRecording(points) {
         arcType: C.ArcType.NONE,
       },
     });
-    recordingEntity.show = assistance(state.mode, state.difficulty).route;
+    recordingEntity.show = mapAids().route;
     viewer.flyTo(recordingEntity);
   }
 }
 function drawRecording() {
-  if (viewer || !renderDiagram.project || !assistance(state.mode, state.difficulty).route) return;
+  if (viewer || !renderDiagram.project || !mapAids().route) return;
   $('diagram-recording')?.remove();
   if (!recordedPoints.length) return;
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
@@ -992,5 +996,43 @@ function drawRecording() {
   line.setAttribute('fill', 'none');
   line.setAttribute('stroke', '#22d3ee');
   line.setAttribute('stroke-width', '3');
+  $('fallback-map').append(line);
+}
+
+let deviationEntity = null;
+let deviation = null;
+export function showDeviation(actual, expected, height = 0, referenceHeight = 0) {
+  if (deviationEntity && viewer) viewer.entities.remove(deviationEntity);
+  deviationEntity = null;
+  deviation = actual && expected ? {actual, expected, height, referenceHeight} : null;
+  $('diagram-deviation')?.remove();
+  if (viewer && deviation) {
+    deviationEntity = viewer.entities.add({
+      polyline: {
+        positions: [
+          C.Cartesian3.fromDegrees(...actual, height),
+          C.Cartesian3.fromDegrees(...expected, referenceHeight),
+        ],
+        width: 4,
+        material: C.Color.RED,
+        arcType: C.ArcType.NONE,
+      },
+    });
+    deviationEntity.show = mapAids().route;
+    viewer.scene.requestRender();
+  } else drawDeviation();
+}
+function drawDeviation() {
+  if (viewer || !deviation || !renderDiagram.project || !mapAids().route) return;
+  $('diagram-deviation')?.remove();
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  line.id = 'diagram-deviation';
+  line.setAttribute(
+    'points',
+    [deviation.actual, deviation.expected].map((p) => renderDiagram.project(p).join(',')).join(' '),
+  );
+  line.setAttribute('stroke', '#fb7185');
+  line.setAttribute('stroke-width', '4');
+  line.setAttribute('fill', 'none');
   $('fallback-map').append(line);
 }

@@ -36,8 +36,18 @@ export function normalizeRecording(rows, {reference, geoidOffsetM} = {}) {
       heading: optional('heading_true', 0, 360),
       speedKt: optional('speed_kt', 0, 1500),
       verticalSpeedFpm: optional('vertical_speed_fpm', -20000, 20000),
+      tasKt: optional('tas_kt', 0, 1500),
+      phase: row.phase?.trim() || null,
     };
   });
+  if (
+    points.some(
+      (p) =>
+        p.phase &&
+        !['takeoff', 'upwind', 'crosswind', 'downwind', 'base', 'final', 'landing'].includes(p.phase),
+    )
+  )
+    throw new Error('Unknown flight phase tag.');
   for (let i = 1; i < points.length; i++) {
     if (points[i].timestamp <= points[i - 1].timestamp)
       throw new Error(

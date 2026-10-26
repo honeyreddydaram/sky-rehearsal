@@ -5,8 +5,9 @@ export default function RecordingPanel() {
       <h2>Recorded flight</h2>
       <p className="micro">
         Compare ideal circuit (purple), rehearsal wind track (amber), and recording (cyan). Files stay in this
-        tab. GPX elevation / CSV altitude_m are metres; speed_kt is ground speed. Recorded replay is separate
-        from scored rehearsal.
+        tab. GPX elevation / CSV altitude_m are metres; speed_kt is ground speed. Recorded comparisons are
+        separate from knowledge-recall scores. Optional CSV tas_kt and phase tags support additional
+        measurements.
       </p>
       <label>
         Altitude reference{' '}
@@ -71,6 +72,14 @@ export default function RecordingPanel() {
         Recorded time
         <input id="recording-time" type="range" min="0" max="1000" defaultValue="0" disabled />
       </label>
+      <button id="recording-assess" disabled>
+        Compare flight with current route
+      </button>
+      <p className="micro">
+        Comparison uses the currently selected illustrative route/profile. GPS track is not nose heading, and
+        ground speed is not true airspeed. Unknown measurements remain unscored.
+      </p>
+      <div id="recording-debrief"></div>
       <p id="recording-telemetry" className="micro" aria-live="polite"></p>
       <p className="micro">
         Use Pilot, Chase, or Overview above to replay the recorded aircraft. The main flight telemetry remains

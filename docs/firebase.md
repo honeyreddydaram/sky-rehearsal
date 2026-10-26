@@ -99,7 +99,7 @@ no role currently gives blanket access to another person's recordings.
 - Completed sessions merge by independent IDs. Imported profiles with the same ID
   use the latest write. Sign-in/Sync loads the latest 300 sessions and profiles;
   this is not a real-time collaborative editor. Cloud scores remain client-submitted
-  rehearsal results until authoritative deterministic assessment is introduced in M6.
+  rehearsal results and deterministic debriefs remain client-computed self-study results; they are not server-attested grades.
 - Airport and aircraft source data remain version-controlled packages; instructor
   scenario/assignment authoring and an editable cloud catalog are later milestones.
 

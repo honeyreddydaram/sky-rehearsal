@@ -25,6 +25,8 @@ test('account progress and flights follow the user across fresh browsers', async
   await page.selectOption('#recording-reference', 'ELLIPSOID');
   await page.locator('#recording-file').setInputFiles('public/examples/demo-flight.gpx');
   await expect(page.locator('#recording-status')).toContainText('3 points loaded');
+  await page.click('#recording-assess');
+  await expect(page.locator('#recording-debrief')).toContainText('Overall flight score unavailable');
   await page.click('#recording-save-cloud');
   await expect(page.locator('#recording-status')).toHaveText('Flight saved to your account.');
   const second = await browser.newContext();
@@ -38,11 +40,14 @@ test('account progress and flights follow the user across fresh browsers', async
   await other.locator('#account-dialog [data-close]').click();
   await other.click('#progress-open');
   await expect(other.locator('#history .history-row')).toHaveCount(1);
+  await other.locator('#history button').filter({hasText: 'View debrief'}).click();
+  await expect(other.locator('#history-debrief')).toContainText('Criteria v1');
   await other.locator('#progress-dialog [data-close]').click();
   await other.click('#recording-list-cloud');
   await expect(other.locator('#recording-cloud-list option')).toHaveCount(1);
   await other.click('#recording-load-cloud');
   await expect(other.locator('#recording-status')).toContainText('3 points loaded from account');
+  await expect(other.locator('#recording-debrief')).toContainText('Criteria v1');
   await other.click('#account-open');
   await other.click('#account-signout');
   await expect(other.locator('#account-status')).toContainText('Guest practice');

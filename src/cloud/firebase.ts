@@ -1,3 +1,4 @@
+import {validDebrief} from '../training/debrief-schema.mjs';
 import {initializeApp} from 'firebase/app';
 import {
   getAuth,
@@ -92,9 +93,16 @@ export async function saveAccount(
     await setDoc(doc(cloud.db, 'users', uid, 'profiles', profile.id), profile);
 }
 
-export async function saveTrack(name: string, rows: unknown, reference: string, geoidOffsetM: number | null) {
+export async function saveTrack(
+  name: string,
+  rows: unknown,
+  reference: string,
+  geoidOffsetM: number | null,
+  debrief: unknown = null,
+) {
   const user = cloud?.auth.currentUser;
   if (!cloud || !user) throw new Error('Sign in before saving a flight.');
+  if (debrief !== null && !validDebrief(debrief)) throw new Error('Invalid debrief report.');
   const id = crypto.randomUUID(),
     path = `users/${user.uid}/tracks/${id}.json`;
   const metadata = {
@@ -102,6 +110,7 @@ export async function saveTrack(name: string, rows: unknown, reference: string, 
     path,
     reference,
     geoidOffsetM,
+    debrief,
     createdAt: new Date().toISOString(),
   };
   await uploadBytes(ref(cloud.storage, path), new Blob([JSON.stringify(rows)], {type: 'application/json'}), {

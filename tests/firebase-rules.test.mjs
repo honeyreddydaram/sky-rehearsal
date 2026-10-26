@@ -124,3 +124,36 @@ test('new assessment modes persist difficulty and hint metadata without allowing
     }),
   );
 });
+
+test('debrief summaries can be saved on private sessions/tracks; unsupported versions are denied', async () => {
+  const db = environment.authenticatedContext('debrief-student').firestore();
+  const debrief = {version: 1, events: [], source: 'simulation', overall: null};
+  await assertSucceeds(
+    setDoc(doc(db, 'users/debrief-student/sessions/report'), {...session, id: 'report', debrief}),
+  );
+  await assertFails(
+    setDoc(doc(db, 'users/debrief-student/sessions/bad-report'), {
+      ...session,
+      id: 'bad-report',
+      debrief: {...debrief, version: 99},
+    }),
+  );
+  await assertSucceeds(
+    setDoc(doc(db, 'users/debrief-student/tracks/report'), {
+      name: 'Flight',
+      createdAt: '2026-01-01T00:00:00Z',
+      reference: 'MSL',
+      geoidOffsetM: -76,
+      path: 'users/debrief-student/tracks/report.json',
+      debrief,
+    }),
+  );
+  await assertFails(
+    getDoc(
+      doc(
+        environment.authenticatedContext('other-student').firestore(),
+        'users/debrief-student/tracks/report',
+      ),
+    ),
+  );
+});

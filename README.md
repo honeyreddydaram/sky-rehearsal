@@ -170,3 +170,18 @@ performance scoring/debrief comes in M6. See [training behavior](docs/training.m
 for the mode differences and assistance matrix. Measured aircraft telemetry remains
 visible when target hints are hidden. The test runner starts its own Vite server;
 stop any old preview/dev server using 4173/4174 before running browser checks.
+
+## Flight comparison and debrief (M6)
+
+Completed rehearsals now show deterministic error metrics and recall breakdowns.
+Use **Compare flight with current route** after importing a recording to inspect
+available track/altitude differences. A debrief entry replays a short window around
+the difference and shows the ideal/actual position connector. Reports export as JSON,
+remain in session history, and can be saved with private account flights.
+
+Missing true heading, TAS, wind data, or phase tags stay unavailable. GPS ground
+speed is never treated as TAS. Optional CSV `tas_kt` and `phase` columns support
+additional measurements. The minute-spaced replay demo is too sparse for the default
+30-second assessment gap limit; use suitably sampled flight data. Current illustrative
+references and automatically generated rehearsals do not receive an overall flight
+proficiency score. See [assessment methods and limits](docs/assessment.md).

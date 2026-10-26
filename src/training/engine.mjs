@@ -98,5 +98,12 @@ export function questionFor({mode, index, waypoints, course, windSpeed = 0, wind
     choices = [correct, ...waypoints.map((p) => p.name)];
   }
   choices = [...new Set(choices)].filter((value) => value !== correct).slice(0, 3);
-  return {type, prompt, correct, choices: [correct, ...choices], explanation: w.cue};
+  return {
+    type,
+    skill: type === 'decision' && windSpeed > 0 && index % 2 === 0 ? 'wind' : type,
+    prompt,
+    correct,
+    choices: [correct, ...choices],
+    explanation: w.cue,
+  };
 }

@@ -12,6 +12,7 @@
 // is the same inversion-of-control trick used in map.js (setInteractionHandler) and
 // playback.js (setQuizHandler) — see README "Architecture".
 
+import {renderDebrief} from '../training/debrief.js';
 import {assessed, modeLabel} from '../training/engine.mjs';
 import {validateProfile, validateProgressBackup} from '../flight/core.mjs';
 import {state, demo, routeLabel, flightFrame, EGM2008_UNDULATION_M_VOHY} from '../flight/state.js';
@@ -224,6 +225,7 @@ export function renderProgress() {
     $('progress-stats').append(d);
   }
   $('history').replaceChildren();
+  $('history-debrief').replaceChildren();
   if (!sessions.length) {
     const p = document.createElement('p');
     p.textContent = 'Your first completed rehearsal will appear here.';
@@ -239,6 +241,12 @@ export function renderProgress() {
       d.textContent = `${routeLabel(s.route)} · ${modeLabel(s.mode)}${assessed(s.mode) ? ` ${s.score}/${s.total}` : ''} · ${s.difficulty ?? 'beginner'} · ${s.hintsUsed ?? 0} hints`;
       sm.textContent = new Date(s.completedAt).toLocaleString() + ' · ' + s.profile;
       d.append(sm);
+      if (s.debrief) {
+        const button = document.createElement('button');
+        button.textContent = 'View debrief';
+        button.onclick = () => renderDebrief($('history-debrief'), s.debrief);
+        d.append(button);
+      }
       $('history').append(d);
     });
 }
@@ -258,7 +266,7 @@ export function wireProgressDialog() {
   $('restore-progress').onchange = async (e) => {
     const file = e.target.files[0];
     try {
-      if (!file || file.size > 2_000_000) throw new Error('Choose a progress backup under 2 MB.');
+      if (!file || file.size > 10_000_000) throw new Error('Choose a progress backup under 10 MB.');
       const data = JSON.parse(await file.text());
       const checked = validateProgressBackup(data);
       const restored = {
@@ -275,6 +283,7 @@ export function wireProgressDialog() {
           total: s.total,
           profile: s.profile,
           answers: [],
+          debrief: s.debrief ?? null,
         })),
         flightProfiles: checked.flightProfiles.map((f) => ({...validateProfile(f), id: crypto.randomUUID()})),
       };

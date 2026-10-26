@@ -10,14 +10,18 @@
 // create a cycle. Instead app.js registers quiz.beginQuestion via setQuizHandler().
 
 import {assessed, assistance, modeLabel, modeDescription, trainingHint} from '../training/engine.mjs';
+import {assessFlight} from '../training/assessment.mjs';
+import {comparisonTrace} from '../training/reference.mjs';
+import {renderDebrief} from '../training/debrief.js';
 import {replay} from './recording.mjs';
 import {distance, at, headingText} from './core.mjs';
 import {state, demo, routeLabel, flightFrame, models, waypoints, stateAt, secondsAt} from './state.js';
 import {$, all, text, toast, callout, selectStates, showDialog} from '../ui/ui.js';
-import {renderPosition, applyTrainingAssistance} from '../map/map.js';
+import {renderPosition, applyTrainingAssistance, showDeviation} from '../map/map.js';
 import {learner, save} from '../progress/progress.js';
 
 let onQuizCheckpoint = null;
+let replayUntil = null;
 export function setQuizHandler(fn) {
   onQuizCheckpoint = fn;
 }
@@ -64,6 +68,11 @@ export function waypointList() {
 
 export function reset() {
   replay.stop?.();
+  replayUntil = null;
+  showDeviation();
+  state.reviewing = false;
+  $('result-debrief').replaceChildren();
+  if ($('results-dialog').open) $('results-dialog').close();
   state.playing = false;
   state.started = false;
   state.eligible = true;
@@ -179,6 +188,47 @@ function finish() {
       correctWind: state.correctWind,
       answers: [...state.answers],
     };
+    try {
+      const {samples, reference} = comparisonTrace();
+      record.debrief = assessFlight({
+        samples,
+        reference,
+        answers: state.answers,
+        source: 'simulation',
+        referenceName: routeLabel() + ' · ' + state.profile.name,
+        verified: false,
+        windKnown: true,
+      });
+    } catch (error) {
+      record.debrief = null;
+      text('result-debrief', `Debrief unavailable: ${error.message}`);
+    }
+    if (record.debrief)
+      renderDebrief($('result-debrief'), record.debrief, (event) => {
+        $('results-dialog').close();
+        const progressAt = (seconds) => {
+          let lo = 0,
+            hi = 1;
+          for (let i = 0; i < 20; i++) {
+            const mid = (lo + hi) / 2;
+            if (secondsAt(mid) < seconds) lo = mid;
+            else hi = mid;
+          }
+          return (lo + hi) / 2;
+        };
+        state.reviewing = true;
+        state.completed = false;
+        state.pending = null;
+        state.started = true;
+        state.playing = true;
+        state.eligible = false;
+        state.t = progressAt(Math.max(0, event.atSeconds - 5));
+        replayUntil = progressAt(Math.min(secondsAt(1), event.atSeconds + 5));
+        applyTrainingAssistance();
+        last = performance.now();
+        refresh();
+        callout('DEBRIEF REPLAY', `${event.phase}: ${event.advice}`, false);
+      });
     if (!learner().sessions.some((s) => s.id === record.id)) {
       learner().sessions.push(record);
       learner().sessions = learner().sessions.slice(-300);
@@ -240,6 +290,18 @@ function step(dt) {
       state.customSeen.add(i);
       if (state.mode === 'guided' && state.difficulty === 'beginner') callout('PROFILE CALLOUT', c.text);
     }
+  }
+  if (replayUntil !== null && next >= replayUntil) {
+    state.t = replayUntil;
+    state.playing = false;
+    replayUntil = null;
+    callout(
+      'DEBRIEF REPLAY COMPLETE',
+      'Review the comparison against an instructor-approved reference before drawing conclusions.',
+      false,
+    );
+    refresh();
+    return;
   }
   state.t = next;
   if (state.t >= 1) finish();
