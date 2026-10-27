@@ -12,3 +12,8 @@ __pycache__/
 !.env.firebase.example
 .firebase/
 *-debug.log
+
+firebase.release.json
+deploy/.terraform/
+deploy/*.tfstate*
+deploy/*.tfvars

@@ -9,3 +9,5 @@ README.md
 public/cesium/
 dist/
 .venv/
+
+deploy/.terraform/

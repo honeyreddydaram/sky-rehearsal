@@ -367,7 +367,7 @@ test('weather observations require fresh steady wind and apply a reproducible sc
   const stamp = [now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes()]
     .map((n) => String(n).padStart(2, '0'))
     .join('');
-  await page.route('**/api/weather/metar', (route) =>
+  await page.route('**/api/weather/metar*', (route) =>
     route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({raw: `VOHY ${stamp}Z 27010G20KT 8000 SCT030 30/22 Q1008`}),
@@ -517,4 +517,52 @@ test('restored progress retains weather and wind settings', async ({page}) => {
     };
   });
   expect(restored).toEqual({windFrom: 270, windSpeed: 10, correctWind: true, environment});
+});
+
+test('airport packages switch geometry, datum, runways and isolate saved progress', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#airport-open')).toBeEnabled();
+  await page.click('#airport-open');
+  await page.selectOption('#airport-catalog', 'ZZZZ');
+  await page.click('#airport-load');
+  await expect(page.locator('#airport-heading')).toContainText('Synthetic Training Field');
+  await expect(page.locator('[data-runway="18"]')).toBeVisible();
+  await expect(page.locator('[data-route="inner"]')).toBeDisabled();
+  const loaded = await page.evaluate(async () => {
+    const {state, stateAt, demo} = await import('/src/flight/state.js');
+    return {route: state.route, position: stateAt(0).position, geoid: demo.geoidOffsetM};
+  });
+  expect(loaded).toEqual({route: 'circuit18', position: [-97, 35.008], geoid: 0});
+  await page.click('[data-runway="36"]');
+  await page.evaluate(async () => {
+    const {state} = await import('/src/flight/state.js');
+    state.rate = 10000;
+  });
+  await page.click('#play');
+  await expect(page.locator('#results-dialog')).toBeVisible();
+  await page.locator('#results-dialog [data-close]').click();
+  const saved = await page.evaluate(async () => {
+    const {learner} = await import('/src/progress/progress.js');
+    const s = learner().sessions.at(-1);
+    return [s.airportId, s.airportRevision, s.route];
+  });
+  expect(saved).toEqual(['ZZZZ', 'synthetic-v1', 'circuit36']);
+  await page.click('#airport-open');
+  await page.selectOption('#airport-catalog', 'VOHY');
+  await page.click('#airport-load');
+  await expect(page.locator('#airport-heading')).toContainText('Begumpet');
+  await expect(page.locator('[data-route="inner"]')).toBeEnabled();
+});
+
+test('phone layout keeps navigation and school forms within the viewport', async ({page}) => {
+  await page.setViewportSize({width: 390, height: 844});
+  await page.goto('/');
+  await expect(page.locator('#airport-open')).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
+  await page.click('#school-open');
+  await expect(page.locator('#school-dialog')).toBeVisible();
+  expect(
+    await page.locator('#school-dialog').evaluate((node) => node.getBoundingClientRect().width <= innerWidth),
+  ).toBe(true);
+  await page.locator('#school-dialog [data-close]').click();
 });

@@ -1,0 +1,75 @@
+name: Release to Google Cloud
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        required: true
+        default: staging
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: google-release-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_REGION: ${{ vars.GCP_REGION }}
+      CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+      ARTIFACT_REPOSITORY: ${{ vars.ARTIFACT_REPOSITORY }}
+      RUNTIME_SERVICE_ACCOUNT: ${{ vars.RUNTIME_SERVICE_ACCOUNT }}
+      FIREBASE_STORAGE_BUCKET: ${{ vars.FIREBASE_STORAGE_BUCKET }}
+      BUILD_SERVICE_ACCOUNT: ${{ vars.BUILD_SERVICE_ACCOUNT }}
+      FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+      FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_AUTH_DOMAIN }}
+      FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Validate release configuration
+        run: |
+          : "${GCP_PROJECT_ID:?Configure GCP_PROJECT_ID}"
+          : "${GCP_REGION:?Configure GCP_REGION}"
+          : "${CLOUD_RUN_SERVICE:?Configure CLOUD_RUN_SERVICE}"
+          : "${ARTIFACT_REPOSITORY:?Configure ARTIFACT_REPOSITORY}"
+          : "${RUNTIME_SERVICE_ACCOUNT:?Configure RUNTIME_SERVICE_ACCOUNT}"
+          : "${FIREBASE_STORAGE_BUCKET:?Configure FIREBASE_STORAGE_BUCKET}"
+          : "${FIREBASE_API_KEY:?Configure public FIREBASE_API_KEY}"
+          : "${FIREBASE_AUTH_DOMAIN:?Configure FIREBASE_AUTH_DOMAIN}"
+          : "${FIREBASE_APP_ID:?Configure FIREBASE_APP_ID}"
+          : "${BUILD_SERVICE_ACCOUNT:?Configure BUILD_SERVICE_ACCOUNT}"
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          VITE_FIREBASE_API_KEY: ${{ vars.FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_APP_ID: ${{ vars.FIREBASE_APP_ID }}
+      - name: Build and deploy a pinned API image
+        run: |
+          release_image="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPOSITORY}/sky-rehearsal:${GITHUB_SHA}"
+          gcloud builds submit --project "$GCP_PROJECT_ID" --service-account "projects/${GCP_PROJECT_ID}/serviceAccounts/${BUILD_SERVICE_ACCOUNT}" --config deploy/cloudbuild.yaml --substitutions "_IMAGE=$release_image" .
+          release_digest=$(gcloud artifacts docker images describe "$release_image" --project "$GCP_PROJECT_ID" --format='value(image_summary.digest)')
+          [[ "$release_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          gcloud run deploy "$CLOUD_RUN_SERVICE" --project "$GCP_PROJECT_ID" --region "$GCP_REGION" --image "${release_image%:*}@${release_digest}" --service-account "$RUNTIME_SERVICE_ACCOUNT" --allow-unauthenticated --max-instances 3 --min-instances 0 --concurrency 20 --memory 1Gi --timeout 60 --set-env-vars "APP_ENV=production,FIREBASE_PROJECT_ID=$GCP_PROJECT_ID,GOOGLE_CLOUD_PROJECT=$GCP_PROJECT_ID,FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET,GEMINI_MODEL=$GEMINI_MODEL,RELEASE_SHA=$GITHUB_SHA"
+      - name: Publish rules and Hosting release
+        run: |
+          node scripts/hosting-config.mjs "$CLOUD_RUN_SERVICE" "$GCP_REGION"
+          npx firebase deploy --project "$GCP_PROJECT_ID" --config firebase.release.json --only firestore:rules,firestore:indexes,storage,hosting --non-interactive

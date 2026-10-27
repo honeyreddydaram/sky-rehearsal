@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "airports": [
+    {
+      "icao": "VOHY",
+      "revision": "vohy-legacy-v1",
+      "name": "Begumpet Airport (unverified)",
+      "path": "./data/airports/vohy.json"
+    },
+    {
+      "icao": "ZZZZ",
+      "revision": "synthetic-v1",
+      "name": "Synthetic Training Field \u2014 example only",
+      "path": "./data/airports/synthetic.json"
+    }
+  ]
+}

@@ -209,3 +209,15 @@ and publish scenario configurations, assign exercises, review explicitly submitt
 scores/debriefs, replay shared recordings and leave review notes. Students launch
 assigned settings and choose what to submit. Private history remains private.
 See [school setup, workflow and limits](docs/schools.md).
+
+
+### Milestone 10 — multi-airport and launch foundation
+
+Versioned airport packages and an in-app builder remove airport-specific geometry
+from the engine. A fictional second airport demonstrates data-only expansion.
+School dashboards now page through roster-scoped results. Google Cloud release,
+monitoring/backup configuration, request limits, operational logs, opt-in usage
+metrics and phone layouts are included. See [airport packages](docs/airports.md),
+[release operations](docs/launch.md) and the [private beta protocol](docs/beta.md).
+Real deployment, approved new airport/POH data and a pilot beta remain external
+validation work; completing the engineering roadmap does not establish launch readiness.

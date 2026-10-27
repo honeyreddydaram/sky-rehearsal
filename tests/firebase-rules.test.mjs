@@ -253,3 +253,25 @@ test('school records and submitted evidence cannot be edited directly by clients
     }
   }
 });
+
+test('airport-scoped circuit sessions persist without granting quota or school privileges', async () => {
+  const db = environment.authenticatedContext('airport-owner').firestore();
+  await assertSucceeds(
+    setDoc(doc(db, 'users/airport-owner/sessions/airport-flight'), {
+      ...session,
+      id: 'airport-flight',
+      route: 'circuit18',
+      airportId: 'ZZZZ',
+      airportRevision: 'synthetic-v1',
+    }),
+  );
+  await assertFails(
+    setDoc(doc(db, 'users/airport-owner/sessions/bad-airport'), {
+      ...session,
+      id: 'bad-airport',
+      airportId: '../other',
+    }),
+  );
+  await assertFails(setDoc(doc(db, '_apiQuota/airport-owner'), {count: 0}));
+  await assertFails(getDoc(doc(db, '_apiQuota/airport-owner')));
+});

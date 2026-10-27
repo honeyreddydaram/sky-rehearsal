@@ -1,5 +1,10 @@
 # Instructor and flight-school platform (Milestone 9)
 
+M10 update: scenarios can use installed airport packages and pin their revisions.
+Dashboard pages are limited to 50 records per request, with explicit load-more
+controls and a selected-student review scope. The original fixed school-size caps
+below are superseded; see [release operations](launch.md).
+
 ## School workflow
 
 Open **Flight school**, sign in and enter the school ID supplied by your school.
@@ -111,13 +116,12 @@ suite, with the Python Storage SDK pointed at its local endpoint.
 
 ## Beta limits and validation
 
-This dashboard targets the small-school beta. It loads at most 100 membership
-records, 100 scenarios, 200 assignments and 300 submissions per school; exceeding a
-limit returns a clear error rather than a misleading partial progress summary.
-Pagination, retention, audit-log export, automated invitations, scheduling/due dates,
-notification delivery, real-time collaboration and multi-airport authoring remain
-later work. Scenario creation uses an explicit form; natural-language Gemini
-scenario generation is not implemented in this milestone.
+The dashboard pages active rosters, scenarios, assignments and submissions. Review
+one authorized student at a time and load remaining pages before interpreting full
+submitted-history statistics. Retention, audit-log export, automated invitations,
+scheduling, notification delivery and real-time collaboration remain future work.
+Scenario creation uses an explicit form; natural-language Gemini scenario generation
+is not implemented.
 
 `npm run test:firebase` runs Rules tests, real local Firebase/API workflows, account
 browser checks and a two-account school browser test. It starts a dedicated API on

@@ -1,0 +1,4 @@
+project_id = "REPLACE_PROJECT"
+service_name = "sky-rehearsal"
+site_hostname = "REPLACE_PROJECT.web.app"
+notification_channels = ["projects/REPLACE_PROJECT/notificationChannels/REPLACE_CHANNEL"]

@@ -14,7 +14,7 @@
 import {rad, deg, resolveRunwayEnds, nearestNamedPoint} from '../flight/core.mjs';
 import {state, models, routeData, getTrackPoints, heightAt} from '../flight/state.js';
 import {$, all, text, toast, selectStates} from '../ui/ui.js';
-import {airport, activeCircuit, circuits, landmarks} from '../aviation/airport.js';
+import {airport, airportState, activeCircuit, circuits, landmarks} from '../aviation/airport.js';
 import {PUBLIC_ION_TOKEN} from './ion-token.js';
 
 import * as C from 'cesium';
@@ -77,9 +77,11 @@ export function hasViewer() {
 // approximation) + the active circuit's located checkpoints, shared by both the
 // Cesium entities (refreshAirportLayer, below) and the SVG fallback (renderDiagram,
 // next). Returns null until airport.loadAirportData() has finished.
+const legacyPlaces = () => (!airport || airport.icao === 'VOHY' ? routeData.places : []);
 function airportGeometry() {
   if (!airport) return null;
-  const runway = airport.runways[0];
+  const runway =
+    airport.runways.find((r) => r.id.split('/').includes(airportState.activeRunway)) ?? airport.runways[0];
   const ends = Object.values(resolveRunwayEnds(airport.referencePoint, runway));
   const checkpoints = activeCircuit().legs.flatMap((leg) => leg.checkpoints.filter((c) => c.coords));
   return {ends, checkpoints, isReal: runway.geometry !== 'approximate'};
@@ -89,7 +91,7 @@ function airportGeometry() {
 // circuit's checkpoints, the static Landmarks layer, and the runway ends. Shared by
 // the Landmarks rendering and the click-to-identify feature.
 function namedPoints() {
-  const points = routeData.places.map((p) => ({name: p.name, lon: p.lon, lat: p.lat, kind: 'route place'}));
+  const points = legacyPlaces().map((p) => ({name: p.name, lon: p.lon, lat: p.lat, kind: 'route place'}));
   if (landmarks) {
     points.push(...landmarks.landmarks.map((l) => ({name: l.name, lon: l.lon, lat: l.lat, kind: l.kind})));
   }
@@ -134,7 +136,7 @@ function renderDiagram() {
     ...models[state.route].points,
     ...getTrackPoints(),
     ...recordedPoints.map((p) => p.position),
-    ...routeData.places.map((p) => [p.lon, p.lat]),
+    ...legacyPlaces().map((p) => [p.lon, p.lat]),
     ...landmarkPoints,
     ...(airportLayer ? [...airportLayer.ends, ...airportLayer.checkpoints.map((c) => c.coords)] : []),
   ];
@@ -175,7 +177,7 @@ function renderDiagram() {
     });
   }
   if (aids.labels && $('labels').checked) {
-    routeData.places.forEach((p) => {
+    legacyPlaces().forEach((p) => {
       const [x, y] = renderDiagram.project([p.lon, p.lat]);
       if (aids.markers) node('circle', {cx: x, cy: y, r: 4, fill: '#c1d8ee'});
       const label = node('text', {
@@ -350,7 +352,7 @@ export function refreshAirportLayer() {
   if (!layer) return;
   if (viewer) {
     const runwayPositions = layer.ends.map((p) => C.Cartesian3.fromDegrees(...p, 0));
-    const runwayLabel = layer.isReal ? 'RWY 09/27 (OpenStreetMap)' : 'RWY 09/27 (approximate)';
+    const runwayLabel = `RWY ${airport.runways.find((r) => r.id.split('/').includes(airportState.activeRunway))?.id} (reference geometry)`;
     if (!runwayEntity) {
       runwayEntity = viewer.entities.add({
         position: C.Cartesian3.fromDegrees(...layer.ends[0], 0),
@@ -558,7 +560,7 @@ export function applyTrainingAssistance() {
   $('labels').disabled = !aids.labels;
   if (!aids.labels) $('identify-panel').hidden = true;
   labels.forEach((entity) => {
-    entity.show = showLabels;
+    entity.show = showLabels && airport?.icao === 'VOHY';
     entity.point.show = aids.markers;
   });
   [...checkpointEntities, ...landmarkEntities].forEach((entity) => {
@@ -856,7 +858,7 @@ export async function init() {
         disableDepthTestDistance: Infinity,
       },
     });
-    labels = routeData.places.map((p) =>
+    labels = legacyPlaces().map((p) =>
       viewer.entities.add({
         position: C.Cartesian3.fromDegrees(p.lon, p.lat),
         point: {pixelSize: 5, color: C.Color.WHITE, heightReference: clampRef()},

@@ -1,3 +1,4 @@
+import AirportDialog from './ui/AirportDialog';
 import SchoolDialog from './ui/SchoolDialog';
 import React from 'react';
 import Briefing from './ui/Briefing';
@@ -28,6 +29,9 @@ export default function App() {
           </span>
         </a>
         <nav>
+          <button id="airport-open" disabled>
+            Airports
+          </button>
           <button id="school-open">Flight school</button>
           <button id="account-open" disabled>
             Account
@@ -42,7 +46,9 @@ export default function App() {
       <main>
         <section className="page-heading">
           <div>
-            <p className="eyebrow">HYDERABAD / BEGUMPET</p>
+            <p className="eyebrow" id="airport-heading">
+              HYDERABAD / BEGUMPET
+            </p>
             <h1>Know the route. Build confidence.</h1>
             <p>Brief, rehearse, and test your recall — one waypoint at a time.</p>
           </div>
@@ -64,6 +70,7 @@ export default function App() {
       <Dialogs />
       <AccountDialog />
       <SchoolDialog />
+      <AirportDialog />
     </>
   );
 }

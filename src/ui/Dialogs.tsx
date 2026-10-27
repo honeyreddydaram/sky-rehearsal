@@ -40,6 +40,7 @@ export default function Dialogs() {
         <div id="history"></div>
         <div id="history-debrief"></div>
         <div className="dialog-actions">
+          <button id="export-beta-metrics">Export aggregate beta metrics</button>
           <button id="export-progress" className="secondary">
             Export progress
           </button>

@@ -6,14 +6,14 @@ export default function AirfieldPanel() {
         <h2>Airfield &amp; circuit</h2>
         <span className="step">03</span>
       </div>
-      <p className="micro">
+      <p className="micro" id="airport-reference-note">
         Reference data for VOHY (Begumpet) — not for flight planning or navigation. Sources and confidence are
         noted throughout; see README.
       </p>
       <div className="airfield-grid">
         <div>
           <h3>Active runway</h3>
-          <div className="segmented" aria-label="Select active runway">
+          <div id="runway-selector" className="segmented" aria-label="Select active runway">
             <button data-runway="27" className="selected">
               RWY 27
             </button>

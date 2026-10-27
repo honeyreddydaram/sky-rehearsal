@@ -1,3 +1,4 @@
+import {airport, airportPackage} from '../aviation/airport.js';
 import {environmentSnapshot} from '../aviation/conditions.mjs';
 import {resetRadio} from '../training/radio.js';
 import {resetInstructor} from '../training/instructor.js';
@@ -193,6 +194,8 @@ function finish() {
     const record = {
       id: state.sessionId,
       route: state.route,
+      airportId: airport?.icao ?? 'VOHY',
+      airportRevision: airportPackage?.revision ?? 'vohy-legacy-v1',
       mode: state.mode,
       difficulty: state.difficulty,
       hintsUsed: state.hintsUsed,
@@ -250,6 +253,15 @@ function finish() {
       });
     if (!learner().sessions.some((s) => s.id === record.id)) {
       learner().sessions.push(record);
+      window.dispatchEvent(
+        new CustomEvent('training-completed', {
+          detail: {
+            airport: record.airportId,
+            mode: record.mode,
+            recallScore: record.total ? Math.round((record.score / record.total) * 100) : null,
+          },
+        }),
+      );
       learner().sessions = learner().sessions.slice(-300);
       save();
     }

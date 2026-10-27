@@ -1,3 +1,4 @@
+import {airport, airportPackage} from '../aviation/airport.js';
 import {schoolRequest} from '../school-client.js';
 import {learner} from './progress.js';
 import {listTracks} from '../cloud/firebase.ts';
@@ -10,14 +11,24 @@ import {reviewSharedRecording} from './recording.js';
 export function wireSchool(launch) {
   let school = '',
     version = 0,
-    dashboard = null;
+    dashboard = null,
+    selectedStudent = null,
+    launchGeneration = 0;
   const status = (value) => text('school-status', value);
   const clear = () => {
     version++;
     dashboard = null;
+    selectedStudent = null;
     $('school-content').hidden = true;
     $('school-debrief').replaceChildren();
-    for (const id of ['school-roster', 'school-assignments', 'school-submissions', 'school-scenarios'])
+    for (const id of [
+      'school-roster',
+      'school-assignments',
+      'school-submissions',
+      'school-scenarios',
+      'school-pagination',
+      'school-student-filter',
+    ])
       $(id).replaceChildren();
   };
   window.addEventListener('account-changed', () => {
@@ -70,11 +81,45 @@ export function wireSchool(launch) {
     }
   };
   const configText = (c) =>
-    `${c.title} · VOHY RWY ${c.runway} · ${c.aircraft.toUpperCase()} · ${c.weather}, ${c.windFrom}°T / ${c.windSpeed} kt · ${c.mode}, ${c.difficulty} · recall target ${c.requiredScore}%`;
+    `${c.title} · ${c.airport} RWY ${c.runway} · ${c.aircraft.toUpperCase()} · ${c.weather}, ${c.windFrom}°T / ${c.windSpeed} kt · ${c.mode}, ${c.difficulty} · recall target ${c.requiredScore}%`;
+  window.addEventListener('airport-changed', () => {
+    text(
+      'school-scenario-airport',
+      `Airport: ${airport.icao} / ${airportPackage.revision} · reference package`,
+    );
+    options(
+      'school-scenario-runway',
+      airportPackage.circuits.map((c) => ({id: c.runway, name: c.runway})),
+    );
+  });
   const refresh = async () => {
     $('school-content').hidden = true;
-    dashboard = await api();
+    dashboard = await api(selectedStudent ? `?student_uid=${encodeURIComponent(selectedStudent)}` : '');
+    selectedStudent = dashboard.selectedStudent;
+    render();
+  };
+  const render = () => {
     $('school-content').hidden = false;
+    $('school-student-filter-label').hidden = !dashboard.staff;
+    options(
+      'school-student-filter',
+      dashboard.students.map((s) => ({id: s.id, name: s.name})),
+    );
+    $('school-student-filter').value = dashboard.selectedStudent ?? '';
+    $('school-pagination').replaceChildren();
+    for (const [collection, cursor] of Object.entries(dashboard.cursors)) {
+      if (!cursor) continue;
+      button($('school-pagination'), `Load more ${collection}`, async () => {
+        const page = await api(
+          `/page/${collection}?after=${encodeURIComponent(cursor)}${dashboard.selectedStudent ? '&student_uid=' + encodeURIComponent(dashboard.selectedStudent) : ''}`,
+        );
+        dashboard[collection] = [
+          ...new Map([...dashboard[collection], ...page.items].map((item) => [item.id, item])).values(),
+        ];
+        dashboard.cursors[collection] = page.nextCursor;
+        render();
+      });
+    }
     $('school-staff').hidden = !dashboard.staff;
     $('school-admin').hidden = !dashboard.admin;
     options(
@@ -93,11 +138,15 @@ export function wireSchool(launch) {
     );
     $('school-roster').replaceChildren();
     for (const student of dashboard.students) {
+      if (student.id !== dashboard.selectedStudent) {
+        node($('school-roster'), 'p', `${student.name} · select this student to review submitted work.`);
+        continue;
+      }
       const summary = studentSummary(dashboard.submissions.filter((s) => s.studentUid === student.id));
       node(
         $('school-roster'),
         'p',
-        `${student.name}: ${summary.attempts} submitted attempts · first → latest recall ${summary.first ?? '—'}% → ${summary.latest ?? '—'}% · areas below 80%: ${summary.weak.map((g) => `${g.name} ${g.percent}%`).join(', ') || 'none measured'}`,
+        `${student.name}: ${summary.attempts} submitted attempts (loaded) · first → latest recall ${summary.first ?? '—'}% → ${summary.latest ?? '—'}% · areas below 80%: ${summary.weak.map((g) => `${g.name} ${g.percent}%`).join(', ') || 'none measured'}`,
       );
     }
     $('school-scenarios').replaceChildren();
@@ -123,7 +172,15 @@ export function wireSchool(launch) {
       );
       if (!dashboard.staff) {
         button(row, 'Launch assignment', async () => {
-          launch(validateScenario(assignment.config), {schoolId: school, assignmentId: assignment.id});
+          const currentVersion = version,
+            currentLaunch = ++launchGeneration;
+          const active = () => currentVersion === version && currentLaunch === launchGeneration;
+          await launch(
+            validateScenario(assignment.config),
+            {schoolId: school, assignmentId: assignment.id},
+            active,
+          );
+          if (!active()) return;
           text(
             'assignment-status',
             `Active assignment: ${assignment.config.title}. Changing training settings ends this assignment attempt; relaunch it to submit.`,
@@ -208,6 +265,13 @@ export function wireSchool(launch) {
       }
     }
   };
+  $('school-student-filter').onchange = (event) => {
+    version++;
+    return action(async () => {
+      selectedStudent = $('school-student-filter').value;
+      await refresh();
+    })(event);
+  };
   $('school-load').onclick = action(async () => {
     school = $('school-id').value.trim();
     await refresh();
@@ -242,7 +306,8 @@ export function wireSchool(launch) {
     }
     const config = validateScenario({
       title: $('school-scenario-title').value,
-      airport: 'VOHY',
+      airport: airport.icao,
+      packageRevision: airportPackage.revision,
       runway: $('school-scenario-runway').value,
       aircraft: $('school-scenario-aircraft').value,
       performance,

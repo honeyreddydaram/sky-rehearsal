@@ -1,3 +1,4 @@
+import {validateAirportPackage} from './package.mjs';
 // airport.js
 // Loads and exposes the real-world reference data added in Phase 2: the airport
 // record (ARP, approximate runway, circuit-altitude convention), the two circuit
@@ -9,13 +10,7 @@
 // illustrative circuit. Missing checkpoints remain missing; side landmarks are
 // reference cues, not aircraft track vertices. See flight/circuit.mjs.
 
-import {
-  validateAirportData,
-  validateCircuitData,
-  validateAircraftType,
-  validateLandmarksData,
-  resolveAircraftProfile,
-} from '../flight/core.mjs';
+import {validateAircraftType, resolveAircraftProfile} from '../flight/core.mjs';
 
 export let airport = null;
 export const circuits = {}; // '27' | '09' -> validated circuit data
@@ -35,43 +30,48 @@ async function fetchJson(path) {
   return response.json();
 }
 
-export async function loadAirportData() {
-  const [
-    airportRaw,
-    rwy27Raw,
-    rwy09Raw,
-    fleetRaw,
-    commonRaw,
-    c152Raw,
-    c172rRaw,
-    c172sRaw,
-    da42Raw,
-    landmarksRaw,
-  ] = await Promise.all([
-    fetchJson('./data/airport-vohy.json'),
-    fetchJson('./data/circuits/vohy-rwy27.json'),
-    fetchJson('./data/circuits/vohy-rwy09.json'),
-    fetchJson('./data/aircraft/fleet.json'),
-    fetchJson('./data/aircraft/cessna-common.json'),
-    fetchJson('./data/aircraft/c152.json'),
-    fetchJson('./data/aircraft/c172r.json'),
-    fetchJson('./data/aircraft/c172s.json'),
-    fetchJson('./data/aircraft/da42ng.json'),
-    fetchJson('./data/landmarks.json'),
-  ]);
-
-  airport = validateAirportData(airportRaw);
-  circuits['27'] = validateCircuitData(rwy27Raw);
-  circuits['09'] = validateCircuitData(rwy09Raw);
-  fleet = fleetRaw;
-  cessnaCommon = commonRaw;
-  aircraftTypes.c152 = validateAircraftType(c152Raw);
-  aircraftTypes.c172r = validateAircraftType(c172rRaw);
-  aircraftTypes.c172s = validateAircraftType(c172sRaw);
-  aircraftTypes.da42ng = validateAircraftType(da42Raw);
-  landmarks = validateLandmarksData(landmarksRaw);
-
+export let airportPackage = null;
+export let airportCatalog = [];
+export function applyAirportPackage(raw) {
+  const data = validateAirportPackage(raw);
+  airportPackage = data;
+  airport = data.airport;
+  for (const id of Object.keys(circuits)) delete circuits[id];
+  for (const circuit of data.circuits) circuits[circuit.runway] = circuit;
+  fleet = data.fleet;
+  landmarks = data.landmarks;
+  airportState.activeRunway = data.circuits[0].runway;
   airportState.selectedRegistration = fleet.aircraft.find((a) => a.registration)?.registration ?? null;
+  return data;
+}
+export async function catalogPackage(id, revision = null) {
+  const entry = airportCatalog.find((a) => a.icao === id && (!revision || a.revision === revision));
+  if (!entry) throw Error('The assigned airport revision is not installed. Contact your instructor.');
+  const data = validateAirportPackage(await fetchJson(entry.path));
+  if (data.airport.icao !== entry.icao || data.revision !== entry.revision)
+    throw Error('Airport catalog and package revision disagree.');
+  return data;
+}
+export async function loadAirportData() {
+  const catalog = await fetchJson('./data/airports/catalog.json');
+  if (
+    catalog.version !== 1 ||
+    !Array.isArray(catalog.airports) ||
+    catalog.airports.length > 100 ||
+    catalog.airports.some(
+      (a) => !/^[A-Z]{4}$/.test(a.icao) || !/^\.\/data\/airports\/[a-z0-9-]+\.json$/.test(a.path),
+    )
+  )
+    throw Error('Invalid airport catalog.');
+  airportCatalog = catalog.airports;
+  const common = await fetchJson('./data/aircraft/cessna-common.json');
+  cessnaCommon = common;
+  await Promise.all(
+    ['c152', 'c172r', 'c172s', 'da42ng'].map(async (type) => {
+      aircraftTypes[type] = validateAircraftType(await fetchJson(`./data/aircraft/${type}.json`));
+    }),
+  );
+  applyAirportPackage(await catalogPackage('VOHY'));
 }
 
 export function activeCircuit() {

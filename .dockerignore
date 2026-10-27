@@ -1,0 +1,11 @@
+**
+!backend/
+!backend/app/
+!backend/app/**
+!backend/pyproject.toml
+!backend/uv.lock
+!public/
+!public/data/
+!public/data/airports/
+!public/data/airports/**
+**/__pycache__

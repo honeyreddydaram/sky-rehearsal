@@ -1,3 +1,4 @@
+import {packageCircuit} from '../aviation/package.mjs';
 import {WEATHER, trueAirspeed} from '../aviation/conditions.mjs';
 // state.js
 // Shared, mutable "flight session" state, plus the pure-ish math that derives a
@@ -15,8 +16,8 @@ import {WEATHER, trueAirspeed} from '../aviation/conditions.mjs';
 // read `state` too. Anything here that needs rendering to react (rebuildTrace) just
 // recomputes data — the caller is responsible for telling map.js to redraw.
 
-import {buildCircuit, circuitStage} from './circuit.mjs';
-import {airport, circuits} from '../aviation/airport.js';
+import {circuitStage} from './circuit.mjs';
+import {airport, circuits, airportState, airportPackage} from '../aviation/airport.js';
 
 import {bearing, routeModel, at, profileAt, windTriangle, driftPoint, validateRouteData} from './core.mjs';
 
@@ -99,12 +100,17 @@ export let routeData = null;
 export let models = null;
 export const flightCircuits = {};
 export function loadCircuits() {
-  for (const runway of ['27', '09']) {
+  for (const key of Object.keys(flightCircuits)) {
+    delete flightCircuits[key];
+    delete models[key];
+  }
+  for (const runway of Object.keys(circuits)) {
     const route = `circuit${runway}`;
-    flightCircuits[route] = buildCircuit(airport, circuits, runway);
+    flightCircuits[route] = packageCircuit(circuits[runway]);
     models[route] = flightCircuits[route].model;
   }
-  state.route = 'circuit27';
+  state.route = `circuit${airportState.activeRunway}`;
+  demo.geoidOffsetM = airportPackage.geoidOffsetM;
 }
 export function routeLabel(route = state.route) {
   return route.startsWith('circuit')
@@ -131,15 +137,15 @@ export function flightFrame(progress) {
   }));
   frames.push({
     progress: 1,
-    altitudeFt: airport.elevation.ft,
+    altitudeFt: circuit.terminalAltitudeFt,
     tasKt: state.performance
       ? trueAirspeed(
           state.performance.phaseSpeedsKias.landing,
-          airport.elevation.ft,
+          circuit.terminalAltitudeFt,
           state.weather,
           airport.elevation.ft,
         )
-      : 30,
+      : circuit.terminalSpeedKt,
   });
   return profileAt(frames, progress);
 }

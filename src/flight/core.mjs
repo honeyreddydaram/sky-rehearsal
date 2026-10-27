@@ -1,3 +1,6 @@
+export const validRoute = (route) =>
+  ['inner', 'outer'].includes(route) ||
+  (typeof route === 'string' && /^circuit(0[1-9]|[12][0-9]|3[0-6])[LRC]?$/.test(route));
 import {validEnvironment} from '../aviation/conditions.mjs';
 import {validDebrief} from '../training/debrief-schema.mjs';
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -110,7 +113,7 @@ export function validateProfile(d) {
   const fail = (m) => {
     throw Error(m);
   };
-  if (!d || d.schemaVersion !== 1 || !['inner', 'outer', 'circuit27', 'circuit09'].includes(d.route))
+  if (!d || d.schemaVersion !== 1 || !validRoute(d.route))
     fail('Use schemaVersion 1 and route inner, outer, circuit27 or circuit09.');
   if (
     typeof d.name !== 'string' ||
@@ -158,7 +161,15 @@ export function validateProfile(d) {
       ))
   )
     fail('Callouts need progress (0–1) and text (up to 350 characters).');
+  if (
+    (d.airportId !== undefined && !/^[A-Z]{4}$/.test(d.airportId)) ||
+    (d.airportRevision !== undefined &&
+      (typeof d.airportRevision !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(d.airportRevision)))
+  )
+    fail('Invalid profile airport identity.');
   return {
+    ...(d.airportId ? {airportId: d.airportId} : {}),
+    ...(d.airportRevision ? {airportRevision: d.airportRevision} : {}),
     schemaVersion: 1,
     name: d.name.trim(),
     source: d.source.trim(),
@@ -229,7 +240,9 @@ export function validateProgressBackup(d) {
       !['quiz', 'exam', 'landmarks', 'decisions'].includes(s.mode) ||
       (Number.isInteger(s.score) && s.score >= 0 && s.score <= 5 && s.total === 5);
     if (
-      !['inner', 'outer', 'circuit27', 'circuit09'].includes(s.route) ||
+      !validRoute(s.route) ||
+      (s.airportId !== undefined && !/^[A-Z]{4}$/.test(s.airportId)) ||
+      (s.airportRevision !== undefined && !/^[a-zA-Z0-9_-]{1,80}$/.test(s.airportRevision)) ||
       !['quiz', 'guided', 'practice', 'landmarks', 'decisions', 'exam'].includes(s.mode) ||
       !Number.isFinite(Date.parse(s.completedAt)) ||
       typeof s.profile !== 'string' ||

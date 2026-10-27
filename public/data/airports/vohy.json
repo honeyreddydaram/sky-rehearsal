@@ -1,0 +1,662 @@
+{
+  "version": 1,
+  "revision": "vohy-legacy-v1",
+  "source": "Existing SkyRehearsal reference data; trainee notes and source citations retained. Unverified geometry.",
+  "review": {
+    "status": "unverified",
+    "reviewer": null,
+    "reviewedAt": null
+  },
+  "geoidOffsetM": -76.5548,
+  "weatherStation": "VOHY",
+  "airport": {
+    "schemaVersion": 1,
+    "icao": "VOHY",
+    "iata": "BPM",
+    "name": "Begumpet Airport",
+    "city": "Hyderabad, Telangana, India",
+    "referencePoint": {
+      "lat": 17.4531,
+      "lon": 78.4675,
+      "source": "Wikipedia; aviationweather.gov airport database lists 17.453, 78.468 (consistent within rounding)"
+    },
+    "elevation": {
+      "ft": 1745,
+      "m": 532,
+      "source": "Wikipedia",
+      "discrepancy": "aviationweather.gov airport database lists 540 (unit as published there, not independently re-confirmed here). TODO: confirm against an official AIP/NOTAM source before using for anything beyond rough familiarization."
+    },
+    "frequenciesMHz": {
+      "tower": 122.25,
+      "atis": 126.8,
+      "note": "Display only, not sourced for operational use. Confirm current published frequencies before any real-world use."
+    },
+    "runways": [
+      {
+        "id": "09/27",
+        "lengthM": 3230,
+        "lengthFt": 10597,
+        "widthM": 45,
+        "widthFt": 148,
+        "nominalAlignment": 90,
+        "geometry": "OpenStreetMap",
+        "geometryNote": "Endpoint coordinates below are the first/last nodes of OpenStreetMap way 28113198 (aeroway=runway, ref=09/27), retrieved via the Overpass API on 2026-10-13 -- a real digitized runway outline, not computed from the reference point. core.mjs's approximateRunwayEnds()/resolveRunwayEnds() still exist as a fallback for an airport that has no such OSM way. Discrepancy, flagged not resolved: the OSM-derived length is ~3103 m, about 4% shorter than the 3230 m published length above -- the community-mapped way may not trace the full paved length exactly.",
+        "ends": {
+          "27": {
+            "lon": 78.4837418,
+            "lat": 17.4534266,
+            "source": "OpenStreetMap way/28113198, node 308808703",
+            "confidence": "high"
+          },
+          "09": {
+            "lon": 78.4544977,
+            "lat": 17.452873,
+            "source": "OpenStreetMap way/28113198, node 308808702",
+            "confidence": "high"
+          }
+        }
+      }
+    ],
+    "sources": [
+      "Wikipedia: Begumpet Airport",
+      "aviationweather.gov airport database (https://aviationweather.gov/api/data/airport?ids=VOHY)",
+      "OpenStreetMap, way/28113198 (runway endpoints), via the Overpass API"
+    ],
+    "circuitAltitude": {
+      "circuitHeightAglFt": 1000,
+      "aerodromeElevationFtPilotRounded": 1800,
+      "circuitAltitudeAmslFt": 2800,
+      "basis": "aerodromeElevationFtPilotRounded + circuitHeightAglFt",
+      "displayText": "Circuit: 2,800 ft QNH (1,000 ft AGL)",
+      "source": "trainee pilot",
+      "verified": false,
+      "note": "Pilots commonly round the published elevation (~1745 ft, see elevation field) up to 1800 ft for quick mental math. Circuit altitude is flown on the day's QNH, not a fixed pressure setting -- see the live METAR (Phase 3) for current QNH."
+    },
+    "liveWeather": {
+      "metarUrl": "https://aviationweather.gov/api/data/metar?ids=VOHY&format=json",
+      "note": "Fetched live in Phase 3 -- not bundled here since it changes constantly."
+    },
+    "limitations": "Reference data for ground-based familiarization only. Not for flight planning or navigation. See README for the full disclaimer."
+  },
+  "aircraft": ["c152", "c172r", "c172s", "da42ng"],
+  "fleet": {
+    "schemaVersion": 1,
+    "source": "trainee pilot",
+    "verified": false,
+    "callSignRule": "Pilots refer to an aircraft by the NATO phonetic name of its registration's last letter (see core.mjs lastLetterCallSign).",
+    "aircraft": [
+      {
+        "registration": "VT-AKN",
+        "typeCode": "c152",
+        "callSign": "November",
+        "callSignSource": "derived from the last-letter rule"
+      },
+      {
+        "registration": "VT-YOU",
+        "typeCode": "c152",
+        "callSign": "Uniform",
+        "callSignSource": "derived from the last-letter rule"
+      },
+      {
+        "registration": "VT-CAM",
+        "typeCode": "c172r",
+        "callSign": "Mike",
+        "callSignSource": "derived from the last-letter rule"
+      },
+      {
+        "registration": "VT-TSB",
+        "typeCode": "c172s",
+        "callSign": "Bravo",
+        "callSignSource": "trainee pilot confirmed"
+      },
+      {
+        "registration": "VT-STC",
+        "typeCode": "c172s",
+        "callSign": "Charlie",
+        "callSignSource": "trainee pilot confirmed"
+      },
+      {
+        "registration": null,
+        "typeCode": "da42ng",
+        "callSign": null,
+        "callSignSource": "TODO: registration TBD"
+      }
+    ]
+  },
+  "landmarks": {
+    "schemaVersion": 1,
+    "source": "OpenStreetMap, individually looked up via the Nominatim search API during development (2026-10-13)",
+    "note": "A broader automated sweep (every named lake/peak within the radius via the Overpass API) was attempted first but the public Overpass instance was rate-limiting during development, so this list is a curated set of specific named landmarks individually confirmed to exist in OSM and fall within radiusNm -- not an exhaustive spatial query. Extend it the same way (search, cite the OSM reference, record confidence) rather than guessing coordinates for a name that doesn't turn up a match.",
+    "center": {
+      "lat": 17.4531,
+      "lon": 78.4675,
+      "note": "VOHY airport reference point"
+    },
+    "radiusNm": 8,
+    "landmarks": [
+      {
+        "name": "Hussain Sagar",
+        "kind": "lake",
+        "lon": 78.475421,
+        "lat": 17.4229113,
+        "distanceNm": 1.87,
+        "osmRef": "relation/2833155",
+        "confidence": "high"
+      },
+      {
+        "name": "Safilguda Lake Park",
+        "kind": "lake",
+        "lon": 78.5362774,
+        "lat": 17.4633878,
+        "distanceNm": 3.99,
+        "osmRef": "relation/10669535",
+        "confidence": "high"
+      },
+      {
+        "name": "Durgam Cheruvu",
+        "kind": "lake",
+        "lon": 78.3897305,
+        "lat": 17.4310553,
+        "distanceNm": 4.65,
+        "osmRef": "way/28131043",
+        "confidence": "high"
+      },
+      {
+        "name": "Moula Ali hill",
+        "kind": "hill",
+        "lon": 78.556148,
+        "lat": 17.4684742,
+        "distanceNm": 5.16,
+        "osmRef": "way/357991201",
+        "source": "Google Maps (user-provided): https://maps.app.goo.gl/Uqq53JcGnWmZoqMZ8",
+        "confidence": "high",
+        "note": "Originally pinned via OpenStreetMap's Moula Ali Dargah (place_of_worship) node, the best available proxy since OSM has no separate natural=peak/hill node for Moula Ali. The user independently supplied a Google Maps pin for the hill that landed 66 m from that OSM point -- close enough to treat as the same location and upgrade confidence from medium to high. Coordinates above are the user-provided pin."
+      },
+      {
+        "name": "Kapra lake",
+        "kind": "lake",
+        "lon": 78.5534411,
+        "lat": 17.4935493,
+        "distanceNm": 5.49,
+        "osmRef": "way/265159686",
+        "confidence": "high"
+      }
+    ]
+  },
+  "circuits": [
+    {
+      "schemaVersion": 1,
+      "runway": "27",
+      "source": "trainee pilot description",
+      "verified": false,
+      "circuitDirection": "left-hand",
+      "side": "south of runway",
+      "note": "Relayed from a trainee pilot's description of flying the circuit, not an official chart. Checkpoint coordinates were located individually (see each checkpoint's source/confidence) -- several checkpoints were first located via OpenStreetMap search (confidence: medium), several more via Google Maps links the user supplied directly (confidence: high, source field cites the link), and a handful remain null with a TODO where neither turned up a confident match. The GPX track from an actual flight (arriving separately) will be used to check this geometry; conflicts will be flagged, not silently edited into this file.",
+      "distanceFieldNote": "On upwind/crosswind/base/final, distanceNm is measured along that leg from its start. On downwind, the pilot's distances are ambiguous between 'along the leg' and 'straight-line distance from the airport' -- the described pattern (5, 4, ..., 1, abeam, 2, 3, 4, 5) only makes sense as airport-relative radial distance (closing in toward the abeam point, then opening back out), so downwind checkpoints use distanceFromAirportNm instead. This is an interpretation of the pilot's wording, not a literal field they specified -- flagged here rather than presented as fact.",
+      "legs": [
+        {
+          "name": "upwind",
+          "headingTrue": 270,
+          "headingNote": "Takeoff/departure heading for RWY 27 (reciprocal of the runway's own 270 alignment).",
+          "checkpoints": [
+            {
+              "name": "Police Tower",
+              "description": "Cuboid Telangana Police building, Banjara/Jubilee Hills area",
+              "side": "LEFT",
+              "distanceNm": 2,
+              "coords": [78.4274895, 17.4144553],
+              "source": "Google Maps (user-provided, \"Police Twin Towers\"): https://maps.app.goo.gl/JzKneGGt3g7U6jgu8",
+              "confidence": "high",
+              "note": "User-provided pin. 3.26 NM from VOHY at bearing 225° -- plausible as a landmark left/south of the upwind track rather than directly on it (the pilot calls out landmarks they can see to the side, not points on the centerline)."
+            },
+            {
+              "name": "End of KBR Park",
+              "side": "LEFT",
+              "distanceNm": 3,
+              "coords": [78.4205231, 17.4201773],
+              "osmRef": "way/28268610",
+              "confidence": "medium",
+              "note": "Point is OSM's reference point for Kasu Brahmananda Reddy National Park as a whole, not specifically its 'end' edge as seen from the air. approximate: true."
+            },
+            {
+              "name": "Durgam Cheruvu",
+              "side": "LEFT",
+              "distanceNm": 3.5,
+              "distanceNmNote": "Pilot said 3-4 NM; 3.5 used as a midpoint placeholder.",
+              "coords": [78.3897305, 17.4310553],
+              "osmRef": "way/28131043",
+              "confidence": "medium",
+              "note": "Lake centroid, not an exact sighting point. approximate: true."
+            },
+            {
+              "name": "Overhead Cyber Towers",
+              "side": null,
+              "distanceNm": 5,
+              "coords": [78.3831376, 17.449005],
+              "osmRef": "node/6444553239",
+              "confidence": "medium",
+              "turnTo": "crosswind",
+              "note": "Turn point: left turn onto crosswind here."
+            }
+          ]
+        },
+        {
+          "name": "crosswind",
+          "headingTrue": 180,
+          "checkpoints": [
+            {
+              "name": "Wells Fargo building",
+              "side": null,
+              "distanceNm": 3,
+              "coords": [78.3775143, 17.4249629],
+              "osmRef": "way/1409668579",
+              "confidence": "medium",
+              "turnTo": "downwind",
+              "note": "Turn point: left turn onto downwind here."
+            }
+          ]
+        },
+        {
+          "name": "downwind",
+          "headingTrue": 90,
+          "checkpoints": [
+            {
+              "name": "IKEA",
+              "side": null,
+              "distanceFromAirportNm": 5,
+              "coords": [78.3751236, 17.4387591],
+              "osmRef": "way/847994242",
+              "confidence": "medium",
+              "note": "Marks the beginning of downwind, alongside KBR Park (next entry)."
+            },
+            {
+              "name": "KBR Park",
+              "side": "RIGHT",
+              "distanceFromAirportNm": 5,
+              "coords": [78.4205231, 17.4201773],
+              "osmRef": "way/28268610",
+              "confidence": "medium",
+              "note": "Same OSM reference point as the upwind KBR Park checkpoint, seen from the other side on downwind."
+            },
+            {
+              "name": "My Home Bhooja",
+              "side": null,
+              "distanceFromAirportNm": 4,
+              "coords": [78.3777758, 17.430975],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/mdWHhMHCNZHmSwuz9",
+              "confidence": "high",
+              "note": "User-provided pin. 5.31 NM from VOHY, bearing 256° -- consistent with the west side of downwind, near the beginning-of-downwind checkpoints."
+            },
+            {
+              "name": "Durgam Cheruvu",
+              "side": "RIGHT",
+              "coords": [78.3897305, 17.4310553],
+              "osmRef": "way/28131043",
+              "confidence": "medium",
+              "note": "Same lake as on upwind, viewed from downwind. No distance given by the pilot for this mention."
+            },
+            {
+              "name": "Metro station / Police Tower",
+              "side": null,
+              "distanceFromAirportNm": 1,
+              "coords": [78.451161, 17.428605],
+              "source": "Google Maps (user-provided, \"Panjagutta Metro Station\"): https://maps.app.goo.gl/xvVAsgPvkXyCJagZ7",
+              "confidence": "high",
+              "note": "User-provided pin. 1.74 NM from VOHY -- close match to the pilot's stated ~1 NM for this checkpoint."
+            },
+            {
+              "name": "Abeam tower (flag at Tank Bund / Hussain Sagar)",
+              "side": null,
+              "coords": null,
+              "osmRef": null,
+              "confidence": "unconfirmed",
+              "nearbyReference": {
+                "name": "Hussain Sagar (lake, from routes.json)",
+                "coords": [78.4747, 17.4239]
+              },
+              "note": "TODO: still not located -- coords stay null. The user confirmed the Tank Bund tower/flag link they had actually identifies the Buddha Statue (78.474973, 17.4155657; https://maps.app.goo.gl/4T857gRXLWVz7KUG9), a distinct nearby landmark, not this checkpoint's own flagpole/monument -- that one is still needed. Buddha Statue is 2.29 NM south of VOHY, consistent with the Tank Bund/Hussain Sagar area, so it's a useful nearby reference even though it isn't this checkpoint itself."
+            },
+            {
+              "name": "Secunderabad Railway Station",
+              "side": null,
+              "distanceFromAirportNm": 2,
+              "coords": [78.502051, 17.4338591],
+              "osmRef": "node/10252989488",
+              "confidence": "medium",
+              "note": "Start of the 'end of downwind' sequence -- distance now increasing again as the aircraft passes the abeam point."
+            },
+            {
+              "name": "Mahendra Hills",
+              "description": "Hill with houses",
+              "side": null,
+              "distanceFromAirportNm": 3,
+              "coords": [78.5192298, 17.4546797],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/3F12LuHBcyPm4baf6",
+              "confidence": "high",
+              "note": "User-provided pin. 2.96 NM from VOHY, bearing 88° (east) -- consistent with the end-of-downwind sequence running east with increasing distance."
+            },
+            {
+              "name": "White sheds",
+              "side": null,
+              "distanceFromAirportNm": 4,
+              "coords": [78.5320913, 17.4349488],
+              "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
+              "confidence": "high",
+              "note": "User-provided pin. 3.86 NM from VOHY, bearing 106° -- consistent with continuing east/ESE along end-of-downwind."
+            },
+            {
+              "name": "Y-junction road",
+              "side": null,
+              "distanceFromAirportNm": 5,
+              "coords": [78.544948, 17.451477],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/NwTzRB3MFWFvBV886",
+              "confidence": "high",
+              "turnTo": "base",
+              "nearbyReference": {
+                "name": "Rajiv Gandhi International Cricket Stadium, Uppal (far right, per pilot)",
+                "coords": [78.5505638, 17.4059481],
+                "osmRef": "way/839364278"
+              },
+              "note": "User-provided pin. 4.44 NM from VOHY, bearing 91° (east) -- matches the stated end-of-downwind/turn-to-base point well. The stadium stays noted as the pilot's own \"far right\" reference. Turn point: left turn onto base here."
+            }
+          ]
+        },
+        {
+          "name": "base",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Small hills",
+              "side": null,
+              "distanceNm": 5,
+              "coords": null,
+              "osmRef": null,
+              "confidence": "unconfirmed",
+              "note": "TODO: pilot describes flying toward these, heading north, ~5 NM; no single point identified."
+            }
+          ]
+        },
+        {
+          "name": "final",
+          "headingTrue": 270,
+          "headingNote": "Aligned with RWY 27.",
+          "checkpoints": [
+            {
+              "name": "Mahendra Hills",
+              "side": null,
+              "coords": [78.5192298, 17.4546797],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/3F12LuHBcyPm4baf6",
+              "confidence": "high",
+              "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
+            },
+            {
+              "name": "White sheds",
+              "side": null,
+              "coords": [78.5320913, 17.4349488],
+              "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
+              "confidence": "high",
+              "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
+            },
+            {
+              "name": "L-shaped buildings",
+              "side": "RIGHT",
+              "distanceNm": 4,
+              "coords": null,
+              "osmRef": null,
+              "confidence": "unconfirmed",
+              "note": "TODO: omitted at the user's request when providing the other pins for this round -- not located, left unconfirmed."
+            }
+          ]
+        }
+      ],
+      "points": [
+        [78.4837418, 17.4534266],
+        [78.4544977, 17.452873],
+        [78.3831376, 17.449005],
+        [78.3775143, 17.4249629],
+        [78.544948, 17.451477],
+        [78.54488336908784, 17.454584029110386],
+        [78.4837418, 17.4534266],
+        [78.4544977, 17.452873]
+      ],
+      "altitudesFt": [1745, 1845, 2800, 2800, 2800, 2445, 1745, 1745],
+      "speedsKt": [55, 65, 90, 90, 90, 65, 55, 30]
+    },
+    {
+      "schemaVersion": 1,
+      "runway": "09",
+      "source": "trainee pilot description",
+      "verified": false,
+      "circuitDirection": "right-hand",
+      "side": "south of runway",
+      "note": "Generated from vohy-rwy27.json by scripts/generate-rwy09-circuit.mjs (reverseCircuit in core.mjs): same ground track flown in the opposite direction, right-hand instead of left-hand, legs/checkpoints reversed, L/R swapped. Not independently confirmed by a pilot flying RWY 09 -- needsConfirmation is true. Re-run this script after editing vohy-rwy27.json rather than hand-editing this file.",
+      "distanceFieldNote": "On upwind/crosswind/base/final, distanceNm is measured along that leg from its start. On downwind, the pilot's distances are ambiguous between 'along the leg' and 'straight-line distance from the airport' -- the described pattern (5, 4, ..., 1, abeam, 2, 3, 4, 5) only makes sense as airport-relative radial distance (closing in toward the abeam point, then opening back out), so downwind checkpoints use distanceFromAirportNm instead. This is an interpretation of the pilot's wording, not a literal field they specified -- flagged here rather than presented as fact.",
+      "legs": [
+        {
+          "name": "upwind",
+          "headingTrue": 90,
+          "checkpoints": [
+            {
+              "name": "L-shaped buildings",
+              "side": "LEFT",
+              "distanceNm": 4,
+              "coords": null,
+              "osmRef": null,
+              "confidence": "unconfirmed",
+              "note": "TODO: omitted at the user's request when providing the other pins for this round -- not located, left unconfirmed."
+            },
+            {
+              "name": "White sheds",
+              "side": null,
+              "coords": [78.5320913, 17.4349488],
+              "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
+              "confidence": "high",
+              "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
+            },
+            {
+              "name": "Mahendra Hills",
+              "side": null,
+              "coords": [78.5192298, 17.4546797],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/3F12LuHBcyPm4baf6",
+              "confidence": "high",
+              "note": "Same checkpoint as end-of-downwind, seen again on final. User-provided pin."
+            }
+          ]
+        },
+        {
+          "name": "crosswind",
+          "headingTrue": 180,
+          "checkpoints": [
+            {
+              "name": "Small hills",
+              "side": null,
+              "distanceNm": 5,
+              "coords": null,
+              "osmRef": null,
+              "confidence": "unconfirmed",
+              "note": "TODO: pilot describes flying toward these, heading north, ~5 NM; no single point identified."
+            }
+          ]
+        },
+        {
+          "name": "downwind",
+          "headingTrue": 270,
+          "checkpoints": [
+            {
+              "name": "Y-junction road",
+              "side": null,
+              "distanceFromAirportNm": 5,
+              "coords": [78.544948, 17.451477],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/NwTzRB3MFWFvBV886",
+              "confidence": "high",
+              "nearbyReference": {
+                "name": "Rajiv Gandhi International Cricket Stadium, Uppal (far right, per pilot)",
+                "coords": [78.5505638, 17.4059481],
+                "osmRef": "way/839364278"
+              },
+              "note": "(This was a turn point in the RWY 27 pattern, not necessarily in this derived RWY 09 pattern.) User-provided pin. 4.44 NM from VOHY, bearing 91° (east) -- matches the stated end-of-downwind/turn-to-base point well. The stadium stays noted as the pilot's own \"far right\" reference. Turn point: left turn onto base here."
+            },
+            {
+              "name": "White sheds",
+              "side": null,
+              "distanceFromAirportNm": 4,
+              "coords": [78.5320913, 17.4349488],
+              "source": "Google Maps (user-provided, \"White sheds — SCR Workshop\"): https://maps.app.goo.gl/bCJyJttTZqo8HcXe9",
+              "confidence": "high",
+              "note": "User-provided pin. 3.86 NM from VOHY, bearing 106° -- consistent with continuing east/ESE along end-of-downwind."
+            },
+            {
+              "name": "Mahendra Hills",
+              "description": "Hill with houses",
+              "side": null,
+              "distanceFromAirportNm": 3,
+              "coords": [78.5192298, 17.4546797],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/3F12LuHBcyPm4baf6",
+              "confidence": "high",
+              "note": "User-provided pin. 2.96 NM from VOHY, bearing 88° (east) -- consistent with the end-of-downwind sequence running east with increasing distance."
+            },
+            {
+              "name": "Secunderabad Railway Station",
+              "side": null,
+              "distanceFromAirportNm": 2,
+              "coords": [78.502051, 17.4338591],
+              "osmRef": "node/10252989488",
+              "confidence": "medium",
+              "note": "Start of the 'end of downwind' sequence -- distance now increasing again as the aircraft passes the abeam point."
+            },
+            {
+              "name": "Abeam tower (flag at Tank Bund / Hussain Sagar)",
+              "side": null,
+              "coords": null,
+              "osmRef": null,
+              "confidence": "unconfirmed",
+              "nearbyReference": {
+                "name": "Hussain Sagar (lake, from routes.json)",
+                "coords": [78.4747, 17.4239]
+              },
+              "note": "TODO: still not located -- coords stay null. The user confirmed the Tank Bund tower/flag link they had actually identifies the Buddha Statue (78.474973, 17.4155657; https://maps.app.goo.gl/4T857gRXLWVz7KUG9), a distinct nearby landmark, not this checkpoint's own flagpole/monument -- that one is still needed. Buddha Statue is 2.29 NM south of VOHY, consistent with the Tank Bund/Hussain Sagar area, so it's a useful nearby reference even though it isn't this checkpoint itself."
+            },
+            {
+              "name": "Metro station / Police Tower",
+              "side": null,
+              "distanceFromAirportNm": 1,
+              "coords": [78.451161, 17.428605],
+              "source": "Google Maps (user-provided, \"Panjagutta Metro Station\"): https://maps.app.goo.gl/xvVAsgPvkXyCJagZ7",
+              "confidence": "high",
+              "note": "User-provided pin. 1.74 NM from VOHY -- close match to the pilot's stated ~1 NM for this checkpoint."
+            },
+            {
+              "name": "Durgam Cheruvu",
+              "side": "LEFT",
+              "coords": [78.3897305, 17.4310553],
+              "osmRef": "way/28131043",
+              "confidence": "medium",
+              "note": "Same lake as on upwind, viewed from downwind. No distance given by the pilot for this mention."
+            },
+            {
+              "name": "My Home Bhooja",
+              "side": null,
+              "distanceFromAirportNm": 4,
+              "coords": [78.3777758, 17.430975],
+              "source": "Google Maps (user-provided): https://maps.app.goo.gl/mdWHhMHCNZHmSwuz9",
+              "confidence": "high",
+              "note": "User-provided pin. 5.31 NM from VOHY, bearing 256° -- consistent with the west side of downwind, near the beginning-of-downwind checkpoints."
+            },
+            {
+              "name": "KBR Park",
+              "side": "LEFT",
+              "distanceFromAirportNm": 5,
+              "coords": [78.4205231, 17.4201773],
+              "osmRef": "way/28268610",
+              "confidence": "medium",
+              "note": "Same OSM reference point as the upwind KBR Park checkpoint, seen from the other side on downwind."
+            },
+            {
+              "name": "IKEA",
+              "side": null,
+              "distanceFromAirportNm": 5,
+              "coords": [78.3751236, 17.4387591],
+              "osmRef": "way/847994242",
+              "confidence": "medium",
+              "note": "Marks the beginning of downwind, alongside KBR Park (next entry)."
+            }
+          ]
+        },
+        {
+          "name": "base",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Wells Fargo building",
+              "side": null,
+              "distanceNm": 3,
+              "coords": [78.3775143, 17.4249629],
+              "osmRef": "way/1409668579",
+              "confidence": "medium",
+              "note": "(This was a turn point in the RWY 27 pattern, not necessarily in this derived RWY 09 pattern.) Turn point: left turn onto downwind here."
+            }
+          ]
+        },
+        {
+          "name": "final",
+          "headingTrue": 90,
+          "checkpoints": [
+            {
+              "name": "Overhead Cyber Towers",
+              "side": null,
+              "distanceNm": 5,
+              "coords": [78.3831376, 17.449005],
+              "osmRef": "node/6444553239",
+              "confidence": "medium",
+              "note": "(This was a turn point in the RWY 27 pattern, not necessarily in this derived RWY 09 pattern.) Turn point: left turn onto crosswind here."
+            },
+            {
+              "name": "Durgam Cheruvu",
+              "side": "RIGHT",
+              "distanceNm": 3.5,
+              "distanceNmNote": "Pilot said 3-4 NM; 3.5 used as a midpoint placeholder.",
+              "coords": [78.3897305, 17.4310553],
+              "osmRef": "way/28131043",
+              "confidence": "medium",
+              "note": "Lake centroid, not an exact sighting point. approximate: true."
+            },
+            {
+              "name": "End of KBR Park",
+              "side": "RIGHT",
+              "distanceNm": 3,
+              "coords": [78.4205231, 17.4201773],
+              "osmRef": "way/28268610",
+              "confidence": "medium",
+              "note": "Point is OSM's reference point for Kasu Brahmananda Reddy National Park as a whole, not specifically its 'end' edge as seen from the air. approximate: true."
+            },
+            {
+              "name": "Police Tower",
+              "description": "Cuboid Telangana Police building, Banjara/Jubilee Hills area",
+              "side": "RIGHT",
+              "distanceNm": 2,
+              "coords": [78.4274895, 17.4144553],
+              "source": "Google Maps (user-provided, \"Police Twin Towers\"): https://maps.app.goo.gl/JzKneGGt3g7U6jgu8",
+              "confidence": "high",
+              "note": "User-provided pin. 3.26 NM from VOHY at bearing 225° -- plausible as a landmark left/south of the upwind track rather than directly on it (the pilot calls out landmarks they can see to the side, not points on the centerline)."
+            }
+          ]
+        }
+      ],
+      "derived": true,
+      "derivedFrom": "27",
+      "needsConfirmation": true,
+      "points": [
+        [78.4544977, 17.452873],
+        [78.4837418, 17.4534266],
+        [78.54488336908784, 17.454584029110386],
+        [78.544948, 17.451477],
+        [78.3775143, 17.4249629],
+        [78.3831376, 17.449005],
+        [78.4544977, 17.452873],
+        [78.4837418, 17.4534266]
+      ],
+      "altitudesFt": [1745, 1845, 2800, 2800, 2800, 2445, 1745, 1745],
+      "speedsKt": [55, 65, 90, 90, 90, 65, 55, 30]
+    }
+  ]
+}

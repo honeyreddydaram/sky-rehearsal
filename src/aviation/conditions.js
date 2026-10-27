@@ -1,4 +1,4 @@
-import {airport} from './airport.js';
+import {airport, airportPackage} from './airport.js';
 import {state} from '../flight/state.js';
 import {$, text, download} from '../ui/ui.js';
 import {
@@ -51,7 +51,8 @@ export function wireConditions(changed) {
     observation = null;
     $('weather-apply').disabled = true;
     const result = parseMetar(raw);
-    if (result.station !== 'VOHY') throw Error('Use a VOHY observation for this airport.');
+    if (!airportPackage.weatherStation || result.station !== airportPackage.weatherStation)
+      throw Error('Observation does not match this package’s configured weather station.');
     observation = result;
     text(
       'weather-status',
@@ -78,7 +79,9 @@ export function wireConditions(changed) {
     const controller = new AbortController(),
       timer = setTimeout(() => controller.abort(), 10000);
     try {
-      const response = await fetch('/api/weather/metar', {signal: controller.signal});
+      const response = await fetch(`/api/weather/metar?airport_id=${airport.icao}`, {
+        signal: controller.signal,
+      });
       if (!response.ok) throw Error('Live METAR unavailable. Paste a report or choose a training scenario.');
       const result = await response.json();
       $('weather-metar').value = result.raw;
@@ -116,11 +119,16 @@ export function wireConditions(changed) {
       );
     else {
       const p = state.performance;
-      const tas = trueAirspeed(p.phaseSpeedsKias.downwind, 2800, state.weather, airport.elevation.ft),
+      const tas = trueAirspeed(
+          p.phaseSpeedsKias.downwind,
+          airport.circuitAltitude.circuitAltitudeAmslFt,
+          state.weather,
+          airport.elevation.ft,
+        ),
         turn = turnCharacteristics(tas, p.bankDeg);
       text(
         'performance-status',
-        `${p.typeCode.toUpperCase()} · ${p.source}, ${p.reference} · reviewer: ${p.reviewedBy}. Downwind ${p.phaseSpeedsKias.downwind} KIAS; indicative 2800 ft turn radius ${turn.radiusM.toFixed(0)} m at ${p.bankDeg}° bank. Data is user-declared, not independently certified. Applies to demo circuits; imported TAS profiles take precedence. Route corners remain instantaneous.`,
+        `${p.typeCode.toUpperCase()} · ${p.source}, ${p.reference} · reviewer: ${p.reviewedBy}. Downwind ${p.phaseSpeedsKias.downwind} KIAS; indicative circuit-altitude turn radius ${turn.radiusM.toFixed(0)} m at ${p.bankDeg}° bank. Data is user-declared, not independently certified. Applies to demo circuits; imported TAS profiles take precedence. Route corners remain instantaneous.`,
       );
     }
     changed();
@@ -181,4 +189,26 @@ export function applySchoolConditions(config) {
       ? `${config.aircraft.toUpperCase()} · ${state.performance.source} · ${state.performance.reference} · reviewed by ${state.performance.reviewedBy}. User-declared review; simplified model.`
       : 'Assignment explicitly uses demo aircraft speeds.',
   );
+}
+
+export function resetAirportConditions() {
+  state.performance = null;
+  state.weather = {...WEATHER.calm, source: 'Training scenario'};
+  state.windFrom = 270;
+  state.windSpeed = 0;
+  state.correctWind = false;
+  $('performance-type').value = 'none';
+  $('weather-scenario').value = 'calm';
+  $('wind-from').value = 270;
+  $('wind-speed').value = 0;
+  $('compensate').checked = false;
+  text('wind-from-value', '270°T');
+  text('wind-speed-value', '0 kt');
+  text('weather-status', 'New airport · calm training scenario.');
+  text('performance-status', 'Demo speeds. Select reviewed performance inputs explicitly.');
+  $('weather-metar').value = '';
+  observation = null;
+  $('weather-apply').disabled = true;
+  $('weather-load').disabled = !airportPackage.weatherStation;
+  text('weather-load', `Load latest ${airportPackage.weatherStation ?? 'unconfigured'} METAR`);
 }

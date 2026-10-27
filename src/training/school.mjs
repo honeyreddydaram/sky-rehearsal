@@ -3,8 +3,8 @@ import {validDebrief} from './debrief-schema.mjs';
 export function validateScenario(config) {
   if (
     !config ||
-    config.airport !== 'VOHY' ||
-    !['27', '09'].includes(config.runway) ||
+    !/^[A-Z]{4}$/.test(config.airport) ||
+    !/^(0[1-9]|[12][0-9]|3[0-6])[LRC]?$/.test(config.runway) ||
     !['demo', ...AIRCRAFT].includes(config.aircraft) ||
     !Object.hasOwn(WEATHER, config.weather) ||
     !['landmarks', 'decisions', 'quiz', 'exam'].includes(config.mode) ||

@@ -57,7 +57,7 @@ export default function SchoolDialog() {
               Title
               <input id="school-scenario-title" maxLength={120} required />
             </label>
-            <p>Airport: VOHY · unverified circuit geometry</p>
+            <p id="school-scenario-airport">Airport: VOHY · unverified circuit geometry</p>
             <label>
               Runway
               <select id="school-scenario-runway">
@@ -149,6 +149,14 @@ export default function SchoolDialog() {
             <button>Assign exercise</button>
           </form>
         </section>
+        <label id="school-student-filter-label" hidden>
+          Review student<select id="school-student-filter"></select>
+        </label>
+        <p className="micro">
+          Summaries cover loaded attempts for the selected student. Load remaining pages before assessing
+          their full submitted history.
+        </p>
+        <div id="school-pagination"></div>
         <h3 id="school-roster-heading">Student progress</h3>
         <div id="school-roster"></div>
         <h3>Assignments</h3>

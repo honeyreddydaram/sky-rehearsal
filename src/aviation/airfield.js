@@ -11,12 +11,26 @@ import {
   airportState,
   fleet,
   activeCircuit,
+  circuits,
   setActiveRunway,
   setSelectedRegistration,
 } from './airport.js';
 import {refreshAirportLayer, refreshLandmarksLayer, wireIdentify} from '../map/map.js';
 
+let runwayChanged = () => {};
 function renderRunwaySelector() {
+  $('runway-selector').replaceChildren();
+  for (const runway of Object.keys(circuits)) {
+    const button = document.createElement('button');
+    button.dataset.runway = runway;
+    button.textContent = `RWY ${runway}`;
+    button.onclick = () => {
+      setActiveRunway(runway);
+      runwayChanged();
+      refreshAll();
+    };
+    $('runway-selector').append(button);
+  }
   all('[data-runway]').forEach((b) => {
     b.classList.toggle('selected', b.dataset.runway === airportState.activeRunway);
   });
@@ -124,19 +138,12 @@ function refreshAll() {
 }
 
 export function init(onRunwayChange = () => {}, onAircraftChange = () => {}) {
+  runwayChanged = onRunwayChange;
   renderConcepts();
   renderAircraftOptions();
   refreshAll();
   refreshLandmarksLayer(); // runway-independent, so only needs drawing once
   wireIdentify();
-
-  all('[data-runway]').forEach((b) => {
-    b.onclick = () => {
-      setActiveRunway(b.dataset.runway);
-      onRunwayChange();
-      refreshAll();
-    };
-  });
 
   $('aircraft-select').onchange = (e) => {
     setSelectedRegistration(e.target.value || null);
@@ -146,6 +153,7 @@ export function init(onRunwayChange = () => {}, onAircraftChange = () => {}) {
 }
 
 export function refreshSelection() {
+  renderConcepts();
   refreshAll();
   renderAircraftOptions();
 }

@@ -1,0 +1,259 @@
+{
+  "version": 1,
+  "revision": "synthetic-v1",
+  "source": "SYNTHETIC EXAMPLE ONLY. Not a real airport or approved aviation data.",
+  "review": {
+    "status": "unverified",
+    "reviewer": null,
+    "reviewedAt": null
+  },
+  "geoidOffsetM": 0,
+  "weatherStation": null,
+  "airport": {
+    "schemaVersion": 1,
+    "icao": "ZZZZ",
+    "iata": null,
+    "name": "Synthetic Training Field",
+    "city": "Fictional test environment",
+    "referencePoint": {
+      "lat": 35.0,
+      "lon": -97.0,
+      "source": "Synthetic fixture"
+    },
+    "elevation": {
+      "ft": 1000,
+      "m": 304.8,
+      "source": "Synthetic fixture"
+    },
+    "frequenciesMHz": {},
+    "runways": [
+      {
+        "id": "18/36",
+        "lengthM": 1800,
+        "nominalAlignment": 0,
+        "ends": {
+          "18": {
+            "lon": -97.0,
+            "lat": 35.008,
+            "source": "Synthetic fixture"
+          },
+          "36": {
+            "lon": -97.0,
+            "lat": 34.992,
+            "source": "Synthetic fixture"
+          }
+        }
+      }
+    ],
+    "sources": ["Synthetic fixture"],
+    "circuitAltitude": {
+      "circuitAltitudeAmslFt": 2000,
+      "circuitHeightAglFt": 1000,
+      "aerodromeElevationFtPilotRounded": 1000,
+      "displayText": "2000 ft AMSL (synthetic)",
+      "source": "Synthetic fixture",
+      "verified": false
+    },
+    "liveWeather": {},
+    "limitations": "SYNTHETIC EXAMPLE ONLY."
+  },
+  "aircraft": ["c152", "c172r", "c172s", "da42ng"],
+  "fleet": {
+    "aircraft": [
+      {
+        "registration": "DEMO-A",
+        "typeCode": "c152",
+        "callSign": "Alpha",
+        "callSignSource": "Synthetic fixture"
+      }
+    ]
+  },
+  "landmarks": {
+    "schemaVersion": 1,
+    "source": "Synthetic fixture",
+    "center": {
+      "lat": 35.0,
+      "lon": -97.0
+    },
+    "radiusNm": 8,
+    "landmarks": [
+      {
+        "name": "Synthetic lake",
+        "kind": "lake",
+        "lon": -97.02,
+        "lat": 35.02,
+        "distanceNm": 1.5,
+        "osmRef": "none \u2014 synthetic",
+        "confidence": "unconfirmed"
+      }
+    ]
+  },
+  "circuits": [
+    {
+      "schemaVersion": 1,
+      "runway": "18",
+      "circuitDirection": "left-hand",
+      "side": "synthetic",
+      "source": "Synthetic fixture",
+      "verified": false,
+      "note": "Fictional geometry. Do not navigate with this package.",
+      "points": [
+        [-97, 35.008],
+        [-97, 34.992],
+        [-97, 34.98],
+        [-97.025, 34.98],
+        [-97.025, 35.025],
+        [-97, 35.025],
+        [-97, 35.008],
+        [-97, 34.992]
+      ],
+      "altitudesFt": [1000, 1100, 2000, 2000, 2000, 1700, 1000, 1000],
+      "speedsKt": [55, 65, 90, 90, 90, 65, 55, 30],
+      "legs": [
+        {
+          "name": "upwind",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic upwind",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "crosswind",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic crosswind",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "downwind",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic downwind",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "base",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic base",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "final",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic final",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "runway": "36",
+      "circuitDirection": "left-hand",
+      "side": "synthetic",
+      "source": "Synthetic fixture",
+      "verified": false,
+      "note": "Fictional geometry. Do not navigate with this package.",
+      "points": [
+        [-97, 34.992],
+        [-97, 35.008],
+        [-97, 35.025],
+        [-97.025, 35.025],
+        [-97.025, 34.98],
+        [-97, 34.98],
+        [-97, 34.992],
+        [-97, 35.008]
+      ],
+      "altitudesFt": [1000, 1100, 2000, 2000, 2000, 1700, 1000, 1000],
+      "speedsKt": [55, 65, 90, 90, 90, 65, 55, 30],
+      "legs": [
+        {
+          "name": "upwind",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic upwind",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "crosswind",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic crosswind",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "downwind",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic downwind",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "base",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic base",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        },
+        {
+          "name": "final",
+          "headingTrue": 0,
+          "checkpoints": [
+            {
+              "name": "Synthetic final",
+              "coords": null,
+              "side": "AHEAD",
+              "confidence": "unconfirmed"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -123,3 +123,18 @@ an explicitly shared owned recording; instructor reviews are separate fields.
 requests, and the bootstrap injects an atomic simulator launch callback. Assignment
 labels are cleared by ordinary training resets. `training/school.mjs` contains pure
 scenario checks and submitted-recall summaries. See [school workflows](schools.md).
+
+## Packages and operations (M10)
+
+`aviation/package.mjs` validates airport data and builds a generic seven-segment
+circuit. `aviation/airport.js` installs immutable-revision catalog data or validated
+local packages; the builder UI edits JSON, not simulation code. Airport identity,
+revision and geoid offsets travel with sessions/profiles. The API reads the same
+catalog and school assignments pin its revision. Legacy VOHY geometry is preserved
+by equivalence tests; old records retain explicit legacy defaults.
+
+School pages filter roster/student scope before bounded Firestore queries.
+`operations.py` provides body limits, distributed request quotas and sanitized JSON
+logs; `telemetry.py` accepts only explicitly opted-in structured usage fields.
+Release workflow, container context and Terraform operations live separately from
+flight math. See [launch and operations](launch.md) for remaining real-service work.

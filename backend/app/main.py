@@ -9,10 +9,14 @@ from google.auth.credentials import AnonymousCredentials
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.school import school_router
+from app.telemetry import TrainingEvent, record_event
+from app.operations import OperationsMiddleware
+from app.catalog import airport_catalog
 from app.conditions import AudioRequest, latest_metar, transcribe
 from app.instructor import CoachingContext, configuration, generate, reserve_request
 
 app = FastAPI(title="SkyRehearsal API", version="0.2.0")
+app.add_middleware(OperationsMiddleware)
 bearer = HTTPBearer(auto_error=False)
 ROLES = {"student", "instructor", "school_admin", "platform_admin"}
 
@@ -103,8 +107,8 @@ def instructor(context: CoachingContext, user: Annotated[dict, Depends(identity)
 
 
 @app.get("/api/weather/metar")
-def metar():
-    return latest_metar()
+def metar(airport_id: str = "VOHY"):
+    return latest_metar(airport_id)
 
 
 @app.post("/api/radio/transcribe")
@@ -116,3 +120,13 @@ def radio_transcribe(body: AudioRequest, user: Annotated[dict, Depends(identity)
 
 
 app.include_router(school_router(identity, lambda: firebase_app()))
+
+
+@app.get('/api/version')
+def version():
+    return {'release':os.getenv('RELEASE_SHA','development'), 'airports':{id:p['revision'] for id,p in airport_catalog().items()}}
+
+
+@app.post('/api/telemetry')
+def telemetry(body: TrainingEvent, user: Annotated[dict, Depends(identity)]):
+    return record_event(firebase_app(),user,body)

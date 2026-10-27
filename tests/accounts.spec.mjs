@@ -87,6 +87,15 @@ test('account progress and flights follow the user across fresh browsers', async
   await page.click('#radio-check');
   await expect(page.locator('#radio-result')).toContainText('expected call sign');
   await page.selectOption('#weather-scenario', 'westerly');
+  const usage = [];
+  await page.route('**/api/telemetry', async (route) => {
+    usage.push(route.request().postDataJSON());
+    await route.fulfill({contentType: 'application/json', body: '{"status":"accepted"}'});
+  });
+  await page.click('#account-open');
+  await expect(page.locator('#share-usage')).not.toBeChecked();
+  await page.check('#share-usage');
+  await page.locator('#account-dialog [data-close]').click();
   // Complete an actual guided circuit quickly without skipping eligibility gates.
   await page.evaluate(async () => {
     const {state} = await import('/src/flight/state.js');
@@ -96,6 +105,8 @@ test('account progress and flights follow the user across fresh browsers', async
   await expect(page.locator('#results-dialog')).toBeVisible({timeout: 30000});
   await page.locator('#results-dialog [data-close]').click();
   await expect(page.locator('#save-status')).toHaveText('Saved to your cloud account');
+  await expect.poll(() => usage.length).toBe(1);
+  expect(usage[0]).toEqual({airport: 'VOHY', mode: 'guided', recallScore: null});
   await page.selectOption('#recording-reference', 'ELLIPSOID');
   await page.locator('#recording-file').setInputFiles('public/examples/demo-flight.gpx');
   await expect(page.locator('#recording-status')).toContainText('3 points loaded');

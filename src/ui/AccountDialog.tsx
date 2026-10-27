@@ -40,6 +40,13 @@ export default function AccountDialog() {
         </button>
       </form>
       <div id="account-actions" hidden>
+        <label className="check">
+          <input id="share-usage" type="checkbox" /> Share limited usage metrics for this signed-in session
+        </label>
+        <p className="micro">
+          Optional: airport code, training mode and recall score. No raw flight, audio, account ID or answers
+          in the event log. Operational API logs are separate.
+        </p>
         <button id="account-sync">Sync progress</button>
         <button id="account-copy">Copy guest progress into account</button>
         <button id="account-signout">Sign out</button>

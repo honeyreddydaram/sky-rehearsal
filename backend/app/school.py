@@ -8,6 +8,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
+from app.catalog import get_airport, LEGACY_REVISION
+from app.operations import reserve_api_quota
 from firebase_admin import auth, firestore, storage
 from google.api_core.exceptions import AlreadyExists
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -45,8 +47,9 @@ class Performance(Input):
 
 class Scenario(Input):
     title: str = Field(min_length=1, max_length=120)
-    airport: Literal["VOHY"] = "VOHY"
-    runway: Literal["27", "09"]
+    airport: str = Field(default="VOHY", pattern=r"^[A-Z]{4}$")
+    packageRevision: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9_-]{1,80}$")
+    runway: str = Field(pattern=r"^(0[1-9]|[12][0-9]|3[0-6])[LRC]?$")
     aircraft: Literal["demo", "c152", "c172r", "c172s", "da42ng"]
     performance: Performance | None = None
     weather: Literal["calm", "westerly", "crosswind"]
@@ -59,6 +62,10 @@ class Scenario(Input):
 
     @model_validator(mode="after")
     def aircraft_data(self):
+        package = get_airport(self.airport, self.packageRevision)
+        if self.runway not in {c['runway'] for c in package['circuits']} or (self.aircraft != 'demo' and self.aircraft not in package['aircraft']):
+            raise ValueError('Runway or aircraft is not in the airport package')
+        self.packageRevision = package['revision']
         if (self.aircraft == "demo" and self.performance is not None) or (self.aircraft != "demo" and (self.performance is None or self.performance.typeCode != self.aircraft)):
             raise ValueError("Attach matching reviewed performance inputs or explicitly choose demo aircraft")
         return self
@@ -88,6 +95,7 @@ class Review(Input):
 class School:
     def __init__(self, application, user, school_id):
         self.application, self.user = application, user
+        reserve_api_quota(application,user["uid"])
         self.db = firestore.client(app=application)
         self.ref = self.db.collection("schools").document(identifier(school_id))
         self.member = self.ref.collection("members").document(user["uid"]).get().to_dict()
@@ -115,22 +123,53 @@ class School:
             raise HTTPException(403, "Student is outside your teaching roster")
         return member
 
-    def listing(self, collection, maximum):
-        docs = list(self.ref.collection(collection).limit(maximum + 1).stream())
-        if len(docs) > maximum:
-            raise HTTPException(413, "School exceeds this beta dashboard's limit; pagination is required")
-        return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+    def page(self, collection, after=None, student_uid=None):
+        size = 50
+        if collection in {'students', 'instructors'}:
+            if collection == 'instructors' and not self.admin:
+                raise HTTPException(403, 'School administrator required')
+            if not self.staff:
+                return {'items':[{**self.member,'id':self.user['uid']}], 'nextCursor':None} if collection == 'students' else {'items':[],'nextCursor':None}
+            query = self.ref.collection('members').where(filter=firestore.FieldFilter('active','==',True))
+            query = query.where(filter=firestore.FieldFilter('role','in',['instructor','school_admin'])) if collection == 'instructors' else query.where(filter=firestore.FieldFilter('role','==','student'))
+            if collection == 'students' and not self.admin:
+                query = query.where(filter=firestore.FieldFilter('instructorUid','==',self.user['uid']))
+        elif collection == 'scenarios':
+            self.require_staff()
+            query = self.ref.collection(collection)
+        elif collection in {'assignments','submissions'}:
+            if not student_uid:
+                return {'items':[],'nextCursor':None}
+            self.student(identifier(student_uid))
+            query = self.ref.collection(collection).where(filter=firestore.FieldFilter('studentUid','==',student_uid))
+        else:
+            raise HTTPException(404,'Unknown school page')
+        query = query.order_by('__name__')
+        if after:
+            name = 'members' if collection in {'students','instructors'} else collection
+            cursor = self.ref.collection(name).document(identifier(after)).get()
+            if not cursor.exists:
+                raise HTTPException(422,'Page cursor no longer exists; refresh the school')
+            query = query.start_after(cursor)
+        docs = list(query.limit(size+1).stream())
+        return {'items':[{**d.to_dict(),'id':d.id} for d in docs[:size]], 'nextCursor':docs[size-1].id if len(docs)>size else None}
 
-    def dashboard(self):
-        members = self.listing("members", 100)
-        students = [m for m in members if m.get("active") and m["role"] == "student" and (self.admin or self.staff and m.get("instructorUid") == self.user["uid"] or m["id"] == self.user["uid"])]
-        allowed = {m["id"] for m in students}
-        scenarios = self.listing("scenarios", 100)
-        assignments = [a for a in self.listing("assignments", 200) if a["studentUid"] in allowed]
-        submissions = [s for s in self.listing("submissions", 300) if s["studentUid"] in allowed]
-        return {"role": self.role, "admin": self.admin, "staff": self.staff, "students": students,
-                "instructors": [m for m in members if m.get("active") and m["role"] in {"instructor", "school_admin"}] if self.admin else [],
-                "scenarios": scenarios if self.staff else [], "assignments": assignments, "submissions": submissions}
+    def dashboard(self, student_uid=None):
+        students = self.page('students')
+        if student_uid:
+            selected = self.student(identifier(student_uid))
+            if not any(s['id'] == student_uid for s in students['items']):
+                students['items'].append({**selected,'id':student_uid})
+        else:
+            student_uid = students['items'][0]['id'] if students['items'] else None
+        scenarios = self.page('scenarios') if self.staff else {'items':[],'nextCursor':None}
+        instructors = self.page('instructors') if self.admin else {'items':[],'nextCursor':None}
+        assignments = self.page('assignments',student_uid=student_uid)
+        submissions = self.page('submissions',student_uid=student_uid)
+        return {'role':self.role,'admin':self.admin,'staff':self.staff,'selectedStudent':student_uid,
+                'students':students['items'],'instructors':instructors['items'],'scenarios':scenarios['items'],
+                'assignments':assignments['items'],'submissions':submissions['items'],
+                'cursors':{'students':students['nextCursor'],'instructors':instructors['nextCursor'],'scenarios':scenarios['nextCursor'],'assignments':assignments['nextCursor'],'submissions':submissions['nextCursor']}}
 
     def member_write(self, uid, data):
         if not self.admin:
@@ -196,6 +235,8 @@ class School:
             dates_ok = datetime.fromisoformat(assignment["assignedAt"]) <= completed <= datetime.now(timezone.utc) + timedelta(minutes=5)
         except (ValueError, KeyError, TypeError):
             dates_ok = False
+        if session.get('airportId', 'VOHY') != config['airport'] or session.get('airportRevision', LEGACY_REVISION) != config.get('packageRevision', LEGACY_REVISION):
+            raise HTTPException(409, 'Session airport revision does not match the assignment')
         if not dates_ok or session.get("assignment") != tag or any(session.get(k) != v for k, v in {
             "route": "circuit" + config["runway"], "mode": config["mode"], "difficulty": config["difficulty"],
             "windFrom": config["windFrom"], "windSpeed": config["windSpeed"], "correctWind": True,
@@ -270,8 +311,12 @@ def school_router(identity, application):
     Access = Annotated[School, Depends(access)]
 
     @router.get("/{school_id}")
-    def dashboard(school: Access):
-        return school.dashboard()
+    def dashboard(school: Access, student_uid: str | None = None):
+        return school.dashboard(student_uid)
+
+    @router.get("/{school_id}/page/{collection}")
+    def page(collection: str, school: Access, after: str | None = None, student_uid: str | None = None):
+        return school.page(collection, after, student_uid)
 
     @router.put("/{school_id}/members/{uid}")
     def member(uid: str, body: Member, school: Access):

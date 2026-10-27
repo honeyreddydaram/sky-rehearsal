@@ -1,6 +1,8 @@
 // Pure teaching context. This module never changes flight state or scores.
-export function learningFocus(sessions, route) {
-  const recent = sessions.filter((s) => s.route === route).slice(-20);
+export function learningFocus(sessions, route, airportId = 'VOHY') {
+  const recent = sessions
+    .filter((s) => s.route === route && (s.airportId ?? 'VOHY') === airportId)
+    .slice(-20);
   const groups = new Map();
   for (const session of recent)
     for (const [key, group] of Object.entries(session.debrief?.recall?.groups ?? {})) {

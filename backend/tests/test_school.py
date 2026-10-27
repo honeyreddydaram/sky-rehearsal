@@ -7,6 +7,11 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from app import main, school
 
+@pytest.fixture(autouse=True)
+def fake_quota(monkeypatch):
+    monkeypatch.setattr(school, 'reserve_api_quota', Mock())
+
+
 client = TestClient(main.app)
 SCENARIO = {"title": "RWY 27 landmark exercise", "airport": "VOHY", "runway": "27", "aircraft": "demo", "performance": None,
             "weather": "westerly", "windFrom": 270, "windSpeed": 10, "mode": "landmarks", "difficulty": "beginner", "requiredScore": 80, "notes": "Instructor-reviewed ground exercise"}
@@ -60,3 +65,10 @@ def test_school_ids_cannot_traverse_paths():
     for value in ['../other','school/other','', 'x'*129]:
         with pytest.raises(HTTPException):
             school.identifier(value)
+
+
+def test_catalog_scenarios_pin_revision_and_runway():
+    config = school.Scenario(**{**SCENARIO,'airport':'ZZZZ','runway':'18'})
+    assert config.packageRevision=='synthetic-v1'
+    with pytest.raises(ValidationError):
+        school.Scenario(**{**SCENARIO,'airport':'ZZZZ','runway':'27'})

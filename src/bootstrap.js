@@ -1,3 +1,6 @@
+import {wireTelemetry} from './progress/telemetry.js';
+import {wireAirportBuilder} from './aviation/builder.js';
+import {resetAirportConditions} from './aviation/conditions.js';
 import {wireSchool} from './progress/school.js';
 import {applySchoolConditions} from './aviation/conditions.js';
 import {wireConditions, manualWeather} from './aviation/conditions.js';
@@ -76,6 +79,7 @@ map.wireViewControls();
 // changing mode only needs a fresh session.
 ui.all('[data-route]').forEach((b) => {
   b.onclick = () => {
+    if (airport.airport.icao !== 'VOHY' && b.dataset.route !== 'circuit') return;
     state.route =
       b.dataset.route === 'circuit' ? `circuit${airport.airportState.activeRunway}` : b.dataset.route;
     if (!models[state.route]) {
@@ -151,7 +155,11 @@ wireConditions(() => {
 });
 wireRecording();
 wireAccount();
-wireSchool((config, assignment) => {
+wireTelemetry();
+wireSchool(async (config, assignment, active) => {
+  const data = await airport.catalogPackage(config.airport, config.packageRevision ?? 'vohy-legacy-v1');
+  if (!active()) return;
+  activateAirport(data);
   airport.setActiveRunway(config.runway);
   if (config.aircraft !== 'demo')
     airport.setSelectedRegistration(
@@ -201,3 +209,28 @@ if (airfieldAvailable) {
   ui.$('airfield-panel')?.setAttribute('hidden', '');
 }
 playback.startLoop();
+
+function activateAirport(data) {
+  airport.applyAirportPackage(data);
+  loadCircuits();
+  resetAirportConditions();
+  progress.profileOptions();
+  playback.reset();
+  rebuildTrace();
+  airfield.refreshSelection();
+  map.refreshLandmarksLayer();
+  map.refreshRouteVisuals();
+  map.fit();
+  playback.refresh();
+  ui.$('recording-clear').click();
+  ui.text('airport-heading', `${data.airport.city} / ${data.airport.name}`);
+  ui.text(
+    'airport-reference-note',
+    `${data.airport.icao} · ${data.source} · review: ${data.review.status}. Ground rehearsal only.`,
+  );
+  ui.all('[data-route="inner"], [data-route="outer"]').forEach((b) => {
+    b.disabled = data.airport.icao !== 'VOHY';
+  });
+  window.dispatchEvent(new Event('airport-changed'));
+}
+wireAirportBuilder(activateAirport);

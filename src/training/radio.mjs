@@ -16,14 +16,17 @@ const DIGITS = {
   niner: '9',
 };
 export function radioExercise(runway, phase, callSign) {
-  if (!['09', '27'].includes(runway)) throw Error('Choose a circuit runway for radio practice.');
+  if (!/^(0[1-9]|[12][0-9]|3[0-6])[LRC]?$/.test(runway))
+    throw Error('Choose a circuit runway for radio practice.');
   const leg = ['downwind', 'base', 'final'].includes(phase) ? phase : 'downwind';
+  const spokenRunway =
+    runway.slice(0, 2).split('').join(' ') + ({L: ' left', R: ' right', C: ' centre'}[runway[2]] ?? '');
   return {
     runway,
     phase: leg,
     callSign,
-    tower: `${callSign}, report ${leg} runway ${runway.split('').join(' ')}.`,
-    expected: `${callSign}, ${leg} runway ${runway.split('').join(' ')}.`,
+    tower: `${callSign}, report ${leg} runway ${spokenRunway}.`,
+    expected: `${callSign}, ${leg} runway ${spokenRunway}.`,
   };
 }
 export function checkReadback(transcript, exercise) {
@@ -47,6 +50,11 @@ export function checkReadback(transcript, exercise) {
           .filter((w) => /^\d+$/.test(w))
           .join('');
   if (runway.length === 1) runway = runway.padStart(2, '0');
+  const suffixes = normalized
+    .slice(runwayIndex + 1, runwayIndex + 4)
+    .filter((word) => ['left', 'right', 'center', 'centre', 'l', 'r', 'c'].includes(word));
+  if (suffixes.length)
+    runway += {left: 'L', right: 'R', center: 'C', centre: 'C', l: 'L', r: 'R', c: 'C'}[suffixes[0]];
   const phases = ['downwind', 'base', 'final'].filter((phase) => normalized.includes(phase));
   const missing = [];
   if (

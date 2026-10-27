@@ -7,28 +7,35 @@ from functools import lru_cache
 
 import httpx
 from fastapi import HTTPException
+from app.catalog import get_airport
 from google.cloud import speech
 from pydantic import BaseModel, ConfigDict, Field
 
 
 # Restrict to the packaged airport; this is not an arbitrary URL proxy.
 @lru_cache(maxsize=2)
-def cached_metar(window):
+def cached_metar(window, station="VOHY"):
     try:
         with httpx.Client(timeout=8, follow_redirects=False) as client:
-            response = client.get("https://aviationweather.gov/api/data/metar", params={"ids": "VOHY", "format": "raw", "hours": 2}, headers={"User-Agent": "SkyRehearsal/1.0 ground-training"})
+            response = client.get("https://aviationweather.gov/api/data/metar", params={"ids": station, "format": "raw", "hours": 2}, headers={"User-Agent": "SkyRehearsal/1.0 ground-training"})
             response.raise_for_status()
             raw = response.text.strip()
         if not raw or len(raw) > 6000:
             raise ValueError("No usable METAR")
         # API may return several observations; choose the first, rechecked in browser.
-        return {"raw": raw.splitlines()[0], "station": "VOHY", "source": "NOAA Aviation Weather Center", "retrievedAt": time.time()}
+        return {"raw": raw.splitlines()[0], "station": station, "source": "NOAA Aviation Weather Center", "retrievedAt": time.time()}
     except Exception:
-        raise HTTPException(503, "METAR unavailable; paste an observation or use a training scenario") from None
+        return None
 
 
-def latest_metar():
-    return cached_metar(int(time.time() // 300))
+def latest_metar(airport_id="VOHY"):
+    station = get_airport(airport_id)['weatherStation']
+    if not station:
+        raise HTTPException(422, 'This airport package has no configured METAR station')
+    result = cached_metar(int(time.time() // 300), station)
+    if result is None:
+        raise HTTPException(503, "METAR unavailable; paste an observation or use a training scenario")
+    return result
 
 
 class AudioRequest(BaseModel):

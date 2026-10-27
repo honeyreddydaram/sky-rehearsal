@@ -1,3 +1,4 @@
+import {airport} from '../aviation/airport.js';
 import {windTriangle} from '../flight/core.mjs';
 import {state, stateAt, waypoints} from '../flight/state.js';
 import {learner} from '../progress/progress.js';
@@ -30,7 +31,7 @@ export function wireInstructor(refresh) {
     const checkpointKey = `${current.phase}|${checkpoint?.name}`;
     if (checkpointKey !== lastCheckpoint) level = 0;
     lastCheckpoint = checkpointKey;
-    const learning = learningFocus(learner().sessions, state.route);
+    const learning = learningFocus(learner().sessions, state.route, airport.icao);
     const maxLevel = state.difficulty === 'advanced' ? 0 : state.difficulty === 'intermediate' ? 2 : 3;
     const result = coachingHint({
       phase: current.phase ?? 'Legacy route',

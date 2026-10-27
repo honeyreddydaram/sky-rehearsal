@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Ground-based VFR circuit rehearsal with React, TypeScript and Cesium",
   "scripts": {
-    "test": "node core.test.mjs && node tests/circuit.test.mjs && node tests/recording.test.mjs && node tests/training.test.mjs && node tests/assessment.test.mjs && node tests/coaching.test.mjs && node tests/conditions.test.mjs && node tests/school.test.mjs && tsx tests/html-structure.test.tsx",
+    "test": "npm run check:airports && node core.test.mjs && node tests/circuit.test.mjs && node tests/recording.test.mjs && node tests/training.test.mjs && node tests/assessment.test.mjs && node tests/coaching.test.mjs && node tests/conditions.test.mjs && node tests/school.test.mjs && node tests/packages.test.mjs && tsx tests/html-structure.test.tsx",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "node scripts/copy-cesium.mjs",
     "emulators": "firebase emulators:start --project demo-sky-rehearsal --only auth,firestore,storage",
-    "test:firebase": "firebase emulators:exec --project demo-sky-rehearsal --only auth,firestore,storage \"node scripts/firebase-suite.mjs\""
+    "test:firebase": "firebase emulators:exec --project demo-sky-rehearsal --only auth,firestore,storage \"node scripts/firebase-suite.mjs\"",
+    "check:airports": "node scripts/check-airports.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

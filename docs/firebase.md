@@ -56,7 +56,7 @@ explicit demo development mode.
    uses `dist/` and `firebase.json`. Existing GitHub Pages remains a guest-compatible
    fallback and is not automatically migrated or published by an agent commit.
 6. The optional API can run on Cloud Run using `backend/Dockerfile` (build context
-   `backend/`). Set `APP_ENV=production`, `FIREBASE_PROJECT_ID`, and a scoped workload
+   repository root). Set `APP_ENV=production`, `FIREBASE_PROJECT_ID`, and a scoped workload
    service identity with needed Firestore and Firebase Authentication permissions.
    Do not set emulator variables. Route `/api/**` to the chosen Cloud Run service in
    Hosting if exposing the API through that origin. No service name/region is assumed
@@ -108,3 +108,6 @@ no role currently gives blanket access to another person's recordings.
 Firebase email/password and data flows are validated locally with emulators. Real
 Google OAuth sign-in, reset-email delivery, real-project Rules publication, Hosting,
 Cloud Run, and the Docker image require separate real-service/deployment validation.
+
+M10 adds a manual Google Cloud release workflow, published airport catalog, paginated
+school queries and quota TTL/index configuration. See [release operations](launch.md).

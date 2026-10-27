@@ -2,3 +2,7 @@
 
 /* Hidden assistance and dialogs must stay hidden despite component display rules. */
 [hidden]{display:none!important}
+
+/* Launch layouts: touch controls and long school forms remain usable on tablets. */
+#airport-json{width:100%;font-family:monospace}textarea{max-width:100%;width:100%;box-sizing:border-box}#school-dialog{width:min(900px,calc(100% - 26px))}#school-dialog section{border-bottom:1px solid var(--line);padding:12px 0}#school-pagination{display:flex;flex-wrap:wrap;gap:8px}#school-dialog table{display:block;overflow:auto}button,select{touch-action:manipulation}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+@media(max-width:850px){header{height:auto;min-height:68px;flex-wrap:wrap;gap:10px;padding-block:12px}header nav{flex-wrap:wrap;justify-content:flex-end}.modes{flex-wrap:wrap}.modes button{min-height:44px;min-width:80px}button,select{min-height:38px}.view-tabs{flex-wrap:wrap}.map-toolbar{flex-wrap:wrap}.telemetry{grid-template-columns:repeat(2,1fr);gap:8px}.playback-top{flex-wrap:wrap}.conditions{columns:auto}dialog{max-width:calc(100% - 16px)}.look-controls{bottom:42px}}

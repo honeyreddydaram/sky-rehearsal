@@ -1,3 +1,4 @@
+import {airport, airportPackage} from '../aviation/airport.js';
 // progress.js
 // Guest learners use localStorage. A signed-in learner lives separately in memory
 // and saves through the injected Firebase callback. Guest data is never implicitly
@@ -15,14 +16,7 @@
 import {renderDebrief} from '../training/debrief.js';
 import {assessed, modeLabel} from '../training/engine.mjs';
 import {validateProfile, validateProgressBackup} from '../flight/core.mjs';
-import {
-  state,
-  demo,
-  routeLabel,
-  flightFrame,
-  EGM2008_UNDULATION_M_VOHY,
-  activePerformance,
-} from '../flight/state.js';
+import {state, demo, routeLabel, flightFrame, activePerformance, models} from '../flight/state.js';
 import {$, text, toast, download, showDialog} from '../ui/ui.js';
 
 const KEY = 'sky-rehearsal-learners-v1';
@@ -108,7 +102,12 @@ export function profileOptions() {
   opt.textContent = 'Demo familiarization profile';
   select.append(opt);
   learner()
-    .flightProfiles.filter((p) => p.route === state.route)
+    .flightProfiles.filter(
+      (p) =>
+        p.route === state.route &&
+        (p.airportId ?? 'VOHY') === (airport?.icao ?? 'VOHY') &&
+        (!p.airportRevision || p.airportRevision === airportPackage?.revision),
+    )
     .forEach((p) => {
       const o = document.createElement('option');
       o.value = p.id;
@@ -247,7 +246,7 @@ export function renderProgress() {
       const d = document.createElement('div');
       const sm = document.createElement('small');
       d.className = 'history-row';
-      d.textContent = `${routeLabel(s.route)} · ${modeLabel(s.mode)}${assessed(s.mode) ? ` ${s.score}/${s.total}` : ''} · ${s.difficulty ?? 'beginner'} · ${s.hintsUsed ?? 0} hints`;
+      d.textContent = `${s.airportId ?? 'VOHY'} · ${routeLabel(s.route)} · ${modeLabel(s.mode)}${assessed(s.mode) ? ` ${s.score}/${s.total}` : ''} · ${s.difficulty ?? 'beginner'} · ${s.hintsUsed ?? 0} hints`;
       sm.textContent = new Date(s.completedAt).toLocaleString() + ' · ' + s.profile;
       d.append(sm);
       if (s.environment) {
@@ -289,6 +288,8 @@ export function wireProgressDialog() {
         sessions: checked.sessions.map((s) => ({
           id: crypto.randomUUID(),
           route: s.route,
+          ...(s.airportId ? {airportId: s.airportId} : {}),
+          ...(s.airportRevision ? {airportRevision: s.airportRevision} : {}),
           mode: s.mode,
           difficulty: s.difficulty ?? 'beginner',
           hintsUsed: s.hintsUsed ?? 0,
@@ -331,7 +332,9 @@ export function wireProfileImport() {
       name: 'Example only — replace with your flight data',
       source: 'Replace with instructor or flight recording reference',
       altitudeReference: 'MSL',
-      geoidOffsetM: EGM2008_UNDULATION_M_VOHY, // pre-filled for VOHY; adjust for a profile recorded elsewhere
+      airportId: airport.icao,
+      airportRevision: airportPackage.revision,
+      geoidOffsetM: airportPackage.geoidOffsetM, // pre-filled for VOHY; adjust for a profile recorded elsewhere
       frames: demo.frames,
       callouts: [{progress: 0.2, text: 'Replace this with your instructor’s waypoint instruction.'}],
     });
@@ -341,6 +344,13 @@ export function wireProfileImport() {
     try {
       if (!file || file.size > 200_000) throw new Error('Choose a JSON profile under 200 KB.');
       const p = validateProfile(JSON.parse(await file.text()));
+      if (
+        (p.airportId ?? 'VOHY') !== (airport?.icao ?? 'VOHY') ||
+        (p.airportRevision && p.airportRevision !== airportPackage.revision) ||
+        !models[p.route] ||
+        (!p.route.startsWith('circuit') && airport.icao !== 'VOHY')
+      )
+        throw Error('Choose the matching airport package before importing this profile.');
       if (learner().flightProfiles.length >= 30)
         throw new Error('This learner already has 30 imported profiles.');
       p.id = crypto.randomUUID();

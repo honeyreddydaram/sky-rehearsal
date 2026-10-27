@@ -104,3 +104,36 @@ def test_school_end_to_end_and_isolation():
     assert client.delete(root+f'/members/{student}', headers=admin_headers).status_code == 200
     assert client.get(root, headers=student_headers).status_code == 403
     assert client.get(shared_path, headers=teacher_headers).status_code == 403
+
+
+def test_school_pages_are_bounded_and_roster_scoped():
+    from app.school import School
+    application = main.firebase_app()
+    db = firestore.client(app=application)
+    suffix = uuid.uuid4().hex
+    key = 'pages-' + suffix
+    teacher = 'teacher-' + suffix
+    ref = db.collection('schools').document(key)
+    ref.collection('members').document(teacher).set({'role':'instructor','active':True,'name':'Teacher'})
+    batch = db.batch()
+    for i in range(76):
+        uid = f'student-{i:03}'
+        batch.set(ref.collection('members').document(uid),{'role':'student','active':True,'name':uid,'instructorUid':teacher if i<70 else 'other'})
+    for i in range(65):
+        batch.set(ref.collection('assignments').document(f'assignment-{i:03}'),{'studentUid':'student-000','config':SCENARIO})
+        batch.set(ref.collection('submissions').document(f'submission-{i:03}'),{'studentUid':'student-000','score':80})
+    batch.commit()
+    service = School(application,{'uid':teacher,'role':'instructor'},key)
+    first = service.page('students')
+    assert len(first['items'])==50 and first['nextCursor'] is not None
+    second = service.page('students',after=first['nextCursor'])
+    assert len(second['items'])==20 and second['nextCursor'] is None
+    assert not set(s['id'] for s in first['items']) & set(s['id'] for s in second['items'])
+    for collection in ['assignments','submissions']:
+        first = service.page(collection,student_uid='student-000')
+        assert len(first['items'])==50
+        assert len(service.page(collection,after=first['nextCursor'],student_uid='student-000')['items'])==15
+        with pytest.raises(Exception) as error:
+            service.page(collection,student_uid='student-075')
+        assert error.value.status_code==403
+    assert service.dashboard('student-060')['selectedStudent']=='student-060'
